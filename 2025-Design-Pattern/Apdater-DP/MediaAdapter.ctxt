@@ -1,0 +1,7 @@
+#BlueJ class context
+comment0.target=MediaAdapter
+comment1.params=
+comment1.target=MediaAdapter()
+comment2.params=audioType\ filename
+comment2.target=void\ play(java.lang.String,\ java.lang.String)
+numComments=3

@@ -1,0 +1,7 @@
+#BlueJ class context
+comment0.target=AdvancedMediaPlayer
+comment1.params=filename
+comment1.target=void\ playMp4(java.lang.String)
+comment2.params=filename
+comment2.target=void\ playVlc(java.lang.String)
+numComments=3

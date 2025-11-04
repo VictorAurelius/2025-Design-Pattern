@@ -20,3 +20,5 @@ hãy giúp tôi tạo Scripts/req-1.md là plan task cho claude để:
 6. tạo lại file package.bulej của mẫu apdater sao cho giống Solution/Adapter-Lecture.pdf
 
 lưu ý: đây chỉ là plan task cho claude, chưa thực hiện ngay
+
+hãy sửa lại req-1, tôi không cần bạn copy lại Code-Sample và bài toán sample, tôi cần 1 bài toán mới, áp dụng được mẫu Adapter

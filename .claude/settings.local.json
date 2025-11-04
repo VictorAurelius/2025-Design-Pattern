@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cd /mnt/e/person/2025-Design-Pattern/1-Adapter-DP && javac *.java:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

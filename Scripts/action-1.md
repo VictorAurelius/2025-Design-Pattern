@@ -60,3 +60,5 @@ tạo req-16 cho mẫu Template
 tạo req-17 cho mẫu State
 
 tạo req-18 cho mẫu Strategy
+
+tạo req-19 cho mẫu Command

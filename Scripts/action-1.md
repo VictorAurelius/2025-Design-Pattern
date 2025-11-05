@@ -46,3 +46,5 @@ tạo req-9 cho mẫu Chain of Responsibility
 tạo req-10 cho mẫu Flighweight
 
 tạo req-11 cho mẫu Builder
+
+tạo req-12 cho mẫu Factory Method

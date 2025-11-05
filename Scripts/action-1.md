@@ -56,3 +56,5 @@ tạo req-14 cho mẫu Prototype
 tạo req-15 cho mẫu Memento
 
 tạo req-16 cho mẫu Template
+
+tạo req-17 cho mẫu State

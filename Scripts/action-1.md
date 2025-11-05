@@ -25,3 +25,6 @@ hãy sửa lại req-1, tôi không cần bạn copy lại Code-Sample và bài 
 
 tạo req-2 cho mẫu Facade
 tôi cũng đang có input Facade-Lecture.pdf
+
+tạo req-3 cho mẫu Composite
+tôi cũng đang có input Composite-Lecture.pdf

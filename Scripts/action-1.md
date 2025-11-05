@@ -44,3 +44,5 @@ tạo req-8 cho mẫu Proxy, tôi có yêu cầu thêm cho các req tiếp theo 
 tạo req-9 cho mẫu Chain of Responsibility
 
 tạo req-10 cho mẫu Flighweight
+
+tạo req-11 cho mẫu Builder

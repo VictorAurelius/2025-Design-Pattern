@@ -28,3 +28,7 @@ tôi cũng đang có input Facade-Lecture.pdf
 
 tạo req-3 cho mẫu Composite
 tôi cũng đang có input Composite-Lecture.pdf
+
+tạo req-4 cho mẫu Bridge
+input lecture nằm trong Documents/Lectures, tôi chưa có code hay solution mẫu
+solution giờ nằm trong Documents/Solutions

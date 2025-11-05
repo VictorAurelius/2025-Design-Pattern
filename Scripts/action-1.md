@@ -50,3 +50,5 @@ tạo req-11 cho mẫu Builder
 tạo req-12 cho mẫu Factory Method
 
 tạo req-13 cho mẫu Abstract Factory
+
+tạo req-14 cho mẫu Prototype

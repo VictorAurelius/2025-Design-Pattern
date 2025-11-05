@@ -34,3 +34,9 @@ input lecture nằm trong Documents/Lectures, tôi chưa có code hay solution m
 solution giờ nằm trong Documents/Solutions
 
 tạo req-5 cho mẫu Singletion
+
+tạo req-6 cho mẫu Observer
+
+tạo req-7 cho mẫu Mediator
+
+tạo req-8 cho mẫu Proxy, tôi có yêu cầu thêm cho các req tiếp theo là hãy chọn các field và context cho bài toán giống nhau 1 xíu để tôi có thể dễ nhớ hơn, vì nếu mỗi bài toán của design pattern có 1 context khác nhau, tôi sẽ khá khó nhớ (vì có 24 mẫu design pattern phải nhớ)

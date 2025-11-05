@@ -39,4 +39,4 @@ tạo req-6 cho mẫu Observer
 
 tạo req-7 cho mẫu Mediator
 
-tạo req-8 cho mẫu Proxy, tôi có yêu cầu thêm cho các req tiếp theo là hãy chọn các field và context cho bài toán giống nhau 1 xíu để tôi có thể dễ nhớ hơn, vì nếu mỗi bài toán của design pattern có 1 context khác nhau, tôi sẽ khá khó nhớ (vì có 24 mẫu design pattern phải nhớ)
+tạo req-8 cho mẫu Proxy, tôi có yêu cầu thêm cho các req tiếp theo là hãy chọn các field và context cho bài toán giống nhau 1 xíu để tôi có thể dễ nhớ hơn, vì nếu mỗi bài toán của design pattern có 1 context khác nhau, tôi sẽ khá khó nhớ (vì có 24 mẫu design pattern phải nhớ). Nhưng bài toán vẫn phải ưu tiên phù hợp để thể hiện design pattern.

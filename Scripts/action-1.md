@@ -22,3 +22,6 @@ hãy giúp tôi tạo Scripts/req-1.md là plan task cho claude để:
 lưu ý: đây chỉ là plan task cho claude, chưa thực hiện ngay
 
 hãy sửa lại req-1, tôi không cần bạn copy lại Code-Sample và bài toán sample, tôi cần 1 bài toán mới, áp dụng được mẫu Adapter
+
+tạo req-2 cho mẫu Facade
+tôi cũng đang có input Facade-Lecture.pdf

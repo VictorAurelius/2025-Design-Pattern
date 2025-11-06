@@ -77,3 +77,5 @@ do step 7 of req-2
 
 tôi không hài lòng với starUMl của bạn tạo lắm, nên hãy bỏ qua nó
 hãy tạo req-21 cho mẫu Decorator
+
+hãy tạo req-22 cho mẫu Iterator

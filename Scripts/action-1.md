@@ -74,3 +74,6 @@ bây giờ bạn hãy:
 2. sửa req-2 để tạo được file tương ứng để vẽ được UML cho mẫu Facede (sao cho giống Lecture và hợp lý)
 
 do step 7 of req-2
+
+tôi không hài lòng với starUMl của bạn tạo lắm, nên hãy bỏ qua nó
+hãy tạo req-21 cho mẫu Decorator

@@ -79,3 +79,5 @@ tôi không hài lòng với starUMl của bạn tạo lắm, nên hãy bỏ qua
 hãy tạo req-21 cho mẫu Decorator
 
 hãy tạo req-22 cho mẫu Iterator
+
+hãy tạo req-23 cho mẫu Visitor

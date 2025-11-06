@@ -1,11 +1,6 @@
 public class RestaurantDemo {
 
 	public static void main(String[] args) {
-
-		System.out.println("========================================");
-		System.out.println("    GOLDEN FORK RESTAURANT MENU");
-		System.out.println("========================================");
-
 		// Create leaf items (món đơn)
 		MenuComponent springRolls = new MenuItem("Spring Rolls", "Crispy rolls with vegetables", 5.99);
 		MenuComponent caesarSalad = new MenuItem("Caesar Salad", "Fresh romaine with parmesan", 7.50);
@@ -63,10 +58,5 @@ public class RestaurantDemo {
 		System.out.println("\n========================================");
 		System.out.printf("Total Menu Value: $%.2f%n", restaurantMenu.getPrice());
 		System.out.println("========================================");
-
-		// Demonstrate flexibility: display only Main Course
-		System.out.println("\n\n--- Main Course Only ---");
-		mainCourse.display();
-		System.out.printf("\nMain Course Total: $%.2f%n", mainCourse.getPrice());
 	}
 }

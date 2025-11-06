@@ -81,3 +81,6 @@ hãy tạo req-21 cho mẫu Decorator
 hãy tạo req-22 cho mẫu Iterator
 
 hãy tạo req-23 cho mẫu Visitor
+
+tốt, đã xong tất cả các design pattern cần thiết, hãy tạo file readme cho toàn bộ project này
+đặc biệt tôi muốn mỗi DP sẽ có mô tả cơ bản bài toán và mapping context giữa các bài toán

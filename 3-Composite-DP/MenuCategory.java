@@ -47,8 +47,7 @@ public class MenuCategory extends MenuComponent {
 
 	@Override
 	public void display() {
-		System.out.println("\n" + getName() + " - " + getDescription());
-		System.out.println("---------------------------------------");
+		System.out.println(getName() + " - " + getDescription());
 
 		for (MenuComponent component : menuComponents) {
 			component.display();

@@ -55,8 +55,6 @@ public class RestaurantDemo {
 		restaurantMenu.display();
 
 		// Calculate total menu value
-		System.out.println("\n========================================");
 		System.out.printf("Total Menu Value: $%.2f%n", restaurantMenu.getPrice());
-		System.out.println("========================================");
 	}
 }

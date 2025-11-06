@@ -1,0 +1,959 @@
+{
+	"_type": "Project",
+	"_id": "AAAAAAFF+h6SjaM2Hec=",
+	"name": "Facade-Pattern-ECommerce",
+	"ownedElements": [
+		{
+			"_type": "UMLModel",
+			"_id": "AAAAAAGD1FacadeModel001=",
+			"_parent": {
+				"$ref": "AAAAAAFF+h6SjaM2Hec="
+			},
+			"name": "FacadePattern",
+			"ownedElements": [
+				{
+					"_type": "UMLClass",
+					"_id": "AAAAAAGD1OrderFacade001=",
+					"_parent": {
+						"$ref": "AAAAAAGD1FacadeModel001="
+					},
+					"name": "OrderFacade",
+					"attributes": [
+						{
+							"_type": "UMLAttribute",
+							"_id": "AAAAAAGD1OrderFacade002=",
+							"_parent": {
+								"$ref": "AAAAAAGD1OrderFacade001="
+							},
+							"name": "inventory",
+							"visibility": "private",
+							"type": "InventorySystem"
+						},
+						{
+							"_type": "UMLAttribute",
+							"_id": "AAAAAAGD1OrderFacade003=",
+							"_parent": {
+								"$ref": "AAAAAAGD1OrderFacade001="
+							},
+							"name": "payment",
+							"visibility": "private",
+							"type": "PaymentProcessor"
+						},
+						{
+							"_type": "UMLAttribute",
+							"_id": "AAAAAAGD1OrderFacade004=",
+							"_parent": {
+								"$ref": "AAAAAAGD1OrderFacade001="
+							},
+							"name": "shipping",
+							"visibility": "private",
+							"type": "ShippingService"
+						},
+						{
+							"_type": "UMLAttribute",
+							"_id": "AAAAAAGD1OrderFacade005=",
+							"_parent": {
+								"$ref": "AAAAAAGD1OrderFacade001="
+							},
+							"name": "notification",
+							"visibility": "private",
+							"type": "NotificationService"
+						}
+					],
+					"operations": [
+						{
+							"_type": "UMLOperation",
+							"_id": "AAAAAAGD1OrderFacade010=",
+							"_parent": {
+								"$ref": "AAAAAAGD1OrderFacade001="
+							},
+							"name": "placeOrder",
+							"parameters": [
+								{
+									"_type": "UMLParameter",
+									"_id": "AAAAAAGD1OrderFacade011=",
+									"_parent": {
+										"$ref": "AAAAAAGD1OrderFacade010="
+									},
+									"name": "customerId",
+									"type": "String"
+								},
+								{
+									"_type": "UMLParameter",
+									"_id": "AAAAAAGD1OrderFacade012=",
+									"_parent": {
+										"$ref": "AAAAAAGD1OrderFacade010="
+									},
+									"name": "productId",
+									"type": "String"
+								},
+								{
+									"_type": "UMLParameter",
+									"_id": "AAAAAAGD1OrderFacade013=",
+									"_parent": {
+										"$ref": "AAAAAAGD1OrderFacade010="
+									},
+									"name": "quantity",
+									"type": "int"
+								},
+								{
+									"_type": "UMLParameter",
+									"_id": "AAAAAAGD1OrderFacade014=",
+									"_parent": {
+										"$ref": "AAAAAAGD1OrderFacade010="
+									},
+									"name": "cardNumber",
+									"type": "String"
+								},
+								{
+									"_type": "UMLParameter",
+									"_id": "AAAAAAGD1OrderFacade015=",
+									"_parent": {
+										"$ref": "AAAAAAGD1OrderFacade010="
+									},
+									"name": "cvv",
+									"type": "String"
+								},
+								{
+									"_type": "UMLParameter",
+									"_id": "AAAAAAGD1OrderFacade016=",
+									"_parent": {
+										"$ref": "AAAAAAGD1OrderFacade010="
+									},
+									"name": "address",
+									"type": "String"
+								},
+								{
+									"_type": "UMLParameter",
+									"_id": "AAAAAAGD1OrderFacade017=",
+									"_parent": {
+										"$ref": "AAAAAAGD1OrderFacade010="
+									},
+									"name": "email",
+									"type": "String"
+								},
+								{
+									"_type": "UMLParameter",
+									"_id": "AAAAAAGD1OrderFacade018=",
+									"_parent": {
+										"$ref": "AAAAAAGD1OrderFacade010="
+									},
+									"name": "phone",
+									"type": "String"
+								},
+								{
+									"_type": "UMLParameter",
+									"_id": "AAAAAAGD1OrderFacade019=",
+									"_parent": {
+										"$ref": "AAAAAAGD1OrderFacade010="
+									},
+									"type": "String",
+									"direction": "return"
+								}
+							]
+						},
+						{
+							"_type": "UMLOperation",
+							"_id": "AAAAAAGD1OrderFacade020=",
+							"_parent": {
+								"$ref": "AAAAAAGD1OrderFacade001="
+							},
+							"name": "cancelOrder",
+							"parameters": [
+								{
+									"_type": "UMLParameter",
+									"_id": "AAAAAAGD1OrderFacade021=",
+									"_parent": {
+										"$ref": "AAAAAAGD1OrderFacade020="
+									},
+									"name": "orderId",
+									"type": "String"
+								},
+								{
+									"_type": "UMLParameter",
+									"_id": "AAAAAAGD1OrderFacade022=",
+									"_parent": {
+										"$ref": "AAAAAAGD1OrderFacade020="
+									},
+									"name": "productId",
+									"type": "String"
+								},
+								{
+									"_type": "UMLParameter",
+									"_id": "AAAAAAGD1OrderFacade023=",
+									"_parent": {
+										"$ref": "AAAAAAGD1OrderFacade020="
+									},
+									"name": "quantity",
+									"type": "int"
+								},
+								{
+									"_type": "UMLParameter",
+									"_id": "AAAAAAGD1OrderFacade024=",
+									"_parent": {
+										"$ref": "AAAAAAGD1OrderFacade020="
+									},
+									"name": "transactionId",
+									"type": "String"
+								},
+								{
+									"_type": "UMLParameter",
+									"_id": "AAAAAAGD1OrderFacade025=",
+									"_parent": {
+										"$ref": "AAAAAAGD1OrderFacade020="
+									},
+									"name": "trackingNumber",
+									"type": "String"
+								},
+								{
+									"_type": "UMLParameter",
+									"_id": "AAAAAAGD1OrderFacade026=",
+									"_parent": {
+										"$ref": "AAAAAAGD1OrderFacade020="
+									},
+									"type": "boolean",
+									"direction": "return"
+								}
+							]
+						}
+					]
+				},
+				{
+					"_type": "UMLClass",
+					"_id": "AAAAAAGD1InventorySystem001=",
+					"_parent": {
+						"$ref": "AAAAAAGD1FacadeModel001="
+					},
+					"name": "InventorySystem",
+					"operations": [
+						{
+							"_type": "UMLOperation",
+							"_id": "AAAAAAGD1InventorySystem010=",
+							"_parent": {
+								"$ref": "AAAAAAGD1InventorySystem001="
+							},
+							"name": "checkStock",
+							"parameters": [
+								{
+									"_type": "UMLParameter",
+									"_id": "AAAAAAGD1InventorySystem011=",
+									"_parent": {
+										"$ref": "AAAAAAGD1InventorySystem010="
+									},
+									"name": "productId",
+									"type": "String"
+								},
+								{
+									"_type": "UMLParameter",
+									"_id": "AAAAAAGD1InventorySystem012=",
+									"_parent": {
+										"$ref": "AAAAAAGD1InventorySystem010="
+									},
+									"name": "quantity",
+									"type": "int"
+								},
+								{
+									"_type": "UMLParameter",
+									"_id": "AAAAAAGD1InventorySystem013=",
+									"_parent": {
+										"$ref": "AAAAAAGD1InventorySystem010="
+									},
+									"type": "boolean",
+									"direction": "return"
+								}
+							]
+						},
+						{
+							"_type": "UMLOperation",
+							"_id": "AAAAAAGD1InventorySystem020=",
+							"_parent": {
+								"$ref": "AAAAAAGD1InventorySystem001="
+							},
+							"name": "reserveProduct",
+							"parameters": [
+								{
+									"_type": "UMLParameter",
+									"_id": "AAAAAAGD1InventorySystem021=",
+									"_parent": {
+										"$ref": "AAAAAAGD1InventorySystem020="
+									},
+									"name": "productId",
+									"type": "String"
+								},
+								{
+									"_type": "UMLParameter",
+									"_id": "AAAAAAGD1InventorySystem022=",
+									"_parent": {
+										"$ref": "AAAAAAGD1InventorySystem020="
+									},
+									"name": "quantity",
+									"type": "int"
+								},
+								{
+									"_type": "UMLParameter",
+									"_id": "AAAAAAGD1InventorySystem023=",
+									"_parent": {
+										"$ref": "AAAAAAGD1InventorySystem020="
+									},
+									"type": "boolean",
+									"direction": "return"
+								}
+							]
+						},
+						{
+							"_type": "UMLOperation",
+							"_id": "AAAAAAGD1InventorySystem030=",
+							"_parent": {
+								"$ref": "AAAAAAGD1InventorySystem001="
+							},
+							"name": "releaseProduct",
+							"parameters": [
+								{
+									"_type": "UMLParameter",
+									"_id": "AAAAAAGD1InventorySystem031=",
+									"_parent": {
+										"$ref": "AAAAAAGD1InventorySystem030="
+									},
+									"name": "productId",
+									"type": "String"
+								},
+								{
+									"_type": "UMLParameter",
+									"_id": "AAAAAAGD1InventorySystem032=",
+									"_parent": {
+										"$ref": "AAAAAAGD1InventorySystem030="
+									},
+									"name": "quantity",
+									"type": "int"
+								},
+								{
+									"_type": "UMLParameter",
+									"_id": "AAAAAAGD1InventorySystem033=",
+									"_parent": {
+										"$ref": "AAAAAAGD1InventorySystem030="
+									},
+									"type": "void",
+									"direction": "return"
+								}
+							]
+						}
+					]
+				},
+				{
+					"_type": "UMLClass",
+					"_id": "AAAAAAGD1PaymentProcessor001=",
+					"_parent": {
+						"$ref": "AAAAAAGD1FacadeModel001="
+					},
+					"name": "PaymentProcessor",
+					"operations": [
+						{
+							"_type": "UMLOperation",
+							"_id": "AAAAAAGD1PaymentProcessor010=",
+							"_parent": {
+								"$ref": "AAAAAAGD1PaymentProcessor001="
+							},
+							"name": "validatePaymentInfo",
+							"parameters": [
+								{
+									"_type": "UMLParameter",
+									"_id": "AAAAAAGD1PaymentProcessor011=",
+									"_parent": {
+										"$ref": "AAAAAAGD1PaymentProcessor010="
+									},
+									"name": "cardNumber",
+									"type": "String"
+								},
+								{
+									"_type": "UMLParameter",
+									"_id": "AAAAAAGD1PaymentProcessor012=",
+									"_parent": {
+										"$ref": "AAAAAAGD1PaymentProcessor010="
+									},
+									"name": "cvv",
+									"type": "String"
+								},
+								{
+									"_type": "UMLParameter",
+									"_id": "AAAAAAGD1PaymentProcessor013=",
+									"_parent": {
+										"$ref": "AAAAAAGD1PaymentProcessor010="
+									},
+									"name": "amount",
+									"type": "double"
+								},
+								{
+									"_type": "UMLParameter",
+									"_id": "AAAAAAGD1PaymentProcessor014=",
+									"_parent": {
+										"$ref": "AAAAAAGD1PaymentProcessor010="
+									},
+									"type": "boolean",
+									"direction": "return"
+								}
+							]
+						},
+						{
+							"_type": "UMLOperation",
+							"_id": "AAAAAAGD1PaymentProcessor020=",
+							"_parent": {
+								"$ref": "AAAAAAGD1PaymentProcessor001="
+							},
+							"name": "chargePayment",
+							"parameters": [
+								{
+									"_type": "UMLParameter",
+									"_id": "AAAAAAGD1PaymentProcessor021=",
+									"_parent": {
+										"$ref": "AAAAAAGD1PaymentProcessor020="
+									},
+									"name": "cardNumber",
+									"type": "String"
+								},
+								{
+									"_type": "UMLParameter",
+									"_id": "AAAAAAGD1PaymentProcessor022=",
+									"_parent": {
+										"$ref": "AAAAAAGD1PaymentProcessor020="
+									},
+									"name": "amount",
+									"type": "double"
+								},
+								{
+									"_type": "UMLParameter",
+									"_id": "AAAAAAGD1PaymentProcessor023=",
+									"_parent": {
+										"$ref": "AAAAAAGD1PaymentProcessor020="
+									},
+									"type": "String",
+									"direction": "return"
+								}
+							]
+						},
+						{
+							"_type": "UMLOperation",
+							"_id": "AAAAAAGD1PaymentProcessor030=",
+							"_parent": {
+								"$ref": "AAAAAAGD1PaymentProcessor001="
+							},
+							"name": "refundPayment",
+							"parameters": [
+								{
+									"_type": "UMLParameter",
+									"_id": "AAAAAAGD1PaymentProcessor031=",
+									"_parent": {
+										"$ref": "AAAAAAGD1PaymentProcessor030="
+									},
+									"name": "transactionId",
+									"type": "String"
+								},
+								{
+									"_type": "UMLParameter",
+									"_id": "AAAAAAGD1PaymentProcessor032=",
+									"_parent": {
+										"$ref": "AAAAAAGD1PaymentProcessor030="
+									},
+									"type": "boolean",
+									"direction": "return"
+								}
+							]
+						}
+					]
+				},
+				{
+					"_type": "UMLClass",
+					"_id": "AAAAAAGD1ShippingService001=",
+					"_parent": {
+						"$ref": "AAAAAAGD1FacadeModel001="
+					},
+					"name": "ShippingService",
+					"operations": [
+						{
+							"_type": "UMLOperation",
+							"_id": "AAAAAAGD1ShippingService010=",
+							"_parent": {
+								"$ref": "AAAAAAGD1ShippingService001="
+							},
+							"name": "calculateShippingCost",
+							"parameters": [
+								{
+									"_type": "UMLParameter",
+									"_id": "AAAAAAGD1ShippingService011=",
+									"_parent": {
+										"$ref": "AAAAAAGD1ShippingService010="
+									},
+									"name": "address",
+									"type": "String"
+								},
+								{
+									"_type": "UMLParameter",
+									"_id": "AAAAAAGD1ShippingService012=",
+									"_parent": {
+										"$ref": "AAAAAAGD1ShippingService010="
+									},
+									"name": "weight",
+									"type": "double"
+								},
+								{
+									"_type": "UMLParameter",
+									"_id": "AAAAAAGD1ShippingService013=",
+									"_parent": {
+										"$ref": "AAAAAAGD1ShippingService010="
+									},
+									"type": "double",
+									"direction": "return"
+								}
+							]
+						},
+						{
+							"_type": "UMLOperation",
+							"_id": "AAAAAAGD1ShippingService020=",
+							"_parent": {
+								"$ref": "AAAAAAGD1ShippingService001="
+							},
+							"name": "createShipment",
+							"parameters": [
+								{
+									"_type": "UMLParameter",
+									"_id": "AAAAAAGD1ShippingService021=",
+									"_parent": {
+										"$ref": "AAAAAAGD1ShippingService020="
+									},
+									"name": "address",
+									"type": "String"
+								},
+								{
+									"_type": "UMLParameter",
+									"_id": "AAAAAAGD1ShippingService022=",
+									"_parent": {
+										"$ref": "AAAAAAGD1ShippingService020="
+									},
+									"name": "productId",
+									"type": "String"
+								},
+								{
+									"_type": "UMLParameter",
+									"_id": "AAAAAAGD1ShippingService023=",
+									"_parent": {
+										"$ref": "AAAAAAGD1ShippingService020="
+									},
+									"type": "String",
+									"direction": "return"
+								}
+							]
+						},
+						{
+							"_type": "UMLOperation",
+							"_id": "AAAAAAGD1ShippingService030=",
+							"_parent": {
+								"$ref": "AAAAAAGD1ShippingService001="
+							},
+							"name": "cancelShipment",
+							"parameters": [
+								{
+									"_type": "UMLParameter",
+									"_id": "AAAAAAGD1ShippingService031=",
+									"_parent": {
+										"$ref": "AAAAAAGD1ShippingService030="
+									},
+									"name": "trackingNumber",
+									"type": "String"
+								},
+								{
+									"_type": "UMLParameter",
+									"_id": "AAAAAAGD1ShippingService032=",
+									"_parent": {
+										"$ref": "AAAAAAGD1ShippingService030="
+									},
+									"type": "void",
+									"direction": "return"
+								}
+							]
+						}
+					]
+				},
+				{
+					"_type": "UMLClass",
+					"_id": "AAAAAAGD1NotificationService001=",
+					"_parent": {
+						"$ref": "AAAAAAGD1FacadeModel001="
+					},
+					"name": "NotificationService",
+					"operations": [
+						{
+							"_type": "UMLOperation",
+							"_id": "AAAAAAGD1NotificationService010=",
+							"_parent": {
+								"$ref": "AAAAAAGD1NotificationService001="
+							},
+							"name": "sendEmailConfirmation",
+							"parameters": [
+								{
+									"_type": "UMLParameter",
+									"_id": "AAAAAAGD1NotificationService011=",
+									"_parent": {
+										"$ref": "AAAAAAGD1NotificationService010="
+									},
+									"name": "email",
+									"type": "String"
+								},
+								{
+									"_type": "UMLParameter",
+									"_id": "AAAAAAGD1NotificationService012=",
+									"_parent": {
+										"$ref": "AAAAAAGD1NotificationService010="
+									},
+									"name": "orderDetails",
+									"type": "String"
+								},
+								{
+									"_type": "UMLParameter",
+									"_id": "AAAAAAGD1NotificationService013=",
+									"_parent": {
+										"$ref": "AAAAAAGD1NotificationService010="
+									},
+									"type": "void",
+									"direction": "return"
+								}
+							]
+						},
+						{
+							"_type": "UMLOperation",
+							"_id": "AAAAAAGD1NotificationService020=",
+							"_parent": {
+								"$ref": "AAAAAAGD1NotificationService001="
+							},
+							"name": "sendSMSNotification",
+							"parameters": [
+								{
+									"_type": "UMLParameter",
+									"_id": "AAAAAAGD1NotificationService021=",
+									"_parent": {
+										"$ref": "AAAAAAGD1NotificationService020="
+									},
+									"name": "phone",
+									"type": "String"
+								},
+								{
+									"_type": "UMLParameter",
+									"_id": "AAAAAAGD1NotificationService022=",
+									"_parent": {
+										"$ref": "AAAAAAGD1NotificationService020="
+									},
+									"name": "message",
+									"type": "String"
+								},
+								{
+									"_type": "UMLParameter",
+									"_id": "AAAAAAGD1NotificationService023=",
+									"_parent": {
+										"$ref": "AAAAAAGD1NotificationService020="
+									},
+									"type": "void",
+									"direction": "return"
+								}
+							]
+						}
+					]
+				},
+				{
+					"_type": "UMLClass",
+					"_id": "AAAAAAGD1ECommerceDemo001=",
+					"_parent": {
+						"$ref": "AAAAAAGD1FacadeModel001="
+					},
+					"name": "ECommerceDemo",
+					"operations": [
+						{
+							"_type": "UMLOperation",
+							"_id": "AAAAAAGD1ECommerceDemo010=",
+							"_parent": {
+								"$ref": "AAAAAAGD1ECommerceDemo001="
+							},
+							"name": "main",
+							"isStatic": true,
+							"parameters": [
+								{
+									"_type": "UMLParameter",
+									"_id": "AAAAAAGD1ECommerceDemo011=",
+									"_parent": {
+										"$ref": "AAAAAAGD1ECommerceDemo010="
+									},
+									"name": "args",
+									"type": "String[]"
+								},
+								{
+									"_type": "UMLParameter",
+									"_id": "AAAAAAGD1ECommerceDemo012=",
+									"_parent": {
+										"$ref": "AAAAAAGD1ECommerceDemo010="
+									},
+									"type": "void",
+									"direction": "return"
+								}
+							]
+						}
+					]
+				},
+				{
+					"_type": "UMLAssociation",
+					"_id": "AAAAAAGD1Assoc001=",
+					"_parent": {
+						"$ref": "AAAAAAGD1FacadeModel001="
+					},
+					"end1": {
+						"_type": "UMLAssociationEnd",
+						"_id": "AAAAAAGD1Assoc002=",
+						"_parent": {
+							"$ref": "AAAAAAGD1Assoc001="
+						},
+						"reference": {
+							"$ref": "AAAAAAGD1OrderFacade001="
+						},
+						"aggregation": "composite"
+					},
+					"end2": {
+						"_type": "UMLAssociationEnd",
+						"_id": "AAAAAAGD1Assoc003=",
+						"_parent": {
+							"$ref": "AAAAAAGD1Assoc001="
+						},
+						"reference": {
+							"$ref": "AAAAAAGD1InventorySystem001="
+						}
+					}
+				},
+				{
+					"_type": "UMLAssociation",
+					"_id": "AAAAAAGD1Assoc011=",
+					"_parent": {
+						"$ref": "AAAAAAGD1FacadeModel001="
+					},
+					"end1": {
+						"_type": "UMLAssociationEnd",
+						"_id": "AAAAAAGD1Assoc012=",
+						"_parent": {
+							"$ref": "AAAAAAGD1Assoc011="
+						},
+						"reference": {
+							"$ref": "AAAAAAGD1OrderFacade001="
+						},
+						"aggregation": "composite"
+					},
+					"end2": {
+						"_type": "UMLAssociationEnd",
+						"_id": "AAAAAAGD1Assoc013=",
+						"_parent": {
+							"$ref": "AAAAAAGD1Assoc011="
+						},
+						"reference": {
+							"$ref": "AAAAAAGD1PaymentProcessor001="
+						}
+					}
+				},
+				{
+					"_type": "UMLAssociation",
+					"_id": "AAAAAAGD1Assoc021=",
+					"_parent": {
+						"$ref": "AAAAAAGD1FacadeModel001="
+					},
+					"end1": {
+						"_type": "UMLAssociationEnd",
+						"_id": "AAAAAAGD1Assoc022=",
+						"_parent": {
+							"$ref": "AAAAAAGD1Assoc021="
+						},
+						"reference": {
+							"$ref": "AAAAAAGD1OrderFacade001="
+						},
+						"aggregation": "composite"
+					},
+					"end2": {
+						"_type": "UMLAssociationEnd",
+						"_id": "AAAAAAGD1Assoc023=",
+						"_parent": {
+							"$ref": "AAAAAAGD1Assoc021="
+						},
+						"reference": {
+							"$ref": "AAAAAAGD1ShippingService001="
+						}
+					}
+				},
+				{
+					"_type": "UMLAssociation",
+					"_id": "AAAAAAGD1Assoc031=",
+					"_parent": {
+						"$ref": "AAAAAAGD1FacadeModel001="
+					},
+					"end1": {
+						"_type": "UMLAssociationEnd",
+						"_id": "AAAAAAGD1Assoc032=",
+						"_parent": {
+							"$ref": "AAAAAAGD1Assoc031="
+						},
+						"reference": {
+							"$ref": "AAAAAAGD1OrderFacade001="
+						},
+						"aggregation": "composite"
+					},
+					"end2": {
+						"_type": "UMLAssociationEnd",
+						"_id": "AAAAAAGD1Assoc033=",
+						"_parent": {
+							"$ref": "AAAAAAGD1Assoc031="
+						},
+						"reference": {
+							"$ref": "AAAAAAGD1NotificationService001="
+						}
+					}
+				},
+				{
+					"_type": "UMLDependency",
+					"_id": "AAAAAAGD1Depend001=",
+					"_parent": {
+						"$ref": "AAAAAAGD1FacadeModel001="
+					},
+					"source": {
+						"$ref": "AAAAAAGD1ECommerceDemo001="
+					},
+					"target": {
+						"$ref": "AAAAAAGD1OrderFacade001="
+					}
+				}
+			],
+			"visibility": "public"
+		},
+		{
+			"_type": "UMLClassDiagram",
+			"_id": "AAAAAAGD1ClassDiagram001=",
+			"_parent": {
+				"$ref": "AAAAAAGD1FacadeModel001="
+			},
+			"name": "FacadePatternDiagram",
+			"ownedViews": [
+				{
+					"_type": "UMLClassView",
+					"_id": "AAAAAAGD1ClassView001=",
+					"_parent": {
+						"$ref": "AAAAAAGD1ClassDiagram001="
+					},
+					"model": {
+						"$ref": "AAAAAAGD1OrderFacade001="
+					},
+					"subViews": [
+						{
+							"_type": "UMLNameCompartmentView",
+							"_id": "AAAAAAGD1ClassView002=",
+							"_parent": {
+								"$ref": "AAAAAAGD1ClassView001="
+							},
+							"model": {
+								"$ref": "AAAAAAGD1OrderFacade001="
+							}
+						},
+						{
+							"_type": "UMLAttributeCompartmentView",
+							"_id": "AAAAAAGD1ClassView003=",
+							"_parent": {
+								"$ref": "AAAAAAGD1ClassView001="
+							},
+							"model": {
+								"$ref": "AAAAAAGD1OrderFacade001="
+							}
+						},
+						{
+							"_type": "UMLOperationCompartmentView",
+							"_id": "AAAAAAGD1ClassView004=",
+							"_parent": {
+								"$ref": "AAAAAAGD1ClassView001="
+							},
+							"model": {
+								"$ref": "AAAAAAGD1OrderFacade001="
+							}
+						}
+					],
+					"visible": true,
+					"left": 250,
+					"top": 200,
+					"width": 300,
+					"height": 200
+				},
+				{
+					"_type": "UMLClassView",
+					"_id": "AAAAAAGD1ClassView011=",
+					"_parent": {
+						"$ref": "AAAAAAGD1ClassDiagram001="
+					},
+					"model": {
+						"$ref": "AAAAAAGD1InventorySystem001="
+					},
+					"visible": true,
+					"left": 600,
+					"top": 50,
+					"width": 200,
+					"height": 150
+				},
+				{
+					"_type": "UMLClassView",
+					"_id": "AAAAAAGD1ClassView021=",
+					"_parent": {
+						"$ref": "AAAAAAGD1ClassDiagram001="
+					},
+					"model": {
+						"$ref": "AAAAAAGD1PaymentProcessor001="
+					},
+					"visible": true,
+					"left": 600,
+					"top": 220,
+					"width": 220,
+					"height": 150
+				},
+				{
+					"_type": "UMLClassView",
+					"_id": "AAAAAAGD1ClassView031=",
+					"_parent": {
+						"$ref": "AAAAAAGD1ClassDiagram001="
+					},
+					"model": {
+						"$ref": "AAAAAAGD1ShippingService001="
+					},
+					"visible": true,
+					"left": 600,
+					"top": 390,
+					"width": 200,
+					"height": 150
+				},
+				{
+					"_type": "UMLClassView",
+					"_id": "AAAAAAGD1ClassView041=",
+					"_parent": {
+						"$ref": "AAAAAAGD1ClassDiagram001="
+					},
+					"model": {
+						"$ref": "AAAAAAGD1NotificationService001="
+					},
+					"visible": true,
+					"left": 600,
+					"top": 560,
+					"width": 200,
+					"height": 120
+				},
+				{
+					"_type": "UMLClassView",
+					"_id": "AAAAAAGD1ClassView051=",
+					"_parent": {
+						"$ref": "AAAAAAGD1ClassDiagram001="
+					},
+					"model": {
+						"$ref": "AAAAAAGD1ECommerceDemo001="
+					},
+					"visible": true,
+					"left": 50,
+					"top": 250,
+					"width": 150,
+					"height": 80
+				}
+			]
+		}
+	]
+}

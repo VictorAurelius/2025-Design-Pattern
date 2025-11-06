@@ -72,3 +72,5 @@ file này tôi đã cấu hình format và điều chỉnh sau cho giống lectu
 bây giờ bạn hãy:
 1. sửa req-1 để có plan tạo được file như vậy (nhưng sẽ không thực hiện vì đã có file rồi)
 2. sửa req-2 để tạo được file tương ứng để vẽ được UML cho mẫu Facede (sao cho giống Lecture và hợp lý)
+
+do step 7 of req-2

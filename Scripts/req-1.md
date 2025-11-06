@@ -224,6 +224,147 @@ Sắp xếp theo mô hình Adapter Pattern:
 - Concrete Classes: dưới các Interface tương ứng
 ```
 
+### Bước 7: Tạo file UML.mdj cho StarUML
+
+Tạo file `1-Adapter-DP/UML.mdj` để vẽ UML diagram chuyên nghiệp trong StarUML:
+
+#### 7.1. Yêu cầu UML diagram cho StarUML
+- Hiển thị tất cả các class/interface của bài toán
+- Hiển thị đầy đủ attributes và methods cho mỗi class
+- Hiển thị relationship đúng chuẩn UML:
+  - **Interface Realization** (implements): mũi tên nét đứt, đầu rỗng tam giác
+  - **Association** (has-a): mũi tên nét liền
+  - **Dependency** (uses): mũi tên nét đứt
+- **Thêm Client/Main class với dependency đến Target** (theo lecture)
+- Visibility modifiers: + (public), - (private), # (protected)
+- Return types cho methods
+- Layout rõ ràng, dễ đọc
+
+#### 7.2. Cấu trúc file UML.mdj
+
+File UML.mdj là file JSON chứa toàn bộ thông tin UML model:
+
+**Các thành phần chính**:
+1. **Project**: Container tổng thể
+2. **UMLModel**: Chứa các elements (classes, interfaces)
+3. **UMLClass**: Mỗi class trong diagram
+   - Attributes (fields)
+   - Operations (methods)
+   - Parameters cho methods
+4. **UMLInterface**: Mỗi interface trong diagram
+5. **UMLInterfaceRealization**: Quan hệ implements
+6. **UMLAssociation**: Quan hệ has-a
+7. **UMLDependency**: Quan hệ uses
+8. **UMLClassDiagram**: View diagram để hiển thị
+
+#### 7.3. Các classes cần có trong Adapter Pattern UML
+
+1. **Target Interface** (<<interface>>)
+   - Các methods mà client muốn sử dụng
+   - Ví dụ: `TemperatureSensor` interface
+
+2. **Adaptee Interface/Class** (<<interface>> hoặc class)
+   - Interface hoặc class cũ cần được adapt
+   - Ví dụ: `FahrenheitSensor` class
+
+3. **Adapter Class** (class)
+   - Implements Target interface
+   - Has-a relationship với Adaptee
+   - Ví dụ: `SensorAdapter` class
+   - Attributes: reference to Adaptee
+   - Methods: implement Target methods by calling Adaptee methods
+
+4. **Concrete Adaptee** (class) - nếu có
+   - Implements Adaptee interface
+   - Hoặc là class cụ thể nếu Adaptee không phải interface
+
+5. **Client/Main** (class) - **QUAN TRỌNG** theo lecture
+   - Class sử dụng Target interface
+   - Dependency relationship đến Target
+   - Method: main() để demo
+
+#### 7.4. Relationships cần vẽ
+
+1. **Adapter → Target** (InterfaceRealization / implements)
+   - Mũi tên nét đứt, đầu rỗng tam giác
+   - Adapter implements Target
+
+2. **Adapter → Adaptee** (Association / has-a)
+   - Mũi tên nét liền
+   - Adapter has-a Adaptee (composition hoặc aggregation)
+
+3. **ConcreteAdaptee → Adaptee** (InterfaceRealization) - nếu Adaptee là interface
+   - Mũi tên nét đứt, đầu rỗng tam giác
+
+4. **Client/Main → Target** (Dependency / uses)
+   - Mũi tên nét đứt
+   - Client uses Target interface
+
+#### 7.5. Layout gợi ý cho StarUML
+
+```
+┌────────────────┐
+│  Client/Main   │
+│  + main()      │
+└────────┬───────┘
+         │ uses (dependency)
+         ▼
+┌─────────────────────────┐
+│   <<interface>>         │
+│   Target                │
+├─────────────────────────┤
+│ + targetMethod1()       │
+│ + targetMethod2()       │
+└───────────▲─────────────┘
+            │ implements (realization)
+            │
+┌───────────┴─────────────┐
+│   Adapter               │
+├─────────────────────────┤
+│ - adaptee: Adaptee      │
+├─────────────────────────┤
+│ + targetMethod1()       │
+│ + targetMethod2()       │
+└───────┬─────────────────┘
+        │ has-a (association)
+        ▼
+┌─────────────────────────┐
+│   Adaptee               │ (class hoặc interface)
+├─────────────────────────┤
+│ + adapteeMethod1()      │
+│ + adapteeMethod2()      │
+└─────────────────────────┘
+```
+
+#### 7.6. Hướng dẫn tạo file trong StarUML
+
+**Option 1: Vẽ thủ công trong StarUML GUI**
+1. Mở StarUML
+2. Tạo New Project
+3. Add Class Diagram
+4. Vẽ các classes/interfaces
+5. Thêm attributes và operations
+6. Vẽ relationships
+7. Save as UML.mdj
+
+**Option 2: Tạo file JSON theo template (nếu đã có kinh nghiệm)**
+- File UML.mdj là file JSON format
+- Cấu trúc phức tạp, khuyến khích vẽ trong GUI
+- Sau khi vẽ xong, có thể edit JSON để fine-tune
+
+#### 7.7. Checklist cho UML.mdj
+
+✅ Tất cả classes/interfaces từ code được biểu diễn
+✅ Attributes (fields) được liệt kê với visibility và type
+✅ Operations (methods) được liệt kê với parameters và return type
+✅ Relationships đúng chuẩn UML:
+  - Interface realization: nét đứt, đầu rỗng tam giác
+  - Association: nét liền (có thể có multiplicity)
+  - Dependency: nét đứt, đầu mũi tên thường
+✅ Client/Main class được thêm với dependency đến Target
+✅ Layout rõ ràng, không overlapping
+✅ Format theo lecture (nếu có yêu cầu cụ thể)
+
 ## Deliverables
 
 ### 1. File Solution/Adapter.md
@@ -243,6 +384,13 @@ Chứa các file Java cho bài toán MỚI:
 - UML diagram đầy đủ cho bài toán MỚI
 - Hiển thị methods (BlueJ tự động)
 - Layout đẹp giống lecture
+
+### 4. File 1-Adapter-DP/UML.mdj
+- UML diagram chuyên nghiệp trong StarUML
+- Đầy đủ attributes và methods
+- Relationships đúng chuẩn UML
+- Bao gồm Client/Main class với dependency đến Target
+- Layout rõ ràng, format theo lecture
 
 ## Tiêu chí đánh giá bài toán mới
 
@@ -328,6 +476,9 @@ Trước khi hoàn thành, kiểm tra:
 - [ ] Code compile và chạy được
 - [ ] Code phù hợp với bài toán trong Solution/Adapter.md
 - [ ] package.bluej hiển thị UML với đầy đủ classes/interfaces
-- [ ] UML diagram format giống lecture
+- [ ] UML diagram trong BlueJ format giống lecture
+- [ ] UML.mdj được tạo trong StarUML với đầy đủ attributes/methods
+- [ ] UML.mdj có Client/Main class với dependency đến Target
+- [ ] UML.mdj relationships đúng chuẩn UML
 - [ ] Đã xóa hết code cũ không liên quan
 - [ ] Tất cả files đã được format đẹp và dễ đọc

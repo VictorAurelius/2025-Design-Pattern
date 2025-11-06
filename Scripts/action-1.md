@@ -64,3 +64,11 @@ tạo req-18 cho mẫu Strategy
 tạo req-19 cho mẫu Command
 
 tạo req-20 cho mẫu Interpreter
+
+hãy quay lại với Apdater, tôi cần vẽ UML ở cả StarUML nữa, nên tôi đã tự vẽ và được file 1-Apdater-DP/UML.mdj
+
+file này tôi đã cấu hình format và điều chỉnh sau cho giống lecture (thêm đường nối với client)
+
+bây giờ bạn hãy:
+1. sửa req-1 để có plan tạo được file như vậy (nhưng sẽ không thực hiện vì đã có file rồi)
+2. sửa req-2 để tạo được file tương ứng để vẽ được UML cho mẫu Facede (sao cho giống Lecture và hợp lý)

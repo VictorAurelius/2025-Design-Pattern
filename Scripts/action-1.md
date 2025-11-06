@@ -62,3 +62,5 @@ tạo req-17 cho mẫu State
 tạo req-18 cho mẫu Strategy
 
 tạo req-19 cho mẫu Command
+
+tạo req-20 cho mẫu Interpreter

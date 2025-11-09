@@ -6,10 +6,10 @@ public class AlertNotification extends Notification {
 
 	@Override
 	public String formatMessage(String content) {
-		return "⚠️ CRITICAL ALERT ⚠️\n" +
-		       content + "\n" +
-		       "Priority: URGENT\n" +
-		       "Action: IMMEDIATE ATTENTION REQUIRED!";
+		return "CRITICAL ALERT\n" +
+				content + "\n" +
+				"Priority: URGENT\n" +
+				"Action: IMMEDIATE ATTENTION REQUIRED!";
 	}
 
 	@Override

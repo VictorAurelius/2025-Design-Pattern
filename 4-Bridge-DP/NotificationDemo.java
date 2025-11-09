@@ -1,11 +1,6 @@
 public class NotificationDemo {
 
 	public static void main(String[] args) {
-
-		System.out.println("========================================");
-		System.out.println("    TECHCORP NOTIFICATION SYSTEM");
-		System.out.println("========================================");
-
 		// Create channels (implementations)
 		NotificationChannel emailChannel = new EmailChannel();
 		NotificationChannel smsChannel = new SMSChannel();
@@ -23,31 +18,25 @@ public class NotificationDemo {
 		notification = new AlertNotification(slackChannel);
 		notification.send("Security breach detected on production server!");
 
-		// Test 4: Runtime flexibility - change channel dynamically
-		System.out.println("\n\n--- RUNTIME FLEXIBILITY DEMO ---");
-		notification = new SystemNotification(emailChannel);
-		notification.send("Database backup completed");
+		// // Test 4: Runtime flexibility - change channel dynamically
+		// System.out.println("\n\n--- RUNTIME FLEXIBILITY DEMO ---");
+		// notification = new SystemNotification(emailChannel);
+		// notification.send("Database backup completed");
 
-		System.out.println("\n--- Switching channel from Email to SMS ---");
-		notification.setChannel(smsChannel);
-		notification.send("Database backup completed");
+		// System.out.println("\n--- Switching channel from Email to SMS ---");
+		// notification.setChannel(smsChannel);
+		// notification.send("Database backup completed");
 
-		// Test 5: All combinations
-		System.out.println("\n\n--- ALL COMBINATIONS DEMO ---");
+		// // Test 5: All combinations
+		// System.out.println("\n\n--- ALL COMBINATIONS DEMO ---");
 
-		System.out.println("\n[System + Email]");
-		new SystemNotification(emailChannel).send("Test message 1");
+		// System.out.println("\n[System + Email]");
+		// new SystemNotification(emailChannel).send("Test message 1");
 
-		System.out.println("\n[System + SMS]");
-		new SystemNotification(smsChannel).send("Test message 2");
+		// System.out.println("\n[System + SMS]");
+		// new SystemNotification(smsChannel).send("Test message 2");
 
-		System.out.println("\n[Marketing + Slack]");
-		new MarketingNotification(slackChannel).send("Test message 3");
-
-		System.out.println("\n========================================");
-		System.out.println("Total classes created: 8");
-		System.out.println("(3 notification types + 3 channels + 2 base)");
-		System.out.println("Without Bridge would need: 9 classes (3×3)");
-		System.out.println("========================================");
+		// System.out.println("\n[Marketing + Slack]");
+		// new MarketingNotification(slackChannel).send("Test message 3");
 	}
 }

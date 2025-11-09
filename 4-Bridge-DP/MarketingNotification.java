@@ -6,10 +6,10 @@ public class MarketingNotification extends Notification {
 
 	@Override
 	public String formatMessage(String content) {
-		return "🎉 SPECIAL OFFER 🎉\n" +
-		       content + "\n" +
-		       "Don't miss out! Limited time only.\n" +
-		       "Unsubscribe: techcorp.com/unsubscribe";
+		return "SPECIAL OFFER\n" +
+				content + "\n" +
+				"Don't miss out! Limited time only.\n" +
+				"Unsubscribe: techcorp.com/unsubscribe";
 	}
 
 	@Override

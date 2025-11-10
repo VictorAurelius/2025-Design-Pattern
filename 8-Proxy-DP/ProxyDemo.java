@@ -28,9 +28,9 @@ public class ProxyDemo {
 
 		long endTime = System.currentTimeMillis();
 
-		System.out.println("✓ Library loaded: " + videoLibrary.size() + " videos");
-		System.out.println("✓ Loading time: " + (endTime - startTime) + "ms");
-		System.out.println("✓ Memory: ~5MB (proxies only)");
+		System.out.println("Library loaded: " + videoLibrary.size() + " videos");
+		System.out.println("Loading time: " + (endTime - startTime) + "ms");
+		System.out.println("Memory: ~5MB (proxies only)");
 
 		// Test 2: Browsing Videos (Display without loading)
 		System.out.println("\n=== TEST 2: BROWSING CATALOG ===");

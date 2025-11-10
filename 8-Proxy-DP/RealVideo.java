@@ -23,17 +23,17 @@ public class RealVideo implements Video {
 		this.title = filename.replace(".mp4", "").replace("_", " ");
 		this.duration = "10:45";  // Simulated duration
 
-		System.out.println("[RealVideo] ✓ Loaded (~500MB)");
+		System.out.println("[RealVideo] Loaded (~500MB)");
 	}
 
 	@Override
 	public void display() {
-		System.out.println("🎬 " + title + " (" + duration + ") 1080p");
+		System.out.println(title + " (" + duration + ") 1080p");
 	}
 
 	@Override
 	public void play() {
-		System.out.println("▶️ [RealVideo] Playing: " + title);
+		System.out.println("[RealVideo] Playing: " + title);
 	}
 
 	@Override

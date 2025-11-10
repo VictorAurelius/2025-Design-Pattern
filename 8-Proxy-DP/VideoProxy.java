@@ -21,7 +21,7 @@ public class VideoProxy implements Video {
 	public void display() {
 		// Can display without loading actual video!
 		String type = isPremium ? "PREMIUM" : "FREE";
-		System.out.println("🎬 " + title + " (" + duration + ") " + type);
+		System.out.println(title + " (" + duration + ") " + type);
 	}
 
 	@Override

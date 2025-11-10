@@ -18,6 +18,6 @@ public class User {
 
 	public void subscribe() {
 		this.hasSubscription = true;
-		System.out.println("✨ " + name + " subscribed to Premium!");
+		System.out.println(name + " subscribed to Premium!");
 	}
 }

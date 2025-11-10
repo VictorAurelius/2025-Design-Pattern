@@ -16,8 +16,8 @@ public class PremiumVideoProxy implements Video {
 	@Override
 	public void display() {
 		// Can always display preview
-		String access = currentUser.hasSubscription() ? "" : " 🔒";
-		System.out.println("🎬 " + title + " (10:45) PREMIUM" + access);
+		String access = currentUser.hasSubscription() ? "" : " LOCKED";
+		System.out.println(title + " (10:45) PREMIUM" + access);
 	}
 
 	@Override
@@ -26,13 +26,13 @@ public class PremiumVideoProxy implements Video {
 
 		if (!currentUser.hasSubscription()) {
 			// Access denied
-			System.out.println("⛔ ACCESS DENIED - Premium content");
-			System.out.println("💎 Upgrade to Premium ($9.99/month)");
+			System.out.println("ACCESS DENIED - Premium content");
+			System.out.println("Upgrade to Premium ($9.99/month)");
 			return;
 		}
 
 		// Access granted - delegate to VideoProxy
-		System.out.println("[PremiumProxy] ✅ Access granted!");
+		System.out.println("[PremiumProxy] Access granted!");
 
 		if (videoProxy == null) {
 			videoProxy = new VideoProxy(filename, true);

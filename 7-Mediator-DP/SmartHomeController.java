@@ -105,8 +105,13 @@ public class SmartHomeController implements SmartHomeHub {
 		System.out.println("[Hub] Temperature changed, checking mode...");
 
 		if (currentMode.equals("AWAY")) {
-			System.out.println("[Hub] → AWAY mode: Reverting temperature to eco mode");
-			thermostat.setTemperature(18);  // Eco temperature
+			// Check if thermostat is not already at eco temperature to avoid recursion
+			if (thermostat.getTemperature() != 18) {
+				System.out.println("[Hub] → AWAY mode: Reverting temperature to eco mode");
+				thermostat.setTemperature(18);  // Eco temperature
+			} else {
+				System.out.println("[Hub] → Temperature already at eco mode (18°C)");
+			}
 		}
 	}
 

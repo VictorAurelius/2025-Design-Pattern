@@ -10,14 +10,14 @@ public class SmartLight extends SmartDevice {
 	public void turnOn(int brightness) {
 		this.isOn = true;
 		this.brightness = brightness;
-		System.out.println("[" + deviceName + "] 💡 Light ON (Brightness: " + brightness + "%)");
+		System.out.println("[" + deviceName + "] Light ON (Brightness: " + brightness + "%)");
 		hub.notify(this, "light_turned_on");
 	}
 
 	public void turnOff() {
 		this.isOn = false;
 		this.brightness = 0;
-		System.out.println("[" + deviceName + "] 🌑 Light OFF");
+		System.out.println("[" + deviceName + "] Light OFF");
 	}
 
 	public void adjustBrightness(int level) {

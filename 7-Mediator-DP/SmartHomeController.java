@@ -117,7 +117,7 @@ public class SmartHomeController implements SmartHomeHub {
 
 	// Mode-specific coordination methods
 
-		public void activateSecurityMode() {
+	public void activateSecurityMode() {
 		System.out.println("ACTIVATING SECURITY MODE");
 		setMode("SECURITY");
 		securityCamera.enableSurveillance();

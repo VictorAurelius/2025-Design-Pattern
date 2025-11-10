@@ -1,12 +1,6 @@
 public class SingletonDemo {
 
 	public static void main(String[] args) {
-
-		System.out.println("========================================");
-		System.out.println("    SINGLETON PATTERN DEMO");
-		System.out.println("    Configuration Manager Example");
-		System.out.println("========================================");
-
 		// Test 1: Get instance from different places
 		System.out.println("\n--- TEST 1: Single Instance Verification ---");
 
@@ -48,26 +42,13 @@ public class SingletonDemo {
 		System.out.println("New tax rate: " + config.getProperty("business.tax.rate") + "%");
 		salesModule.processSale(1000.00);
 
-		// Test 5: Module operations
-		System.out.println("\n--- TEST 5: Module Operations ---");
-		inventoryModule.processInventory();
-
-		// Test 6: Prevent cloning
-		System.out.println("\n--- TEST 6: Clone Prevention ---");
+		// Test 5: Prevent cloning
+		System.out.println("\n--- TEST 5: Clone Prevention ---");
 		try {
 			ConfigurationManager cloned = (ConfigurationManager) config.clone();
 			System.out.println("ERROR: Cloning succeeded (should not happen)");
 		} catch (CloneNotSupportedException e) {
 			System.out.println("SUCCESS: Cloning prevented - " + e.getMessage());
 		}
-
-		System.out.println("\n========================================");
-		System.out.println("Summary:");
-		System.out.println("- Only 1 ConfigurationManager instance exists");
-		System.out.println("- All modules share the same instance");
-		System.out.println("- Config loaded only once");
-		System.out.println("- Thread-safe by Bill Pugh implementation");
-		System.out.println("- Cannot be cloned");
-		System.out.println("========================================");
 	}
 }

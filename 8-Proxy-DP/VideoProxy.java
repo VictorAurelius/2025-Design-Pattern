@@ -14,33 +14,26 @@ public class VideoProxy implements Video {
 		this.title = filename.replace(".mp4", "").replace("_", " ");
 		this.duration = "10:45";
 
-		System.out.println("[VideoProxy] ⚡ Proxy created for: " + title + " (lightweight)");
+		System.out.println("[VideoProxy] Proxy created: " + title);
 	}
 
 	@Override
 	public void display() {
 		// Can display without loading actual video!
-		System.out.println("\n┌────────────────────────────────────┐");
-		System.out.println("│ 🎬 " + title);
-		System.out.println("│ ⏱️  Duration: " + duration);
-		if (isPremium) {
-			System.out.println("│ 👑 PREMIUM");
-		} else {
-			System.out.println("│ 🆓 FREE");
-		}
-		System.out.println("└────────────────────────────────────┘");
+		String type = isPremium ? "PREMIUM" : "FREE";
+		System.out.println("🎬 " + title + " (" + duration + ") " + type);
 	}
 
 	@Override
 	public void play() {
-		System.out.println("\n[VideoProxy] 🎬 Play requested for: " + title);
+		System.out.println("[VideoProxy] Play requested: " + title);
 
 		// Lazy loading: create RealVideo only when needed
 		if (realVideo == null) {
-			System.out.println("[VideoProxy] 🔄 Lazy loading: Creating RealVideo...");
+			System.out.println("[VideoProxy] Lazy loading...");
 			realVideo = new RealVideo(filename);
 		} else {
-			System.out.println("[VideoProxy] ♻️  Using cached RealVideo");
+			System.out.println("[VideoProxy] Using cached video");
 		}
 
 		// Delegate to real video

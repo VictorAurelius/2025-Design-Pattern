@@ -10,41 +10,24 @@ public class PremiumVideoProxy implements Video {
 		this.currentUser = user;
 		this.title = filename.replace(".mp4", "").replace("_", " ");
 
-		System.out.println("[PremiumProxy] 🔒 Protection proxy created for premium content: " + title);
+		System.out.println("[PremiumProxy] Protection proxy created: " + title);
 	}
 
 	@Override
 	public void display() {
 		// Can always display preview
-		System.out.println("\n┌────────────────────────────────────┐");
-		System.out.println("│ 🎬 " + title);
-		System.out.println("│ ⏱️  Duration: 10:45");
-		System.out.println("│ 👑 PREMIUM CONTENT");
-		if (!currentUser.hasSubscription()) {
-			System.out.println("│ 🔒 Subscribe to watch");
-		}
-		System.out.println("└────────────────────────────────────┘");
+		String access = currentUser.hasSubscription() ? "" : " 🔒";
+		System.out.println("🎬 " + title + " (10:45) PREMIUM" + access);
 	}
 
 	@Override
 	public void play() {
-		System.out.println("\n[PremiumProxy] 🔐 Checking access rights...");
-		System.out.println("[PremiumProxy] User: " + currentUser.getName());
-		System.out.println("[PremiumProxy] Has subscription: " + currentUser.hasSubscription());
+		System.out.println("[PremiumProxy] Checking access: " + currentUser.getName());
 
 		if (!currentUser.hasSubscription()) {
 			// Access denied
-			System.out.println("\n╔════════════════════════════════════════╗");
-			System.out.println("║  ⛔ ACCESS DENIED                     ║");
-			System.out.println("║                                        ║");
-			System.out.println("║  This is premium content.              ║");
-			System.out.println("║  Upgrade to Premium to watch!          ║");
-			System.out.println("║                                        ║");
-			System.out.println("║  💎 Premium: $9.99/month               ║");
-			System.out.println("║  ✓ Unlimited premium videos            ║");
-			System.out.println("║  ✓ Ad-free experience                  ║");
-			System.out.println("║  ✓ 4K quality                          ║");
-			System.out.println("╚════════════════════════════════════════╝");
+			System.out.println("⛔ ACCESS DENIED - Premium content");
+			System.out.println("💎 Upgrade to Premium ($9.99/month)");
 			return;
 		}
 

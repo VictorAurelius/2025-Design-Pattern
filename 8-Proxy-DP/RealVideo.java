@@ -11,8 +11,7 @@ public class RealVideo implements Video {
 
 	private void loadVideoFromDisk() {
 		// Simulate expensive loading operation
-		System.out.println("   [RealVideo] 📁 Loading video from disk: " + filename);
-		System.out.println("   [RealVideo] ⏳ Loading...");
+		System.out.println("[RealVideo] Loading: " + filename);
 
 		try {
 			Thread.sleep(2000);  // Simulate 2 second load time
@@ -24,25 +23,17 @@ public class RealVideo implements Video {
 		this.title = filename.replace(".mp4", "").replace("_", " ");
 		this.duration = "10:45";  // Simulated duration
 
-		System.out.println("   [RealVideo] ✓ Video loaded successfully!");
-		System.out.println("   [RealVideo] 💾 Video size: ~500MB");
+		System.out.println("[RealVideo] ✓ Loaded (~500MB)");
 	}
 
 	@Override
 	public void display() {
-		System.out.println("\n┌────────────────────────────────────┐");
-		System.out.println("│ 🎬 " + title);
-		System.out.println("│ ⏱️  Duration: " + duration);
-		System.out.println("│ 📊 Quality: 1080p");
-		System.out.println("└────────────────────────────────────┘");
+		System.out.println("🎬 " + title + " (" + duration + ") 1080p");
 	}
 
 	@Override
 	public void play() {
-		System.out.println("\n▶️  [RealVideo] Playing video: " + title);
-		System.out.println("   [RealVideo] Buffering: ████████████ 100%");
-		System.out.println("   [RealVideo] 🎵 Audio: ON | 🎞️  Video: ON");
-		System.out.println("   [RealVideo] Now playing at 1080p...");
+		System.out.println("▶️ [RealVideo] Playing: " + title);
 	}
 
 	@Override

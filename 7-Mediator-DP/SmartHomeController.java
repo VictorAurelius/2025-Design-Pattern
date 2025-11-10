@@ -9,9 +9,7 @@ public class SmartHomeController implements SmartHomeHub {
 	private boolean isNightTime = false;
 
 	public SmartHomeController() {
-		System.out.println("==============================================");
 		System.out.println("  Smart Home Controller Initialized");
-		System.out.println("==============================================");
 	}
 
 	// Register devices
@@ -119,11 +117,8 @@ public class SmartHomeController implements SmartHomeHub {
 
 	// Mode-specific coordination methods
 
-	public void activateSecurityMode() {
-		System.out.println("\n╔═══════════════════════════════════════╗");
-		System.out.println("║   ACTIVATING SECURITY MODE           ║");
-		System.out.println("╚═══════════════════════════════════════╝");
-
+		public void activateSecurityMode() {
+		System.out.println("ACTIVATING SECURITY MODE");
 		setMode("SECURITY");
 		securityCamera.enableSurveillance();
 		motionSensor.increaseSensitivity();
@@ -132,10 +127,7 @@ public class SmartHomeController implements SmartHomeHub {
 	}
 
 	public void activateAwayMode() {
-		System.out.println("\n╔═══════════════════════════════════════╗");
-		System.out.println("║   ACTIVATING AWAY MODE               ║");
-		System.out.println("╚═══════════════════════════════════════╝");
-
+		System.out.println("ACTIVATING AWAY MODE");
 		setMode("AWAY");
 		smartLight.turnOff();
 		securityCamera.enableSurveillance();
@@ -145,10 +137,7 @@ public class SmartHomeController implements SmartHomeHub {
 	}
 
 	public void activateWelcomeHomeMode() {
-		System.out.println("\n╔═══════════════════════════════════════╗");
-		System.out.println("║   ACTIVATING WELCOME HOME MODE       ║");
-		System.out.println("╚═══════════════════════════════════════╝");
-
+		System.out.println("ACTIVATING WELCOME HOME MODE");
 		setMode("WELCOME_HOME");
 		smartLight.turnOn(60);
 		thermostat.setTemperature(24);  // Comfortable temperature

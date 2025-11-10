@@ -7,7 +7,7 @@ public class MotionSensor extends SmartDevice {
 	}
 
 	public void detectMotion() {
-		System.out.println("\n[" + deviceName + "] ⚠️  Motion detected!");
+		System.out.println("\n[" + deviceName + "] Motion detected!");
 		hub.notify(this, "motion_detected");
 	}
 

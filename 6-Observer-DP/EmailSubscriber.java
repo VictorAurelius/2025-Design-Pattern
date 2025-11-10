@@ -16,7 +16,7 @@ public class EmailSubscriber implements Subscriber {
 		String description = channel.getVideoDescription();
 		String channelName = channel.getChannelName();
 
-		System.out.println("\n[Email Notification]");
+		System.out.println("[Email Notification]");
 		System.out.println("   To: " + name + " <" + email + ">");
 		System.out.println("   Subject: New video from " + channelName);
 		System.out.println("   Body:");
@@ -30,14 +30,14 @@ public class EmailSubscriber implements Subscriber {
 
 	@Override
 	public void subscribe() {
-		System.out.println("\n" + name + " subscribing via Email...");
+		System.out.println(name + " subscribing via Email...");
 		channel.attach(this);
 		System.out.println("  → Subscribed successfully!");
 	}
 
 	@Override
 	public void unsubscribe() {
-		System.out.println("\n" + name + " unsubscribing via Email...");
+		System.out.println(name + " unsubscribing via Email...");
 		channel.detach(this);
 		System.out.println("  → Unsubscribed successfully!");
 	}

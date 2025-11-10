@@ -31,7 +31,7 @@ public class YouTubeChannel implements Channel {
 
 	@Override
 	public void notifySubscribers() {
-		System.out.println("\nNotifying " + subscribers.size() + " subscribers...");
+		System.out.println("Notifying " + subscribers.size() + " subscribers...");
 		System.out.println("---------------------------------------");
 		for (Subscriber subscriber : subscribers) {
 			subscriber.update(latestVideo);
@@ -54,7 +54,7 @@ public class YouTubeChannel implements Channel {
 
 	// Upload video - automatic notification
 	public void uploadVideo(String title, String description) {
-		System.out.println("\n[" + channelName + "] Uploading new video...");
+		System.out.println("[" + channelName + "] Uploading new video...");
 		System.out.println("   Title: " + title);
 		System.out.println("   Description: " + description);
 

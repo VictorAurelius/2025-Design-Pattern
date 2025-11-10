@@ -14,7 +14,7 @@ public class MobileAppSubscriber implements Subscriber {
 	public void update(String videoTitle) {
 		String channelName = channel.getChannelName();
 
-		System.out.println("\n[Mobile Push Notification]");
+		System.out.println("[Mobile Push Notification]");
 		System.out.println("   Device: " + deviceId);
 		System.out.println("   User: " + name);
 		System.out.println(" " + channelName + " uploaded:");
@@ -24,14 +24,14 @@ public class MobileAppSubscriber implements Subscriber {
 
 	@Override
 	public void subscribe() {
-		System.out.println("\n" + name + " subscribing via Mobile App...");
+		System.out.println(name + " subscribing via Mobile App...");
 		channel.attach(this);
 		System.out.println("  → Subscribed successfully!");
 	}
 
 	@Override
 	public void unsubscribe() {
-		System.out.println("\n" + name + " unsubscribing via Mobile App...");
+		System.out.println(name + " unsubscribing via Mobile App...");
 		channel.detach(this);
 		System.out.println("  → Unsubscribed successfully!");
 	}

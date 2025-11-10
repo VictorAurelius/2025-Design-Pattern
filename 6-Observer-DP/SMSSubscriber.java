@@ -14,7 +14,7 @@ public class SMSSubscriber implements Subscriber {
 	public void update(String videoTitle) {
 		String channelName = channel.getChannelName();
 
-		System.out.println("\n[SMS Notification]");
+		System.out.println("[SMS Notification]");
 		System.out.println("   To: " + phoneNumber + " (" + name + ")");
 		System.out.println("   Message:");
 		System.out.println("   New video from " + channelName + ": " + videoTitle);
@@ -22,14 +22,14 @@ public class SMSSubscriber implements Subscriber {
 
 	@Override
 	public void subscribe() {
-		System.out.println("\n" + name + " subscribing via SMS...");
+		System.out.println(name + " subscribing via SMS...");
 		channel.attach(this);
 		System.out.println("  → Subscribed successfully!");
 	}
 
 	@Override
 	public void unsubscribe() {
-		System.out.println("\n" + name + " unsubscribing via SMS...");
+		System.out.println(name + " unsubscribing via SMS...");
 		channel.detach(this);
 		System.out.println("  → Unsubscribed successfully!");
 	}

@@ -1,12 +1,6 @@
 public class ObserverDemo {
 
 	public static void main(String[] args) {
-
-		System.out.println("========================================");
-		System.out.println("    OBSERVER PATTERN DEMO");
-		System.out.println("    YouTube Channel Notification");
-		System.out.println("========================================");
-
 		// Create YouTube Channel (Subject)
 		YouTubeChannel channel = new YouTubeChannel("TechReview Pro");
 
@@ -61,14 +55,5 @@ public class ObserverDemo {
 			"AirPods Pro 3 vs Sony WF-1000XM5",
 			"Head-to-head comparison of the best wireless earbuds. Sound quality, ANC, and battery life tested."
 		);
-
-		System.out.println("\n\n========================================");
-		System.out.println("Summary:");
-		System.out.println("- Channel uploaded 4 videos");
-		System.out.println("- Multiple subscribers with different notification types");
-		System.out.println("- Dynamic subscribe/unsubscribe demonstrated");
-		System.out.println("- Automatic notification on each upload");
-		System.out.println("- Loose coupling: Channel doesn't know concrete subscriber types");
-		System.out.println("========================================");
 	}
 }

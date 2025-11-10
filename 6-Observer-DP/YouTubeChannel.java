@@ -17,7 +17,7 @@ public class YouTubeChannel implements Channel {
 	@Override
 	public void attach(Subscriber subscriber) {
 		subscribers.add(subscriber);
-		System.out.println("  ✓ New subscriber added. Total: " + subscribers.size());
+		System.out.println("New subscriber added. Total: " + subscribers.size());
 	}
 
 	@Override
@@ -25,13 +25,13 @@ public class YouTubeChannel implements Channel {
 		int index = subscribers.indexOf(subscriber);
 		if (index >= 0) {
 			subscribers.remove(index);
-			System.out.println("  ✓ Subscriber removed. Total: " + subscribers.size());
+			System.out.println("Subscriber removed. Total: " + subscribers.size());
 		}
 	}
 
 	@Override
 	public void notifySubscribers() {
-		System.out.println("\n📢 Notifying " + subscribers.size() + " subscribers...");
+		System.out.println("\nNotifying " + subscribers.size() + " subscribers...");
 		System.out.println("---------------------------------------");
 		for (Subscriber subscriber : subscribers) {
 			subscriber.update(latestVideo);
@@ -54,7 +54,7 @@ public class YouTubeChannel implements Channel {
 
 	// Upload video - automatic notification
 	public void uploadVideo(String title, String description) {
-		System.out.println("\n🎥 [" + channelName + "] Uploading new video...");
+		System.out.println("\n[" + channelName + "] Uploading new video...");
 		System.out.println("   Title: " + title);
 		System.out.println("   Description: " + description);
 

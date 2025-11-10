@@ -14,7 +14,7 @@ public class SMSSubscriber implements Subscriber {
 	public void update(String videoTitle) {
 		String channelName = channel.getChannelName();
 
-		System.out.println("\n💬 [SMS Notification]");
+		System.out.println("\n[SMS Notification]");
 		System.out.println("   To: " + phoneNumber + " (" + name + ")");
 		System.out.println("   Message:");
 		System.out.println("   New video from " + channelName + ": " + videoTitle);

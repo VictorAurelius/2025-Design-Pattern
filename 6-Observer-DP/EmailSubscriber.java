@@ -16,7 +16,7 @@ public class EmailSubscriber implements Subscriber {
 		String description = channel.getVideoDescription();
 		String channelName = channel.getChannelName();
 
-		System.out.println("\n📧 [Email Notification]");
+		System.out.println("\n[Email Notification]");
 		System.out.println("   To: " + name + " <" + email + ">");
 		System.out.println("   Subject: New video from " + channelName);
 		System.out.println("   Body:");

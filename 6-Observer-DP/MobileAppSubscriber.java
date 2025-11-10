@@ -14,10 +14,10 @@ public class MobileAppSubscriber implements Subscriber {
 	public void update(String videoTitle) {
 		String channelName = channel.getChannelName();
 
-		System.out.println("\n📱 [Mobile Push Notification]");
+		System.out.println("\n[Mobile Push Notification]");
 		System.out.println("   Device: " + deviceId);
 		System.out.println("   User: " + name);
-		System.out.println("   🔔 " + channelName + " uploaded:");
+		System.out.println(" " + channelName + " uploaded:");
 		System.out.println("   \"" + videoTitle + "\"");
 		System.out.println("   Tap to watch now!");
 	}

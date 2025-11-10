@@ -13,11 +13,11 @@ public class MotionSensor extends SmartDevice {
 
 	public void increaseSensitivity() {
 		sensitivity = 90;
-		System.out.println("[" + deviceName + "] Sensitivity increased to " + sensitivity + "%");
+		System.out.println("[" + deviceName + "] Sensitivity: " + sensitivity + "%");
 	}
 
 	public void normalSensitivity() {
 		sensitivity = 50;
-		System.out.println("[" + deviceName + "] Sensitivity set to normal: " + sensitivity + "%");
+		System.out.println("[" + deviceName + "] Sensitivity: " + sensitivity + "%");
 	}
 }

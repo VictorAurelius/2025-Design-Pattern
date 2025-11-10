@@ -12,8 +12,6 @@ public class SecurityCamera extends SmartDevice {
 			isRecording = true;
 			System.out.println("[" + deviceName + "] Recording started");
 			hub.notify(this, "recording_started");
-		} else {
-			System.out.println("[" + deviceName + "] Already recording");
 		}
 	}
 
@@ -21,20 +19,18 @@ public class SecurityCamera extends SmartDevice {
 		if (isRecording) {
 			isRecording = false;
 			System.out.println("[" + deviceName + "] Recording stopped");
-		} else {
-			System.out.println("[" + deviceName + "] Not currently recording");
 		}
 	}
 
 	public void enableSurveillance() {
 		surveillanceMode = true;
 		startRecording();
-		System.out.println("[" + deviceName + "] Surveillance mode enabled");
+		System.out.println("[" + deviceName + "] Surveillance enabled");
 	}
 
 	public void disableSurveillance() {
 		surveillanceMode = false;
 		stopRecording();
-		System.out.println("[" + deviceName + "] Surveillance mode disabled");
+		System.out.println("[" + deviceName + "] Surveillance disabled");
 	}
 }

@@ -13,13 +13,10 @@ public class Thermostat extends SmartDevice {
 			this.targetTemperature = temperature;
 			System.out.println("[" + deviceName + "] Temperature set to " + temperature + "°C");
 			hub.notify(this, "temperature_changed");
-		} else {
-			System.out.println("[" + deviceName + "] Temperature already set to " + temperature + "°C");
 		}
 	}
 
 	public void adjustToCurrentWeather() {
-		System.out.println("[" + deviceName + "] Adjusting to current weather conditions");
 		setTemperature(23);
 	}
 

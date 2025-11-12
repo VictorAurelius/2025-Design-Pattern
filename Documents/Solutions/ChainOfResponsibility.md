@@ -1047,6 +1047,190 @@ public class ChainDemo {
 
 ## 6. Kết quả chạy chương trình
 
+### 6.1. Giải thích các testcase
+
+#### Test 1: Basic Priority Ticket
+**Mục đích:**
+Kiểm tra xem Level 1 Support có xử lý được ticket cơ bản (password reset, login issues) không. Test này minh họa trường hợp đơn giản nhất của chain - request được xử lý ngay tại handler đầu tiên mà không cần escalate.
+
+**Cách triển khai:**
+```java
+SupportTicket ticket1 = new SupportTicket("#1234", "basic", "Password reset", "Acme Corp");
+level1.handleTicket(ticket1);
+```
+
+Trong `Level1Support.handleTicket()`:
+```java
+if (ticket.getPriority().equals("basic")) {
+    // L1 can handle basic issues
+    System.out.println("HANDLED BY: " + handlerName);
+    // ... resolution details
+} else if (successor != null) {
+    // Escalate to next level
+    successor.handleTicket(ticket);
+}
+```
+
+**Kết quả mong đợi:**
+- Ticket được xử lý bởi Level 1 Support
+- Không escalate lên Level 2
+- Output: "Level 1 Support handling ticket #1234"
+
+**Ý nghĩa:**
+Testcase này demonstrate rằng Chain of Responsibility pattern cho phép handler đầu tiên xử lý request nếu nó có khả năng. Client (main) không cần biết handler nào sẽ xử lý - chỉ cần gửi vào chain. Đây là loose coupling principle - sender không phụ thuộc vào receiver cụ thể.
+
+---
+
+#### Test 2: Technical Priority Ticket
+**Mục đích:**
+Kiểm tra escalation mechanism - khi Level 1 không đủ khả năng, ticket tự động được chuyển đến Level 2. Test này minh họa cách request "travel through chain" cho đến khi tìm được handler phù hợp.
+
+**Cách triển khai:**
+```java
+SupportTicket ticket2 = new SupportTicket("#5678", "technical", "API integration error", "TechStart Inc");
+level1.handleTicket(ticket2);
+```
+
+Flow trong chain:
+1. Level1Support nhận ticket, check priority
+2. Priority = "technical" → Level 1 không handle được
+3. Level 1 gọi `successor.handleTicket(ticket)` (escalate to Level 2)
+4. Level2Support nhận ticket, check priority
+5. Priority = "technical" → Level 2 handle thành công
+
+**Kết quả mong đợi:**
+- Level 1 nhận nhưng không xử lý
+- Level 1 escalate lên Level 2 tự động
+- Level 2 xử lý ticket
+- Output hiển thị quá trình escalation: "Level 1 cannot handle... Escalating to Level 2"
+
+**Ý nghĩa:**
+Testcase này demonstrate successor mechanism - core của Chain of Responsibility. Handler có thể decide "I can't handle this" và pass sang successor. Client không cần biết logic này - pattern tự động route request đến đúng handler. Đây là automatic escalation - một trong những lợi ích chính của pattern.
+
+---
+
+#### Test 3: Escalated Priority Ticket
+**Mục đích:**
+Test chain với request cần đến Manager level. Minh họa request đi qua nhiều handlers (Level 1 → Level 2 → Manager) cho đến khi tìm được handler có authority phù hợp.
+
+**Cách triển khai:**
+```java
+SupportTicket ticket3 = new SupportTicket("#9012", "escalated", "Database access issue", "MegaCorp Ltd");
+level1.handleTicket(ticket3);
+```
+
+Chain traversal:
+- Level 1: "escalated" ≠ "basic" → pass to successor
+- Level 2: "escalated" ≠ "technical" → pass to successor
+- Manager: "escalated" = "escalated" → handle successfully
+
+**Kết quả mong đợi:**
+- Request đi qua Level 1 (pass)
+- Qua Level 2 (pass)
+- Manager xử lý thành công
+- Output hiển thị 2 lần escalation trước khi được handle
+
+**Ý nghĩa:**
+Testcase này demonstrate rằng chain có thể dài, request có thể đi qua nhiều handlers trước khi được xử lý. Pattern này flexible - có thể thêm/xóa handlers trong chain (ví dụ: thêm Level 3 Specialist giữa Level 2 và Manager) mà không cần sửa client code. Đây là Open/Closed Principle - open for extension, closed for modification.
+
+---
+
+#### Test 4: Critical Priority Ticket
+**Mục đích:**
+Test request đi đến cuối chain (Director). Minh họa rằng chain có thể route request đến highest authority khi cần thiết, và mỗi handler trong chain có responsibility rõ ràng.
+
+**Cách triển khai:**
+```java
+SupportTicket ticket4 = new SupportTicket("#3456", "critical", "System outage", "Enterprise Global");
+level1.handleTicket(ticket4);
+```
+
+Full chain traversal:
+- Level 1: cannot handle → escalate
+- Level 2: cannot handle → escalate
+- Manager: cannot handle → escalate
+- Director: "critical" priority → handle (highest authority)
+
+**Kết quả mong đợi:**
+- Request đi qua toàn bộ chain: Level 1 → Level 2 → Manager → Director
+- Director xử lý (highest level)
+- Output hiển thị 3 lần escalation và resolution bởi Engineering Director
+
+**Ý nghĩa:**
+Testcase này demonstrate escalation to highest level. Critical issues cần highest authority để resolve. Pattern đảm bảo rằng request luôn đến đúng level of responsibility. Không cần if-else logic - chain tự động route based on handler capabilities.
+
+---
+
+#### Test 5: Unknown Priority (Fallback Test)
+**Mục đích:**
+Test fallback mechanism - khi priority không match bất kỳ handler nào trong chain. Minh họa rằng pattern cần default handler để ensure tất cả requests đều được xử lý.
+
+**Cách triển khai:**
+```java
+SupportTicket ticket5 = new SupportTicket("#7890", "unknown", "Unusual issue", "Mystery Customer");
+level1.handleTicket(ticket5);
+```
+
+Fallback behavior:
+- Level 1, 2, Manager: priority không match → escalate
+- Director: end of chain → acts as fallback handler → handles everything that reaches
+
+**Kết quả mong đợi:**
+- Request đi qua toàn bộ chain mà không match handler nào
+- Đến Director (end of chain)
+- Director xử lý as fallback (không phải vì match "unknown", mà vì là terminal handler)
+- Output: "HANDLED BY: Engineering Director (FALLBACK)"
+
+**Ý nghĩa:**
+Testcase này demonstrate best practice: luôn có default/fallback handler ở cuối chain. Nếu không có fallback, request với unknown priority sẽ bị lost (không được xử lý). Director trong design này serves dual purpose: (1) handle critical issues, (2) catch all unhandled requests. Đây là defensive programming - ensure no request falls through cracks.
+
+---
+
+### 6.2. Output thực tế
+
+```
+=== Chain of Responsibility Demo ===
+
+Chain: Level 1 -> Level 2 -> Manager -> Director
+
+--- Test 1: Basic Priority Ticket ---
+[Level 1 Support] Handling ticket #1234: Password reset
+
+--- Test 2: Technical Priority Ticket ---
+[Level 1 Support] Cannot handle 'technical' priority ticket
+[Level 1 Support] Escalating to: Level 2 Support
+[Level 2 Support] Handling ticket #5678: API integration error
+
+--- Test 3: Escalated Priority Ticket ---
+[Level 1 Support] Cannot handle 'escalated' priority ticket
+[Level 1 Support] Escalating to: Level 2 Support
+[Level 2 Support] Cannot handle 'escalated' priority ticket
+[Level 2 Support] Escalating to: Support Manager
+[Support Manager] Handling ticket #9012: Database access issue
+
+--- Test 4: Critical Priority Ticket ---
+[Level 1 Support] Cannot handle 'critical' priority ticket
+[Level 1 Support] Escalating to: Level 2 Support
+[Level 2 Support] Cannot handle 'critical' priority ticket
+[Level 2 Support] Escalating to: Support Manager
+[Support Manager] Cannot handle 'critical' priority ticket
+[Support Manager] Escalating to: Engineering Director
+[Engineering Director] Handling ticket #3456: System outage
+
+--- Test 5: Unknown Priority (Fallback) ---
+[Level 1 Support] Cannot handle 'unknown' priority ticket
+[Level 1 Support] Escalating to: Level 2 Support
+[Level 2 Support] Cannot handle 'unknown' priority ticket
+[Level 2 Support] Escalating to: Support Manager
+[Support Manager] Cannot handle 'unknown' priority ticket
+[Support Manager] Escalating to: Engineering Director
+[Engineering Director] Handling ticket #7890: Unusual issue (FALLBACK)
+```
+
+---
+
+### 6.3. Output ban đầu (verbose version)
+
 ```
 ╔════════════════════════════════════════════════════════════╗
 ║   CHAIN OF RESPONSIBILITY PATTERN DEMO                     ║

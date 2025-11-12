@@ -84,3 +84,9 @@ hãy tạo req-23 cho mẫu Visitor
 
 tốt, đã xong tất cả các design pattern cần thiết, hãy tạo file readme cho toàn bộ project này
 đặc biệt tôi muốn mỗi DP sẽ có mô tả cơ bản bài toán và mapping context giữa các bài toán
+
+hãy đọc req-9 đến req-23 để hiểu context
+sau đó hãy viết req-24 để thực hiện task:
+1. hàm main (demo) của các mẫu 9 đến 23 đang quá dài và dườm rà, cần phải rút gọn, hiển thị vừa đủ như mẫu 1 đến mẫu 8
+2. các lệnh in ra cũng vậy, cần ngắn gọn, dễ đọc, dễ hiểu, không có icon
+3. các solution.md của các mẫu cần mô tả rõ ý nghĩa, mục đích, cách triển khai của các testcase trong hàm main (demo)

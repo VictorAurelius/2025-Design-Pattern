@@ -707,247 +707,287 @@ public class PlayingState implements PlayerState {
 
 ---
 
-## Expected Output
+## 6. Kết quả chạy chương trình
+
+### 6.1. Giải thích các testcase
+
+#### Test 1: Normal Playback Flow
+
+**Mục đích:**
+Kiểm tra luồng playback cơ bản: play → pause → resume → stop. Test này demonstrate rằng State pattern cho phép video player thực hiện different behaviors dựa trên current state, mà KHÔNG CẦN if-else statements hoặc boolean flags.
+
+**Cách triển khai:**
+```java
+VideoPlayer player = new VideoPlayer("Epic Gaming Montage", 300);
+
+// STOPPED → PLAYING
+player.play();
+player.showStatus();
+
+// Simulate playback (time passes)
+player.simulatePlayback(30);
+player.showStatus();
+
+// PLAYING → PAUSED
+player.pause();
+player.showStatus();
+
+// PAUSED → PLAYING (resume)
+player.play();
+player.showStatus();
+
+// PLAYING → STOPPED
+player.stop();
+player.showStatus();
+```
+
+**Kết quả mong đợi:**
+- **Initial state:** STOPPED, position = 0s
+- **After play():** PLAYING, position = 0s (transition STOPPED → PLAYING)
+- **After 30s playback:** PLAYING, position = 30s
+- **After pause():** PAUSED, position = 30s (transition PLAYING → PAUSED)
+- **After play() again:** PLAYING, position = 30s (transition PAUSED → PLAYING, resume)
+- **After stop():** STOPPED, position = 0s (transition PLAYING → STOPPED, reset)
+
+**Ý nghĩa:**
+Test này demonstrate core của State pattern - **same method call, different behavior**:
+- `play()` từ STOPPED state: Start from beginning (position = 0)
+- `play()` từ PAUSED state: Resume from paused position (position = 30s)
+
+KHÔNG có if-else trong VideoPlayer:
+```java
+// ❌ WITHOUT State Pattern (boolean flags + if-else):
+public void play() {
+    if (isStopped) {
+        position = 0;
+        isPlaying = true;
+        isStopped = false;
+    } else if (isPaused) {
+        isPlaying = true;
+        isPaused = false;
+    } else if (isPlaying) {
+        System.out.println("Already playing!");
+    }
+}
+
+// ✅ WITH State Pattern (polymorphism):
+public void play() {
+    state.play(this);  // Delegate to current state
+}
+```
+
+Each state class implements `play()` differently:
+- `StoppedState.play()`: Set position=0, transition to PLAYING
+- `PausedState.play()`: Keep position, transition to PLAYING
+- `PlayingState.play()`: Print "Already playing!" (invalid operation)
+
+**State Transition Mechanism:**
+```java
+// In StoppedState.play():
+public void play(VideoPlayer player) {
+    player.setPosition(0);
+    player.setState(new PlayingState());  // ← Explicit transition
+}
+```
+
+---
+
+#### Test 2: Buffering Flow
+
+**Mục đích:**
+Kiểm tra buffering state handling khi network chậm. Test này demonstrate rằng State pattern có thể handle complex state transitions và invalid operations during buffering state.
+
+**Cách triển khai:**
+```java
+player.play();
+player.simulatePlayback(45);
+
+// Trigger buffering (network slow)
+player.onBuffering();
+player.showStatus();
+
+// Try operations during buffering
+player.play();    // Should wait (buffering in progress)
+player.pause();   // Should fail (can't pause while buffering)
+
+// Buffering completes
+BufferingState bufferingState = new BufferingState();
+bufferingState.onBufferingComplete(player);
+player.showStatus();
+```
+
+**Kết quả mong đợi:**
+- **After onBuffering():** BUFFERING, position = 45s (transition PLAYING → BUFFERING)
+- **After play() during buffering:** Still BUFFERING (message: "Please wait - buffering in progress...")
+- **After pause() during buffering:** Still BUFFERING (message: "Can't pause while buffering!")
+- **After onBufferingComplete():** PLAYING, position = 45s (auto-resume from buffering)
+
+**Ý nghĩa:**
+Test này demonstrate State pattern handling **invalid operations gracefully**:
+- BufferingState có thể reject `pause()` operation
+- BufferingState có thể auto-transition về PLAYING khi buffering complete
+
+**State-specific behavior:**
+```java
+// BufferingState.java
+public void pause(VideoPlayer player) {
+    System.out.println("Can't pause while buffering!");
+    // NO state transition - stay in BUFFERING
+}
+
+public void onBufferingComplete(VideoPlayer player) {
+    System.out.println("[BUFFERING → PLAYING] Buffering complete - resuming...");
+    player.setState(new PlayingState());  // Auto-resume
+}
+```
+
+**Why this is powerful:**
+- Each state defines its own valid operations
+- Invalid operations handled per-state (meaningful error messages)
+- No giant if-else in VideoPlayer to check "can I pause now?"
+
+---
+
+#### Test 3: Invalid Operations
+
+**Mục đích:**
+Kiểm tra graceful handling của invalid operations (e.g., pause when stopped, play when playing). Test này demonstrate rằng State pattern eliminates invalid state bugs bằng cách cho mỗi state tự handle invalid operations.
+
+**Cách triển khai:**
+```java
+// State: STOPPED
+player.pause();  // Invalid: Can't pause when stopped
+player.stop();   // Invalid: Already stopped
+
+player.play();
+// State: PLAYING
+player.play();   // Invalid: Already playing
+
+player.pause();
+// State: PAUSED
+player.pause();  // Invalid: Already paused
+```
+
+**Kết quả mong đợi:**
+- **pause() when STOPPED:** Message "Can't pause - player is stopped!", no state change
+- **stop() when STOPPED:** Message "Already stopped!", no state change
+- **play() when PLAYING:** Message "Already playing!", no state change
+- **pause() when PAUSED:** Message "Already paused!", no state change
+
+**Ý nghĩa:**
+Test này demonstrate **compile-time safety** và **meaningful error messages**:
+
+**Problem Without State Pattern (Boolean Flags):**
+```java
+// ❌ Boolean flag approach:
+boolean isStopped = true;
+boolean isPlaying = false;
+boolean isPaused = false;
+boolean isBuffering = false;
+
+// PROBLEM: 4 flags = 2^4 = 16 combinations, only 4 valid!
+// Invalid combinations:
+// - isStopped=true, isPlaying=true (impossible!)
+// - isStopped=true, isPaused=true (impossible!)
+// - isPlaying=true, isPaused=true (impossible!)
+// ... 12 invalid combinations can cause bugs!
+
+public void pause() {
+    if (isStopped) {
+        System.out.println("Can't pause when stopped");
+    } else if (isBuffering) {
+        System.out.println("Can't pause while buffering");
+    } else if (isPaused) {
+        System.out.println("Already paused");
+    } else if (isPlaying) {
+        isPaused = true;
+        isPlaying = false;  // Forgot to set this? BUG!
+    }
+}
+```
+
+**Solution With State Pattern:**
+```java
+// ✅ State pattern approach:
+PlayerState state;  // Only ONE object, impossible to have invalid state
+
+// Each state handles pause() differently:
+// - StoppedState: "Can't pause when stopped"
+// - PlayingState: Transition to PAUSED
+// - PausedState: "Already paused"
+// - BufferingState: "Can't pause while buffering"
+
+public void pause() {
+    state.pause(this);  // Zero if-else statements
+}
+```
+
+**Benefits:**
+- **Type safety:** Only 4 valid states possible (StoppedState, PlayingState, PausedState, BufferingState)
+- **No flag explosion:** 1 state object instead of 4 boolean flags
+- **Meaningful errors:** Each state provides specific error message
+- **Zero if-else:** VideoPlayer has NO conditional logic
+
+---
+
+### 6.2. Output thực tế
 
 ```
-========================================
-🎬 STATE PATTERN DEMO - Video Player State Management
-========================================
+=== State Pattern Demo ===
 
-Creating video player for: "Epic Gaming Montage"
-Duration: 300 seconds (5:00)
+Video: Epic Gaming Montage
+Duration: 5:00
 Initial state: STOPPED
 
-========================================
-📺 SCENARIO 1: Normal Playback Flow
-========================================
-
-Current State: STOPPED | Position: 0s
-
-Action: play()
+--- Test 1: Normal Playback Flow ---
 [STOPPED → PLAYING] Starting playback from beginning...
 Current State: PLAYING | Position: 0s
 
-... time passes (simulating playback) ...
-
+Simulating playback (30 seconds)...
 Current State: PLAYING | Position: 30s
 
-Action: pause()
 [PLAYING → PAUSED] Pausing at position 30s...
 Current State: PAUSED | Position: 30s
 
-Action: play() (resume)
 [PAUSED → PLAYING] Resuming playback from position 30s...
 Current State: PLAYING | Position: 30s
 
-... time passes ...
-
-Current State: PLAYING | Position: 75s
-
-Action: stop()
 [PLAYING → STOPPED] Stopping playback...
 Current State: STOPPED | Position: 0s (reset)
 
-✓ Normal playback flow completed
-
-========================================
-📺 SCENARIO 2: Buffering Flow
-========================================
-
-Current State: STOPPED | Position: 0s
-
-Action: play()
-[STOPPED → PLAYING] Starting playback...
-Current State: PLAYING | Position: 0s
-
-... time passes (playback) ...
-
-Current State: PLAYING | Position: 45s
-
-Action: Network slow (trigger buffering)
+--- Test 2: Buffering Flow ---
+[STOPPED → PLAYING] Starting playback from beginning...
+Network slow (triggering buffering)...
 [PLAYING → BUFFERING] Network slow - buffering content...
 Current State: BUFFERING | Position: 45s
 
-Action: play() (while buffering)
-⚠️  Please wait - buffering in progress...
-Current State: BUFFERING | Position: 45s (unchanged)
-
-Action: pause() (while buffering)
-⚠️  Can't pause while buffering!
-Current State: BUFFERING | Position: 45s (unchanged)
-
-... buffering completes ...
-
-Action: onBufferingComplete()
+Buffering complete, auto-resuming...
 [BUFFERING → PLAYING] Buffering complete - resuming playback...
 Current State: PLAYING | Position: 45s
 
-✓ Buffering flow handled correctly
-
-========================================
-📺 SCENARIO 3: Invalid Operations
-========================================
-
-Current State: STOPPED | Position: 0s
-
-Action: pause() (can't pause when stopped)
-⚠️  Can't pause - player is stopped!
-Current State: STOPPED | Position: 0s (unchanged)
-
-Action: stop() (already stopped)
-⚠️  Already stopped!
-Current State: STOPPED | Position: 0s (unchanged)
-
-Current State: PLAYING | Position: 60s
-
-Action: play() (already playing)
-⚠️  Already playing!
-Current State: PLAYING | Position: 60s (unchanged)
-
-Current State: PAUSED | Position: 90s
-
-Action: pause() (already paused)
-⚠️  Already paused!
-Current State: PAUSED | Position: 90s (unchanged)
-
-✓ Invalid operations handled gracefully
-
-========================================
-📺 SCENARIO 4: Stop from Any State
-========================================
-
-Current State: PLAYING | Position: 120s
-
-Action: stop()
 [PLAYING → STOPPED] Stopping playback...
-Current State: STOPPED | Position: 0s
 
-Current State: PAUSED | Position: 150s
+--- Test 3: Invalid Operations ---
+Current state: STOPPED
 
-Action: stop()
-[PAUSED → STOPPED] Stopping playback...
-Current State: STOPPED | Position: 0s
+Trying to pause (invalid when stopped):
+Can't pause - player is stopped!
 
-Current State: BUFFERING | Position: 180s
+Trying to stop (already stopped):
+Already stopped!
 
-Action: stop()
-[BUFFERING → STOPPED] Canceling buffering and stopping...
-Current State: STOPPED | Position: 0s
+[STOPPED → PLAYING] Starting playback from beginning...
+Trying to play (already playing):
+Already playing!
 
-✓ Stop works from any state
+[PLAYING → PAUSED] Pausing at current position...
+Trying to pause (already paused):
+Already paused!
 
-========================================
-📊 STATE TRANSITION SUMMARY
-========================================
-
-Total state transitions: 12
-Valid transitions: 12
-Invalid operations handled: 5
-
-State transition log:
-  1. STOPPED → PLAYING (play from beginning)
-  2. PLAYING → PAUSED (pause at 30s)
-  3. PAUSED → PLAYING (resume from 30s)
-  4. PLAYING → STOPPED (stop playback)
-  5. STOPPED → PLAYING (play again)
-  6. PLAYING → BUFFERING (network slow)
-  7. BUFFERING → PLAYING (buffering complete)
-  8. PLAYING → STOPPED (stop from playing)
-  9. PAUSED → STOPPED (stop from paused)
- 10. BUFFERING → STOPPED (stop from buffering)
-
-========================================
-✅ STATE PATTERN BENEFITS DEMONSTRATED
-========================================
-
-1. ✓ No Boolean Flag Explosion
-   - Single state object instead of 4 boolean flags
-   - Invalid states impossible by design
-   - Compile-time type safety
-
-2. ✓ No If-Else Spaghetti Code
-   - Zero if-else statements in VideoPlayer
-   - Behavior delegated to state classes
-   - Cyclomatic complexity: 16 → 2 (87.5% reduction)
-
-3. ✓ Easy to Add New States
-   - Create new state class implementing PlayerState
-   - No changes to existing states or VideoPlayer
-   - Estimated time: 30 minutes (vs 2 hours)
-
-4. ✓ Clear State Transitions
-   - Explicit: setState(new PlayingState())
-   - Easy to visualize state machine
-   - Easy to debug and trace
-
-5. ✓ State-Specific Behavior
-   - Each state handles its own behavior
-   - Meaningful error messages per state
-   - Polymorphism enables specialization
-
-6. ✓ Open/Closed Principle
-   - Open for extension (add new states)
-   - Closed for modification (existing states unchanged)
-
-7. ✓ Single Responsibility Principle
-   - Each state class: one responsibility
-   - VideoPlayer: manage current state
-   - Clean separation of concerns
-
-========================================
-🎓 KEY LEARNING POINTS
-========================================
-
-State Pattern teaches:
-
-1. **Eliminate Conditional Logic**
-   - Replace if-else with polymorphism
-   - Replace boolean flags with state objects
-   - Replace switch statements with state classes
-
-2. **State Machine Design**
-   - Define valid states
-   - Define valid transitions
-   - Define state-specific behavior
-   - Handle invalid operations gracefully
-
-3. **State vs Strategy**
-   - State: Behavior changes based on internal state
-   - Strategy: Behavior selected by client
-   - State: States know each other (transitions)
-   - Strategy: Strategies independent
-
-4. **Open/Closed Principle**
-   - Add states without modifying existing code
-   - Extend behavior through new classes
-   - Minimal impact on existing functionality
-
-5. **Compile-Time Safety**
-   - Type system enforces valid states
-   - Invalid states caught at compile-time
-   - No runtime surprises from flag combinations
-
-========================================
-📈 ROI SUMMARY
-========================================
-
-Before State Pattern:
-  - Boolean flags: 4 (16 combinations, 12 invalid)
-  - If-else statements: 20
-  - Cyclomatic complexity: 16
-  - Invalid state bugs: 8 per month
-  - Annual time waste: 450 hours
-
-After State Pattern:
-  - State object: 1 (4 valid states only)
-  - If-else statements: 0
-  - Cyclomatic complexity: 2
-  - Invalid state bugs: 0 per month
-  - Annual time saved: 398 hours
-
-ROI: 2,743% (Year 1), 14,114% (5 years)
-
-Pattern #11 in StreamFlix cluster - Complete! ✓
+--- Summary ---
+State transitions demonstrated: 10+
+Invalid operations handled gracefully
+No if-else statements, zero boolean flags
 ```
 
 ---

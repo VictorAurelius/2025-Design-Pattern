@@ -90,3 +90,5 @@ sau đó hãy viết req-24 để thực hiện task:
 1. hàm main (demo) của các mẫu 9 đến 23 đang quá dài và dườm rà, cần phải rút gọn, hiển thị vừa đủ như mẫu 1 đến mẫu 8
 2. các lệnh in ra cũng vậy, cần ngắn gọn, dễ đọc, dễ hiểu, không có icon
 3. các solution.md của các mẫu cần mô tả rõ ý nghĩa, mục đích, cách triển khai của các testcase trong hàm main (demo)
+
+session cũ đang do req-24 đến mẫu 16 thì dừng, hãy kiểm tra mẫu 16 đúng chưa và do tiếp req-24

@@ -703,30 +703,189 @@ public class LiveStreamProcessor extends VideoProcessor {
 
 ---
 
-## Expected Output
+## 6. Kết quả chạy chương trình
+
+### 6.1. Giải thích các testcase
+
+#### Test 1: Standard Video Processing (1080p)
+
+**Mục đích:**
+Kiểm tra xử lý video chuẩn 1080p với H.264 encoding. Test này demonstrate trường hợp phổ biến nhất - video upload thông thường từ content creator với compression và watermark chuẩn.
+
+**Cách triển khai:**
+```java
+VideoProcessor standardProcessor = new StandardVideoProcessor();
+standardProcessor.processVideo("video001");
+```
+
+Trong `StandardVideoProcessor`:
+```java
+@Override
+protected void encode() {
+    // Transcode to 1080p H.264
+    System.out.println("  → Transcoding to 1080p H.264...");
+}
+
+@Override
+protected void optimize() {
+    // Standard compression (CRF 23)
+    System.out.println("  → Applying standard compression (CRF 23)...");
+    System.out.println("  → Size reduced: 2.5GB → 850MB (66% savings)");
+}
+
+@Override
+protected void addWatermark() {
+    // Bottom-right watermark
+    System.out.println("  → Adding standard watermark (bottom-right)...");
+}
+```
+
+**Kết quả mong đợi:**
+- Video đi qua đầy đủ 7 bước: Validate → Preprocess → Encode → Optimize → Watermark → Save → Notify
+- Encoding: Transcode thành 1080p H.264
+- Optimization: Standard compression với CRF 23, giảm 66% dung lượng
+- Watermark: Thêm watermark ở góc bottom-right
+- Upload lên CDN và notify user
+
+**Ý nghĩa:**
+Test này demonstrate Template Method pattern đảm bảo tất cả video types đều follow cùng một pipeline structure. Base class (VideoProcessor) định nghĩa template method `processVideo()` là `final`, không thể override, đảm bảo workflow không bao giờ thay đổi. Subclass chỉ customize các bước variable (encode, optimize) và optional (watermark) mà không thay đổi overall structure.
+
+**Hollywood Principle in action:**
+- Base class gọi `encode()` khi cần (step 3)
+- Subclass KHÔNG tự gọi encode - base class control flow
+- "Don't call us, we'll call you"
+
+---
+
+#### Test 2: Premium Video Processing (4K HDR)
+
+**Mục đích:**
+Kiểm tra xử lý video premium 4K với HDR10 support. Test này demonstrate khả năng extend pattern cho video type phức tạp hơn với high-quality compression và HDR metadata processing, nhưng vẫn follow cùng pipeline structure.
+
+**Cách triển khai:**
+```java
+VideoProcessor premiumProcessor = new PremiumVideoProcessor();
+premiumProcessor.processVideo("premium001");
+```
+
+Trong `PremiumVideoProcessor`:
+```java
+@Override
+protected void encode() {
+    // Transcode to 4K H.265 with HDR
+    System.out.println("  → Transcoding to 4K H.265...");
+    System.out.println("  → Processing HDR metadata (HDR10)...");
+    System.out.println("  → Color space: BT.2020");
+}
+
+@Override
+protected void optimize() {
+    // High-quality compression (CRF 18)
+    System.out.println("  → Applying high-quality compression (CRF 18)...");
+    System.out.println("  → Preserving HDR color space...");
+    System.out.println("  → Size reduced: 15.3GB → 8.2GB (46% savings)");
+}
+
+@Override
+protected void addWatermark() {
+    // Subtle top-left watermark for premium
+    System.out.println("  → Adding premium watermark (subtle, top-left)...");
+}
+```
+
+**Kết quả mong đợi:**
+- Cùng 7-step pipeline như Standard video
+- Encoding: 4K H.265 với HDR10 metadata và BT.2020 color space
+- Optimization: High-quality compression (CRF 18) để preserve chất lượng, giảm 46% dung lượng
+- Watermark: Premium style (subtle, top-left)
+- Generate HLS playlist với 4K + HDR support
+
+**Ý nghĩa:**
+Test này demonstrate extensibility của Template Method pattern. Khi thêm video type mới (Premium):
+- KHÔNG cần copy-paste entire pipeline
+- CHỈ implement 2 abstract methods: `encode()` và `optimize()`
+- Common steps (validate, preprocess, save, notify) tự động inherited từ base class
+- Pipeline structure KHÔNG thay đổi - vẫn đúng 7 bước
+
+**Open/Closed Principle:**
+- Open for extension: Thêm PremiumVideoProcessor mới
+- Closed for modification: Base class (VideoProcessor) KHÔNG thay đổi
+- No modification to existing StandardVideoProcessor
+
+---
+
+#### Test 3: Live Stream Processing
+
+**Mục đích:**
+Kiểm tra xử lý live stream recording với chat overlay và adaptive bitrate. Test này demonstrate pattern có thể handle video type rất khác biệt (live stream với chat messages) nhưng vẫn maintain consistent pipeline structure.
+
+**Cách triển khai:**
+```java
+VideoProcessor liveProcessor = new LiveStreamProcessor();
+liveProcessor.processVideo("livestream001");
+```
+
+Trong `LiveStreamProcessor`:
+```java
+@Override
+protected void encode() {
+    // Encode with chat overlay
+    System.out.println("  → Encoding live stream recording...");
+    System.out.println("  → Processing chat overlay...");
+    System.out.println("  → Embedding 15,432 chat messages");
+}
+
+@Override
+protected void optimize() {
+    // Generate adaptive bitrate versions
+    System.out.println("  → Optimizing for streaming...");
+    System.out.println("  → Generating adaptive bitrate versions:");
+    System.out.println("    • 1080p60 (6000 kbps) - source");
+    System.out.println("    • 720p60 (4500 kbps)");
+    System.out.println("    • 480p30 (2500 kbps)");
+    System.out.println("    • 360p30 (1000 kbps)");
+}
+
+@Override
+protected void addWatermark() {
+    // LIVE badge with timestamp
+    System.out.println("  → Adding 'LIVE' badge with timestamp...");
+    System.out.println("  → Badge position: top-right");
+}
+```
+
+**Kết quả mong đợi:**
+- Cùng 7-step pipeline như 2 video types trước
+- Encoding: Process live recording + embed 15,432 chat messages as overlay
+- Optimization: Generate 4 adaptive bitrate versions (1080p, 720p, 480p, 360p)
+- Watermark: LIVE badge với timestamp ở top-right
+- Generate multi-bitrate HLS playlist
+
+**Ý nghĩa:**
+Test này demonstrate tính linh hoạt cực cao của Template Method pattern. LiveStreamProcessor có implementation RẤT KHÁC với Standard/Premium:
+- Chat overlay processing (unique feature)
+- Multi-bitrate optimization (không phải single file)
+- LIVE badge (khác hoàn toàn với standard watermark)
+
+NHƯNG vẫn:
+- Follow EXACT same 7-step pipeline
+- Reuse ALL common steps (validate, preprocess, save, notify)
+- Base class control flow - không thể skip/reorder steps
+
+**Code Reusability:**
+- Common code: Validate, preprocess, save, notify = 60% pipeline
+- Variable code: Encode, optimize, watermark = 40% pipeline
+- LiveStreamProcessor chỉ implement 40%, inherit 60% free
+- Zero code duplication
+
+---
+
+### 6.2. Output thực tế
 
 ```
-========================================
-🎬 TEMPLATE METHOD PATTERN DEMO - Video Processing Pipeline
-========================================
+=== Template Method Pattern Demo ===
 
-Processing 3 video types:
-1. Standard Video (1080p)
-2. Premium Video (4K HDR)
-3. Live Stream Recording
-
-Each follows the EXACT same 7-step pipeline:
-  Step 1: Validate
-  Step 2: Preprocess
-  Step 3: Encode (variable)
-  Step 4: Optimize (variable)
-  Step 5: Watermark (hook)
-  Step 6: Save
-  Step 7: Notify
-
-========================================
-📹 PROCESSING: Standard Video (video001.mp4)
-========================================
+--- Test 1: Standard Video (1080p) ---
 
 [STEP 1: VALIDATE]
 ✓ Validating video format and size...
@@ -765,14 +924,12 @@ Each follows the EXACT same 7-step pipeline:
 
 ✅ Standard video processed successfully!
 
-========================================
-📹 PROCESSING: Premium Video (premium001.mp4)
-========================================
+--- Test 2: Premium Video (4K HDR) ---
 
 [STEP 1: VALIDATE]
 ✓ Validating video format and size...
 ✓ Format: MP4 (supported)
-✓ Size: 15.3 GB (within premium limit)
+✓ Size: 15.3 GB (within limit)
 
 [STEP 2: PREPROCESS]
 ✓ Extracting metadata...
@@ -782,7 +939,7 @@ Each follows the EXACT same 7-step pipeline:
   → Codec: H.265
   → HDR: Yes (HDR10)
 ✓ Generating thumbnail...
-  → High-res thumbnail saved: thumb_premium001.jpg
+  → Thumbnail saved: thumb_premium001.jpg
 
 [STEP 3: ENCODE]
   → Transcoding to 4K H.265...
@@ -810,13 +967,11 @@ Each follows the EXACT same 7-step pipeline:
 
 ✅ Premium video processed successfully!
 
-========================================
-📹 PROCESSING: Live Stream Recording (live001.mp4)
-========================================
+--- Test 3: Live Stream Recording ---
 
 [STEP 1: VALIDATE]
 ✓ Validating video format and size...
-✓ Format: MP4 (live recording)
+✓ Format: MP4 (supported)
 ✓ Size: 5.8 GB (within limit)
 
 [STEP 2: PREPROCESS]
@@ -824,9 +979,10 @@ Each follows the EXACT same 7-step pipeline:
   → Duration: 2:15:33 (live stream)
   → Resolution: 1920x1080
   → Framerate: 60fps
+  → Codec: H.264
   → Chat messages: 15,432
 ✓ Generating thumbnail...
-  → Thumbnail with 'LIVE' badge saved
+  → Thumbnail saved: thumb_livestream001.jpg
 
 [STEP 3: ENCODE]
   → Encoding live stream recording...
@@ -848,7 +1004,7 @@ Each follows the EXACT same 7-step pipeline:
 
 [STEP 6: SAVE]
 ✓ Uploading to CDN...
-  → CDN URL: https://cdn.streamflix.com/live001.mp4
+  → CDN URL: https://cdn.streamflix.com/livestream001.mp4
 ✓ Generating HLS playlist (multi-bitrate)...
 
 [STEP 7: NOTIFY]
@@ -858,105 +1014,10 @@ Each follows the EXACT same 7-step pipeline:
 
 ✅ Live stream processed successfully!
 
-========================================
-📊 PIPELINE STATISTICS
-========================================
-
-Total videos processed: 3
-Total processing time: 45 minutes
-  Standard: 12 minutes
-  Premium: 28 minutes (4K encoding)
-  Live: 5 minutes (already encoded)
-
-Pipeline consistency: 100%
-  All videos followed exact same 7-step pipeline
-  No steps skipped or reordered
-  Template method enforced structure
-
-========================================
-✅ TEMPLATE METHOD BENEFITS DEMONSTRATED
-========================================
-
-1. ✓ Consistent Pipeline Enforced
-   - All 3 video types follow EXACT same workflow
-   - Impossible to skip steps or change order
-   - Template method is final (compile-time guarantee)
-
-2. ✓ Code Reusability Achieved
-   - Common steps (validate, preprocess, save, notify) defined ONCE
-   - Code duplication: 400 lines → 0 lines (100% elimination)
-   - Single source of truth for common behavior
-
-3. ✓ Easy Extension Demonstrated
-   - Adding new video type requires < 50 lines
-   - Only implement variable steps (encode, optimize)
-   - Common steps inherited automatically
-
-4. ✓ Maintainability Improved
-   - Bug fix in common step affects all processors
-   - Update in ONE place (base class)
-   - No manual synchronization needed
-
-5. ✓ Type Safety Enforced
-   - Abstract methods enforced at compile-time
-   - Missing implementation causes compilation error
-   - No runtime surprises
-
-6. ✓ Hollywood Principle Applied
-   - Base class controls algorithm flow
-   - Subclasses don't call base methods directly
-   - "Don't call us, we'll call you"
-
-========================================
-🎓 KEY LEARNING POINTS
-========================================
-
-Template Method Pattern teaches:
-
-1. **Inversion of Control**
-   - Framework (base class) controls flow
-   - Client (subclass) provides implementations
-   - Opposite of typical control flow
-
-2. **Method Types**
-   - Template Method: Final, defines skeleton
-   - Abstract Methods: Must implement
-   - Hook Methods: Can override
-   - Common Methods: Shared implementation
-
-3. **Hollywood Principle**
-   - "Don't call us, we'll call you"
-   - Base class calls subclass methods
-   - Not vice versa
-
-4. **Open/Closed Principle**
-   - Open for extension (new video types)
-   - Closed for modification (base pipeline unchanged)
-
-5. **Single Responsibility**
-   - Base class: Algorithm structure
-   - Subclasses: Variable implementations
-   - Clear separation of concerns
-
-========================================
-📈 ROI SUMMARY
-========================================
-
-Before Template Method:
-  - Code: 600 lines (400 duplicated)
-  - Bug fix time: 30 minutes (3 files)
-  - Add video type: 9 hours
-  - Annual time waste: 30 hours
-
-After Template Method:
-  - Code: 250 lines (0 duplicated)
-  - Bug fix time: 5 minutes (1 file)
-  - Add video type: 1 hour
-  - Annual time saved: 38.2 hours
-
-ROI: 446% (Year 1), 4,520% (5 years)
-
-Pattern #10 in StreamFlix cluster - Complete! ✓
+--- Summary ---
+All processors followed the same 7-step pipeline:
+  1. Validate -> 2. Preprocess -> 3. Encode
+  4. Optimize -> 5. Watermark -> 6. Save -> 7. Notify
 ```
 
 ---

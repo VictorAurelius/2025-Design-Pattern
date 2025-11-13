@@ -1,467 +1,418 @@
-# Hướng Dẫn Vẽ UML Command Pattern Trên StarUML
+# Hướng Dẫn Vẽ UML Command Pattern - Layout Hoàn Chỉnh
 
-## Tổng Quan
-Mẫu Command Pattern có 4 thành phần chính:
-1. **Command Interface** - Giao diện chung cho tất cả commands
-2. **Concrete Commands** - Các lệnh cụ thể (AddTextCommand, AdjustBrightnessCommand, v.v.)
-3. **Invoker** - Lớp gọi commands (VideoEditor)
-4. **Receiver** - Lớp nhận và thực hiện operations (VideoClip)
+## 1. LAYOUT DIAGRAM HOÀN CHỈNH
 
----
-
-## Bước 1: Tạo Dự Án Mới
-
-### 1.1 Mở StarUML
-- Khởi động StarUML
-- Chọn **File → New**
-- Chọn **UML Standard Profile**
-- Đặt tên project: "Command Pattern - Video Editor"
-
-### 1.2 Tạo Class Diagram
-- Trong **Model Explorer**, click chuột phải vào **Model**
-- Chọn **Add → Class Diagram**
-- Đặt tên: "Command Pattern Structure"
-
----
-
-## Bước 2: Vẽ Command Interface
-
-### 2.1 Tạo Interface Command
-1. **Kéo thả Interface:**
-   - Từ **Toolbox**, kéo **Interface** vào diagram
-   - Đặt tên: `Command`
-   - Vị trí: Góc trên bên trái
-
-2. **Thêm Methods:**
-   - Click chuột phải vào Interface Command
-   - Chọn **Add → Operation**
-   - Thêm 3 methods:
-     ```
-     + execute(): void
-     + undo(): void
-     + getDescription(): String
-     ```
-
-3. **Định dạng Interface:**
-   - Click vào Interface Command
-   - Trong **Properties**, đặt **stereotype** = `<<interface>>`
-   - **Font**: Arial 10pt, Bold cho tên interface
-
----
-
-## Bước 3: Vẽ Concrete Commands
-
-### 3.1 Tạo AddTextCommand Class
-1. **Kéo thả Class:**
-   - Từ **Toolbox**, kéo **Class** vào diagram
-   - Đặt tên: `AddTextCommand`
-   - Vị trí: Dưới Interface Command, bên trái
-
-2. **Thêm Attributes:**
-   ```
-   - video: VideoClip
-   - text: String
-   - x: int
-   - y: int
-   - overlayIndex: int
-   ```
-
-3. **Thêm Methods:**
-   ```
-   + AddTextCommand(video: VideoClip, text: String, x: int, y: int)
-   + execute(): void
-   + undo(): void
-   + getDescription(): String
-   ```
-
-### 3.2 Tạo AdjustBrightnessCommand Class
-1. **Kéo thả Class:**
-   - Đặt tên: `AdjustBrightnessCommand`
-   - Vị trí: Cạnh AddTextCommand
-
-2. **Thêm Attributes:**
-   ```
-   - video: VideoClip
-   - adjustment: int
-   - previousBrightness: int
-   ```
-
-3. **Thêm Methods:**
-   ```
-   + AdjustBrightnessCommand(video: VideoClip, adjustment: int)
-   + execute(): void
-   + undo(): void
-   + getDescription(): String
-   ```
-
-### 3.3 Tạo MacroCommand Class
-1. **Kéo thả Class:**
-   - Đặt tên: `MacroCommand`
-   - Vị trí: Bên phải các concrete commands
-
-2. **Thêm Attributes:**
-   ```
-   - commands: List<Command>
-   - name: String
-   ```
-
-3. **Thêm Methods:**
-   ```
-   + MacroCommand(name: String)
-   + addCommand(command: Command): void
-   + removeCommand(command: Command): void
-   + execute(): void
-   + undo(): void
-   + getDescription(): String
-   ```
-
----
-
-## Bước 4: Vẽ Invoker (VideoEditor)
-
-### 4.1 Tạo VideoEditor Class
-1. **Kéo thả Class:**
-   - Đặt tên: `VideoEditor`
-   - Vị trí: Góc trên bên phải
-
-2. **Thêm Attributes:**
-   ```
-   - video: VideoClip
-   - undoStack: Stack<Command>
-   - redoStack: Stack<Command>
-   - history: List<Command>
-   - MAX_HISTORY: int = 50
-   ```
-
-3. **Thêm Methods:**
-   ```
-   + VideoEditor(video: VideoClip)
-   + executeCommand(command: Command): void
-   + undo(): void
-   + redo(): void
-   + showHistory(): void
-   + canUndo(): boolean
-   + canRedo(): boolean
-   ```
-
----
-
-## Bước 5: Vẽ Receiver (VideoClip)
-
-### 5.1 Tạo VideoClip Class
-1. **Kéo thả Class:**
-   - Đặt tên: `VideoClip`
-   - Vị trí: Dưới VideoEditor
-
-2. **Thêm Attributes:**
-   ```
-   - filename: String
-   - duration: String
-   - brightness: int
-   - contrast: int
-   - filter: String
-   - textOverlays: List<String>
-   - volume: int
-   ```
-
-3. **Thêm Methods:**
-   ```
-   + VideoClip(filename: String, duration: String)
-   + applyFilter(filterType: String): void
-   + setBrightness(value: int): void
-   + setContrast(value: int): void
-   + addTextOverlay(text: String, x: int, y: int): void
-   + removeTextOverlay(index: int): void
-   + setVolume(value: int): void
-   + showState(): void
-   ```
-
----
-
-## Bước 6: Vẽ Các Mối Quan Hệ (Relationships)
-
-### 6.1 Realization (Implements) - Command Interface
-**Các concrete commands implement Command interface**
-
-1. **AddTextCommand implements Command:**
-   - Từ **Toolbox**, chọn **Realization**
-   - Click vào `AddTextCommand`
-   - Kéo đến `Command` interface
-   - **Loại đường nối:** Đường gạch ngang với mũi tên tam giác trống
-
-2. **AdjustBrightnessCommand implements Command:**
-   - Tương tự, từ `AdjustBrightnessCommand` đến `Command`
-
-3. **MacroCommand implements Command:**
-   - Từ `MacroCommand` đến `Command`
-
-**Chi tiết vẽ đường Realization:**
-- **Màu:** Đen
-- **Kiểu:** Đường liền nét
-- **Mũi tên:** Tam giác trống (không tô màu)
-- **Label:** Có thể thêm `<<implements>>` (tùy chọn)
-
-### 6.2 Association - VideoEditor uses Command
-**VideoEditor có quan hệ với Command**
-
-1. **VideoEditor → Command:**
-   - Từ **Toolbox**, chọ **Association**
-   - Click vào `VideoEditor`
-   - Kéo đến `Command` interface
-   - **Loại đường nối:** Đường thẳng với mũi tên đơn
-
-2. **Cấu hình Association:**
-   - Click vào đường nối
-   - Trong **Properties**, đặt:
-     - **End2 Role:** `commands`
-     - **End2 Multiplicity:** `*` (many)
-     - **End2 Navigability:** `navigable`
-
-**Chi tiết vẽ Association:**
-- **Màu:** Đen
-- **Kiểu:** Đường liền nét
-- **Mũi tên:** Mũi tên đơn →
-- **Label near VideoEditor:** (không có)
-- **Label near Command:** `commands *`
-
-### 6.3 Association - VideoEditor uses VideoClip
-**VideoEditor có một VideoClip**
-
-1. **VideoEditor → VideoClip:**
-   - Từ `VideoEditor` đến `VideoClip`
-   - **End2 Role:** `video`
-   - **End2 Multiplicity:** `1`
-
-### 6.4 Association - Commands use VideoClip
-**Các concrete commands có reference đến VideoClip**
-
-1. **AddTextCommand → VideoClip:**
-   - Từ `AddTextCommand` đến `VideoClip`
-   - **End2 Role:** `video`
-   - **End2 Multiplicity:** `1`
-
-2. **AdjustBrightnessCommand → VideoClip:**
-   - Tương tự từ `AdjustBrightnessCommand` đến `VideoClip`
-
-### 6.5 Composition - MacroCommand contains Commands
-**MacroCommand chứa nhiều Command (Composite pattern)**
-
-1. **MacroCommand ◆→ Command:**
-   - Từ **Toolbox**, chọn **Composition**
-   - Click vào `MacroCommand`
-   - Kéo đến `Command` interface
-   - **Loại đường nối:** Đường với hình thoi đặc (♦) ở MacroCommand
-
-**Chi tiết vẽ Composition:**
-- **Màu:** Đen
-- **Kiểu:** Đường liền nét
-- **Hình thoi:** Đặc, màu đen ở `MacroCommand`
-- **End2 Role:** `commands`
-- **End2 Multiplicity:** `*`
-
----
-
-## Bước 7: Thêm Ghi Chú (Notes)
-
-### 7.1 Tạo Note cho Command Pattern
-1. **Kéo thả Note:**
-   - Từ **Toolbox**, kéo **Note** vào diagram
-   - Vị trí: Góc trên diagram
-
-2. **Nội dung Note:**
-   ```
-   Command Pattern
-   ===============
-   - Encapsulates requests as objects
-   - Supports undo/redo operations
-   - Enables macro commands
-   - Decouples invoker from receiver
-   ```
-
-### 7.2 Tạo Note cho Execution Flow
-1. **Kéo thả Note thứ 2:**
-   - Vị trí: Bên cạnh VideoEditor
-
-2. **Nội dung:**
-   ```
-   Execution Flow:
-   1. VideoEditor.executeCommand()
-   2. Command.execute()
-   3. VideoClip performs operation
-   4. Save to undo stack
-   ```
-
-### 7.3 Link Notes với Classes
-1. **Note Connector:**
-   - Từ **Toolbox**, chọ **Note Connector** (đường gạch gạch)
-   - Từ Note đến các classes liên quan
-
----
-
-## Bước 8: Sắp Xếp Layout
-
-### 8.1 Bố Cục Tổng Thể
 ```
-+---------------+    +------------------+    +---------------+
-|   Command     |    |   VideoEditor    |    |   VideoClip   |
-| <<interface>> |    |   (Invoker)      |    |  (Receiver)   |
-+---------------+    +------------------+    +---------------+
-        ▲                       |                     ▲
-        |                       |                     |
-        |                       ▼                     |
-+---------------+    +------------------+              |
-| AddTextCommand|    |                  |              |
-+---------------+    |                  |              |
-        |            |                  |              |
-+---------------+    |                  |              |
-|AdjustBrightness|   |                  |              |
-|    Command    |    |                  |              |
-+---------------+    +------------------+              |
-        |                                              |
-+---------------+                                     |
-| MacroCommand  |◆────────────┘                      |
-+---------------+                                     |
-        |                                             |
-        +─────────────────────────────────────────────┘
+                    COMMAND PATTERN - VIDEO EDITOR UML DIAGRAM
+                    
+┌─────────────────────┐      ┌─────────────────────┐      ┌─────────────────────┐
+│     <<interface>>   │      │     VideoEditor     │      │      VideoClip      │
+│       Command       │      │     (Invoker)       │      │     (Receiver)      │
+├─────────────────────┤      ├─────────────────────┤      ├─────────────────────┤
+│ + execute(): void   │      │ - video: VideoClip  │      │ - filename: String  │
+│ + undo(): void      │◄─────┤ - undoStack: Stack  │────► │ - duration: String  │
+│ + getDescription()  │      │ - redoStack: Stack  │      │ - brightness: int   │
+│   : String          │      │ - history: List     │      │ - contrast: int     │
+└─────────────────────┘      │ - MAX_HISTORY: int  │      │ - filter: String    │
+           ▲                 ├─────────────────────┤      │ - textOverlays:List │
+           │                 │ + executeCommand()  │      │ - volume: int       │
+           │                 │ + undo(): void      │      ├─────────────────────┤
+           │                 │ + redo(): void      │      │ + applyFilter()     │
+           │                 │ + canUndo(): bool   │      │ + setBrightness()   │
+           │                 │ + canRedo(): bool   │      │ + setContrast()     │
+┌──────────┴────┐            │ + showHistory()     │      │ + addTextOverlay()  │
+│               │            └─────────────────────┘      │ + removeTextOverlay()│
+│               │                                         │ + setVolume()       │
+▼               ▼                                         │ + showState()       │
+┌─────────────────────┐      ┌─────────────────────┐      └─────────────────────┘
+│   AddTextCommand    │      │AdjustBrightnessCmd  │                ▲
+├─────────────────────┤      ├─────────────────────┤                │
+│ - video: VideoClip  │──────┤ - video: VideoClip  │────────────────┘
+│ - text: String      │      │ - adjustment: int   │
+│ - x: int            │      │ - prevBrightness:int│
+│ - y: int            │      ├─────────────────────┤
+│ - overlayIndex: int │      │ + execute(): void   │
+├─────────────────────┤      │ + undo(): void      │
+│ + execute(): void   │      │ + getDescription()  │
+│ + undo(): void      │      └─────────────────────┘
+│ + getDescription()  │
+└─────────────────────┘
+           ▲
+           │
+           │
+┌─────────────────────┐
+│    MacroCommand     │
+├─────────────────────┤
+│ - commands: List    │◆─────┐
+│ - name: String      │      │
+├─────────────────────┤      │
+│ + addCommand()      │      │
+│ + removeCommand()   │      │  (Composition)
+│ + execute(): void   │      │  Contains multiple
+│ + undo(): void      │      │  Command objects
+│ + getDescription()  │      │
+└─────────────────────┘      │
+           │                 │
+           └─────────────────┘
+
+           
+LEGEND:
+═══════
+
+◄─────  Association (uses)
+  │     Realization (implements)
+  ▲
+  
+◆─────  Composition (contains)
+
+────►   Association (uses)
+
+commands *   (multiplicity many)
+video 1      (multiplicity one)
 ```
 
-### 8.2 Căn Chỉnh
-1. **Select multiple objects:**
-   - Ctrl + Click để chọn nhiều elements
-   - **Format → Align → Align Left** (căn trái)
-   - **Format → Distribute → Distribute Vertically** (phân bố đều)
+## 2. RELATIONSHIPS MAPPING (Các Đường Nối Chi Tiết)
 
-2. **Resize consistency:**
-   - Chọn tất cả classes
-   - **Format → Size → Same Width**
+### A. REALIZATION (IMPLEMENTS) - 3 đường nối
+```
+AddTextCommand          ──────────────────┐
+                                          │
+AdjustBrightnessCommand ──────────────────┼──► Command
+                                          │   <<interface>>
+MacroCommand           ──────────────────┘
+
+Kiểu đường: ──────────────────► (nét liền, mũi tên tam giác trống)
+```
+
+### B. ASSOCIATION (USES) - 4 đường nối
+```
+1. VideoEditor ────────► Command
+   Role: commands
+   Multiplicity: *
+
+2. VideoEditor ────────► VideoClip
+   Role: video
+   Multiplicity: 1
+
+3. AddTextCommand ────────► VideoClip
+   Role: video
+   Multiplicity: 1
+
+4. AdjustBrightnessCommand ────────► VideoClip
+   Role: video
+   Multiplicity: 1
+
+Kiểu đường: ────────► (nét liền, mũi tên đơn)
+```
+
+### C. COMPOSITION (CONTAINS) - 1 đường nối
+```
+MacroCommand ◆────────► Command
+   Role: commands
+   Multiplicity: *
+
+Kiểu đường: ◆────────► (nét liền, hình thoi đặc, mũi tên đơn)
+```
+
+## 3. DETAILED LAYOUT STRUCTURE
+
+### Tầng 1 (Top Layer):
+```
+┌─Command─┐    ┌─VideoEditor─┐    ┌─VideoClip─┐
+│Interface│    │ (Invoker)   │    │(Receiver) │
+└─────────┘    └─────────────┘    └───────────┘
+     │              │                   ▲
+     │              │                   │
+     │              ▼                   │
+     │         [Association]            │
+     │                                  │
+```
+
+### Tầng 2 (Middle Layer):
+```
+     │                                  │
+     │                                  │
+     ▼                                  │
+┌─────────────────────────┐             │
+│ Concrete Commands Layer │             │
+│                         │             │
+│  ┌─AddTextCommand─┐     │─────────────┘
+│  │               │     │
+│  └───────────────┘     │
+│                        │
+│  ┌─AdjustBrightness─┐  │
+│  │     Command      │  │
+│  └──────────────────┘  │
+└─────────────────────────┘
+```
+
+### Tầng 3 (Bottom Layer):
+```
+┌─MacroCommand─┐
+│             │◆
+│ (Composite) │ ┐
+└─────────────┘ │ Composition
+                │ relationship
+       ┌────────┘
+       │
+       ▼
+   [Back to Command Interface]
+```
+
+## 4. CONNECTION POINTS (Điểm Kết Nối)
+
+### From Command Interface:
+- **To AddTextCommand**: Bottom center → Top center
+- **To AdjustBrightnessCommand**: Bottom center → Top center
+- **To MacroCommand**: Bottom center → Top center
+
+### From VideoEditor:
+- **To Command**: Left center → Right center
+- **To VideoClip**: Right center → Left center
+
+### From Concrete Commands:
+- **AddTextCommand to VideoClip**: Right center → Bottom left
+- **AdjustBrightnessCommand to VideoClip**: Right center → Bottom center
+
+### From MacroCommand:
+- **To Command Interface**: Top center → Left bottom (composition diamond)
+
+## 5. VISUAL HIERARCHY
+
+```
+LEVEL 1: Core Abstractions
+┌─────────┐
+│Command  │ (Interface - Blue)
+│Interface│
+└─────────┘
+
+LEVEL 2: Pattern Participants
+┌─────────┐    ┌─────────┐
+│VideoEditor   │VideoClip│
+│(Orange) │    │ (Pink)  │
+└─────────┘    └─────────┘
+
+LEVEL 3: Concrete Implementations
+┌─────────┐ ┌─────────┐ ┌─────────┐
+│AddText  │ │Adjust   │ │Macro    │
+│Command  │ │Bright   │ │Command  │
+│(Green)  │ │Command  │ │(Yellow) │
+│         │ │(Green)  │ │         │
+└─────────┘ └─────────┘ └─────────┘
+```
+
+## 6. COMPLETE WIRING DIAGRAM
+
+```
+                [1] Realization
+    ┌───────────────▲───────────────┐
+    │               │               │
+    │               │               │
+AddTextCmd    AdjustBrightCmd    MacroCmd
+    │               │               ║
+    │[3] Association│               ║ [5] Composition
+    │               │               ║
+    └───────┐       └───────┐       ▼
+            │               │    Command
+            │               │   Interface
+            │               │       ▲
+            │               │       │
+            │               │       │[2] Association
+            │               │       │
+            ▼               ▼       │
+         VideoClip ◄──────────VideoEditor
+                   [4] Association
+
+Legend:
+[1] 3x Realization arrows
+[2] 1x Association (VideoEditor → Command)
+[3] 2x Association (Commands → VideoClip)
+[4] 1x Association (VideoEditor → VideoClip)
+[5] 1x Composition (MacroCommand ◆→ Command)
+
+Total: 8 connections
+```
+
+## 7. STEP-BY-STEP DRAWING ORDER
+
+### Bước 1: Vẽ Classes (6 boxes)
+1. Command Interface (top-left)
+2. VideoEditor (top-center)
+3. VideoClip (top-right)
+4. AddTextCommand (bottom-left)
+5. AdjustBrightnessCommand (bottom-left, dưới AddTextCommand)
+6. MacroCommand (bottom-left, dưới AdjustBrightnessCommand)
+
+### Bước 2: Vẽ Realization (3 arrows up)
+7. AddTextCommand ──────────► Command
+8. AdjustBrightnessCommand ──────────► Command
+9. MacroCommand ──────────► Command
+
+### Bước 3: Vẽ Association (4 arrows horizontal/diagonal)
+10. VideoEditor ────────► Command [commands *]
+11. VideoEditor ────────► VideoClip [video 1]
+12. AddTextCommand ────────► VideoClip [video 1]
+13. AdjustBrightnessCommand ────────► VideoClip [video 1]
+
+### Bước 4: Vẽ Composition (1 diamond arrow)
+14. MacroCommand ◆────────► Command [commands *]
+
+**Total: 6 classes + 8 relationships = 14 elements**
 
 ---
 
-## Bước 9: Định Dạng Cuối Cùng
+## Đường Nối Chi Tiết
 
-### 9.1 Colors và Styling
-1. **Interface Command:**
-   - **Background:** Light Blue (#E6F3FF)
-   - **Border:** Blue (#0066CC)
-   - **Text:** Bold
+### 1. Realization (Implements) - Đường Kế Thừa Interface
 
-2. **Concrete Commands:**
-   - **Background:** Light Green (#E6FFE6)
-   - **Border:** Green (#00AA00)
+#### AddTextCommand implements Command:
+- **Toolbox**: Chọn **Realization**
+- **Từ**: AddTextCommand
+- **Đến**: Command interface
+- **Kiểu đường**: Đường liền nét ——————————
+- **Mũi tên**: Tam giác trống ◁
+- **Màu**: Đen
 
-3. **VideoEditor (Invoker):**
-   - **Background:** Light Orange (#FFE6CC)
-   - **Border:** Orange (#CC6600)
+#### AdjustBrightnessCommand implements Command:
+- **Tương tự**: AdjustBrightnessCommand → Command
+- **Đường nối**: ——————————◁
 
-4. **VideoClip (Receiver):**
-   - **Background:** Light Pink (#FFE6F0)
-   - **Border:** Pink (#CC0066)
+#### MacroCommand implements Command:
+- **Tương tự**: MacroCommand → Command  
+- **Đường nối**: ——————————◁
 
-5. **MacroCommand:**
-   - **Background:** Light Yellow (#FFFEE6)
-   - **Border:** Gold (#CCAA00)
+### 2. Association - VideoEditor uses Command
 
-### 9.2 Stereotypes
-1. **Command Interface:**
-   - Thêm `<<interface>>` stereotype
+#### VideoEditor → Command:
+- **Toolbox**: Chọn **Association**
+- **Từ**: VideoEditor
+- **Đến**: Command interface
+- **Kiểu đường**: Đường liền nét ——————————
+- **Mũi tên**: Mũi tên đơn →
+- **Label**: `commands *` (ở phía Command)
+- **Multiplicity**: `*` (many)
 
-2. **MacroCommand:**
-   - Thêm `<<composite>>` stereotype
+### 3. Association - VideoEditor uses VideoClip  
 
----
+#### VideoEditor → VideoClip:
+- **Từ**: VideoEditor
+- **Đến**: VideoClip
+- **Kiểu đường**: Đường liền nét ——————————
+- **Mũi tên**: Mũi tên đơn →
+- **Label**: `video 1` (ở phía VideoClip)
+- **Multiplicity**: `1`
 
-## Bước 10: Validations và Best Practices
+### 4. Association - Commands use VideoClip
 
-### 10.1 Kiểm Tra Relationships
-- ✅ **Realization arrows:** Từ concrete commands đến Command interface
-- ✅ **Associations:** VideoEditor → Command, Commands → VideoClip
-- ✅ **Composition:** MacroCommand ◆→ Command
-- ✅ **Multiplicities:** Đúng số lượng (1, *, etc.)
+#### AddTextCommand → VideoClip:
+- **Từ**: AddTextCommand
+- **Đến**: VideoClip
+- **Kiểu đường**: Đường liền nét ——————————
+- **Mũi tên**: Mũi tên đơn →
+- **Label**: `video 1`
 
-### 10.2 Naming Conventions
-- ✅ **Classes:** PascalCase (VideoEditor, AddTextCommand)
-- ✅ **Methods:** camelCase (execute, undo, getDescription)
-- ✅ **Attributes:** camelCase (video, text, undoStack)
+#### AdjustBrightnessCommand → VideoClip:
+- **Tương tự**: AdjustBrightnessCommand → VideoClip
+- **Label**: `video 1`
 
-### 10.3 Visibility Indicators
-- ✅ **Public:** + (execute, undo, getDescription)
-- ✅ **Private:** - (video, text, undoStack)
-- ✅ **Protected:** # (nếu có inheritance)
+### 5. Composition - MacroCommand contains Commands
 
----
-
-## Bước 11: Thêm Sequence Diagram (Tùy Chọn)
-
-### 11.1 Tạo Sequence Diagram
-1. **Add New Diagram:**
-   - Click chuột phải vào Model
-   - **Add → Sequence Diagram**
-   - Đặt tên: "Command Execution Sequence"
-
-### 11.2 Lifelines
-Tạo các lifelines theo thứ tự:
-1. **Client** (actor)
-2. **VideoEditor** (object)
-3. **AddTextCommand** (object)
-4. **VideoClip** (object)
-
-### 11.3 Messages
-1. **Client → VideoEditor:** `executeCommand(addTextCmd)`
-2. **VideoEditor → AddTextCommand:** `execute()`
-3. **AddTextCommand → VideoClip:** `addTextOverlay(text, x, y)`
-4. **VideoEditor → VideoEditor:** `undoStack.push(addTextCmd)`
+#### MacroCommand ◆→ Command:
+- **Toolbox**: Chọn **Composition**
+- **Từ**: MacroCommand  
+- **Đến**: Command interface
+- **Kiểu đường**: Đường liền nét ——————————
+- **Hình thoi**: Đặc, màu đen ♦ (ở phía MacroCommand)
+- **Label**: `commands *` (ở phía Command)
+- **Multiplicity**: `*`
 
 ---
 
-## Checklist Hoàn Thành
+## Cách Vẽ Từng Loại Đường Nối
 
-### ✅ Structural Elements
-- [ ] Command Interface với 3 methods
-- [ ] AddTextCommand class với attributes và methods
-- [ ] AdjustBrightnessCommand class
-- [ ] MacroCommand class (composite)
-- [ ] VideoEditor class (invoker)
-- [ ] VideoClip class (receiver)
+### Realization (Kế thừa Interface):
+1. Chọn **Realization** từ Toolbox
+2. Click vào class con (AddTextCommand)
+3. Kéo đến interface cha (Command)
+4. **Kết quả**: ——————————◁
 
-### ✅ Relationships
-- [ ] Realization: Concrete Commands → Command Interface
-- [ ] Association: VideoEditor → Command
-- [ ] Association: VideoEditor → VideoClip  
-- [ ] Association: Commands → VideoClip
-- [ ] Composition: MacroCommand ◆→ Command
+### Association (Quan hệ sử dụng):
+1. Chọn **Association** từ Toolbox
+2. Click vào class sử dụng (VideoEditor)
+3. Kéo đến class được sử dụng (Command)
+4. **Cấu hình Properties**:
+   - End2 Role: `commands`
+   - End2 Multiplicity: `*`
+5. **Kết quả**: ——————————→ commands *
 
-### ✅ Styling
-- [ ] Stereotypes (`<<interface>>`, `<<composite>>`)
-- [ ] Color coding theo roles
-- [ ] Consistent naming conventions
-- [ ] Proper visibility indicators (+, -, #)
-
-### ✅ Documentation
-- [ ] Notes explaining pattern purpose
-- [ ] Execution flow note
-- [ ] Note connectors linking notes to relevant classes
+### Composition (Quan hệ chứa đựng):
+1. Chọn **Composition** từ Toolbox
+2. Click vào class chứa (MacroCommand)
+3. Kéo đến class được chứa (Command)
+4. **Kết quả**: ♦——————————→ commands *
 
 ---
 
-## Tips Vẽ UML Hiệu Quả
+## Thứ Tự Vẽ Đường Nối
 
-### 🎯 Layout Strategy
-1. **Top-down approach:** Interface ở trên, implementations ở dưới
-2. **Left-to-right flow:** Client → Invoker → Command → Receiver
-3. **Group related classes:** Các concrete commands gần nhau
+### Bước 1: Vẽ Realization trước (3 đường)
+1. AddTextCommand → Command
+2. AdjustBrightnessCommand → Command  
+3. MacroCommand → Command
 
-### 🔧 Technical Tips
-1. **Grid alignment:** Sử dụng grid để căn chỉnh
-2. **Consistent spacing:** Khoảng cách đều giữa các elements
-3. **Clear labels:** Đặt tên rõ ràng cho relationships
-4. **Avoid crossing lines:** Minimize line intersections
+### Bước 2: Vẽ Association từ VideoEditor (2 đường)
+4. VideoEditor → Command
+5. VideoEditor → VideoClip
 
-### 📝 Documentation Tips
-1. **Method signatures:** Include return types và parameters
-2. **Attribute types:** Specify data types clearly
-3. **Relationship labels:** Name associations clearly
-4. **Notes for clarity:** Explain complex concepts
+### Bước 3: Vẽ Association từ Commands đến VideoClip (2 đường)
+6. AddTextCommand → VideoClip
+7. AdjustBrightnessCommand → VideoClip
+
+### Bước 4: Vẽ Composition cuối cùng (1 đường)
+8. MacroCommand ◆→ Command
 
 ---
 
-Sau khi hoàn thành, bạn sẽ có một UML diagram hoàn chỉnh thể hiện Command Pattern với video editor context, cho thấy rõ ràng cách pattern tách biệt invoker (VideoEditor) khỏi receiver (VideoClip) thông qua command objects, hỗ trợ undo/redo và macro commands.
+## Tips Layout Hiệu Quả
+
+### 🎯 Positioning Strategy:
+- **Interface ở trên cùng**: Command interface làm gốc
+- **Invoker ở giữa**: VideoEditor ở vị trí trung tâm
+- **Receiver ở phải**: VideoClip tách biệt
+- **Concrete Commands ở dưới**: Implementations ở dưới interface
+
+### 🔧 Spacing và Alignment:
+1. **Uniform spacing**: 100-150px giữa các classes
+2. **Grid alignment**: Sử dụng grid để căn chỉnh chính xác
+3. **Minimize crossing**: Tránh đường nối chéo nhau
+4. **Clear sight lines**: Đường nối thẳng, không quanh co
+
+### 📐 Practical Steps:
+1. **Đặt Command interface trước** (anchor point)
+2. **VideoEditor và VideoClip** trên cùng hàng với Command
+3. **Concrete Commands** xuống hàng dưới
+4. **MacroCommand** ở vị trí đặc biệt (vừa implement vừa contain)
+
+---
+
+## Checklist Đường Nối
+
+### ✅ Realization Arrows (3 đường):
+- [ ] AddTextCommand ——————————◁ Command
+- [ ] AdjustBrightnessCommand ——————————◁ Command  
+- [ ] MacroCommand ——————————◁ Command
+
+### ✅ Association Lines (4 đường):
+- [ ] VideoEditor ——————————→ Command [commands *]
+- [ ] VideoEditor ——————————→ VideoClip [video 1]
+- [ ] AddTextCommand ——————————→ VideoClip [video 1]
+- [ ] AdjustBrightnessCommand ——————————→ VideoClip [video 1]
+
+### ✅ Composition Line (1 đường):
+- [ ] MacroCommand ♦——————————→ Command [commands *]
+
+**Tổng cộng: 8 đường nối**
+
+---
+
+Với layout và đường nối này, bạn sẽ có một UML diagram rõ ràng thể hiện Command Pattern với tất cả relationships chính xác.

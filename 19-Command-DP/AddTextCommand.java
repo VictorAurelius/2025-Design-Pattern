@@ -46,18 +46,14 @@ public class AddTextCommand implements Command {
 		video.addTextOverlay(text, x, y);
 
 		// Feedback
-		System.out.println("Adding text overlay...");
-		System.out.println("  Text: \"" + text + "\"");
-		System.out.println("  Position: (" + x + ", " + y + ")");
-		System.out.println("  Total overlays: " + video.getTextOverlayCount());
+		System.out.println("Added text: \"" + text + "\" at (" + x + ", " + y + ")");
 	}
 
 	@Override
 	public void undo() {
 		// Remove the text overlay at stored index
 		video.removeTextOverlay(overlayIndex);
-		System.out.println("  Text overlay removed: \"" + text + "\" at (" + x + ", " + y + ")");
-		System.out.println("  Total overlays: " + video.getTextOverlayCount());
+		System.out.println("Removed text: \"" + text + "\"");
 	}
 
 	@Override

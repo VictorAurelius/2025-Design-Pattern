@@ -73,13 +73,12 @@ video 1      (multiplicity one)
 
 ## 2. RELATIONSHIPS MAPPING (Các Đường Nối Chi Tiết)
 
-### A. REALIZATION (IMPLEMENTS) - 3 đường nối
+### A. REALIZATION (IMPLEMENTS) - 2 đường nối
 ```
 AddTextCommand          ──────────────────┐
                                           │
-AdjustBrightnessCommand ──────────────────┼──► Command
-                                          │   <<interface>>
-MacroCommand           ──────────────────┘
+AdjustBrightnessCommand ──────────────────┘──► Command
+                                             <<interface>>
 
 Kiểu đường: ──────────────────► (nét liền, mũi tên tam giác trống)
 ```
@@ -103,15 +102,6 @@ Kiểu đường: ──────────────────► (né
    Multiplicity: 1
 
 Kiểu đường: ────────► (nét liền, mũi tên đơn)
-```
-
-### C. COMPOSITION (CONTAINS) - 1 đường nối
-```
-MacroCommand ◆────────► Command
-   Role: commands
-   Multiplicity: *
-
-Kiểu đường: ◆────────► (nét liền, hình thoi đặc, mũi tên đơn)
 ```
 
 ## 3. DETAILED LAYOUT STRUCTURE
@@ -146,25 +136,11 @@ Kiểu đường: ◆────────► (nét liền, hình thoi đặc
 └─────────────────────────┘
 ```
 
-### Tầng 3 (Bottom Layer):
-```
-┌─MacroCommand─┐
-│             │◆
-│ (Composite) │ ┐
-└─────────────┘ │ Composition
-                │ relationship
-       ┌────────┘
-       │
-       ▼
-   [Back to Command Interface]
-```
-
-## 4. CONNECTION POINTS (Điểm Kết Nối)
+## 3. CONNECTION POINTS (Điểm Kết Nối)
 
 ### From Command Interface:
 - **To AddTextCommand**: Bottom center → Top center
 - **To AdjustBrightnessCommand**: Bottom center → Top center
-- **To MacroCommand**: Bottom center → Top center
 
 ### From VideoEditor:
 - **To Command**: Left center → Right center
@@ -174,10 +150,7 @@ Kiểu đường: ◆────────► (nét liền, hình thoi đặc
 - **AddTextCommand to VideoClip**: Right center → Bottom left
 - **AdjustBrightnessCommand to VideoClip**: Right center → Bottom center
 
-### From MacroCommand:
-- **To Command Interface**: Top center → Left bottom (composition diamond)
-
-## 5. VISUAL HIERARCHY
+## 4. VISUAL HIERARCHY
 
 ```
 LEVEL 1: Core Abstractions
@@ -193,26 +166,26 @@ LEVEL 2: Pattern Participants
 └─────────┘    └─────────┘
 
 LEVEL 3: Concrete Implementations
-┌─────────┐ ┌─────────┐ ┌─────────┐
-│AddText  │ │Adjust   │ │Macro    │
-│Command  │ │Bright   │ │Command  │
-│(Green)  │ │Command  │ │(Yellow) │
-│         │ │(Green)  │ │         │
-└─────────┘ └─────────┘ └─────────┘
+┌─────────┐ ┌─────────┐
+│AddText  │ │Adjust   │
+│Command  │ │Bright   │
+│(Green)  │ │Command  │
+│         │ │(Green)  │
+└─────────┘ └─────────┘
 ```
 
-## 6. COMPLETE WIRING DIAGRAM
+## 5. COMPLETE WIRING DIAGRAM
 
 ```
                 [1] Realization
     ┌───────────────▲───────────────┐
     │               │               │
     │               │               │
-AddTextCmd    AdjustBrightCmd    MacroCmd
-    │               │               ║
-    │[3] Association│               ║ [5] Composition
-    │               │               ║
-    └───────┐       └───────┐       ▼
+AddTextCmd    AdjustBrightCmd       │
+    │               │               │
+    │[3] Association│               │
+    │               │               │
+    └───────┐       └───────┐       │
             │               │    Command
             │               │   Interface
             │               │       ▲
@@ -224,40 +197,34 @@ AddTextCmd    AdjustBrightCmd    MacroCmd
                    [4] Association
 
 Legend:
-[1] 3x Realization arrows
+[1] 2x Realization arrows
 [2] 1x Association (VideoEditor → Command)
 [3] 2x Association (Commands → VideoClip)
 [4] 1x Association (VideoEditor → VideoClip)
-[5] 1x Composition (MacroCommand ◆→ Command)
 
-Total: 8 connections
+Total: 6 connections
 ```
 
-## 7. STEP-BY-STEP DRAWING ORDER
+## 6. STEP-BY-STEP DRAWING ORDER
 
-### Bước 1: Vẽ Classes (6 boxes)
+### Bước 1: Vẽ Classes (5 boxes)
 1. Command Interface (top-left)
 2. VideoEditor (top-center)
 3. VideoClip (top-right)
 4. AddTextCommand (bottom-left)
-5. AdjustBrightnessCommand (bottom-left, dưới AddTextCommand)
-6. MacroCommand (bottom-left, dưới AdjustBrightnessCommand)
+5. AdjustBrightnessCommand (bottom-right)
 
-### Bước 2: Vẽ Realization (3 arrows up)
-7. AddTextCommand ──────────► Command
-8. AdjustBrightnessCommand ──────────► Command
-9. MacroCommand ──────────► Command
+### Bước 2: Vẽ Realization (2 arrows up)
+6. AddTextCommand ──────────► Command
+7. AdjustBrightnessCommand ──────────► Command
 
 ### Bước 3: Vẽ Association (4 arrows horizontal/diagonal)
-10. VideoEditor ────────► Command [commands *]
-11. VideoEditor ────────► VideoClip [video 1]
-12. AddTextCommand ────────► VideoClip [video 1]
-13. AdjustBrightnessCommand ────────► VideoClip [video 1]
+8. VideoEditor ────────► Command [commands *]
+9. VideoEditor ────────► VideoClip [video 1]
+10. AddTextCommand ────────► VideoClip [video 1]
+11. AdjustBrightnessCommand ────────► VideoClip [video 1]
 
-### Bước 4: Vẽ Composition (1 diamond arrow)
-14. MacroCommand ◆────────► Command [commands *]
-
-**Total: 6 classes + 8 relationships = 14 elements**
+**Total: 5 classes + 6 relationships = 11 elements**
 
 ---
 
@@ -277,9 +244,6 @@ Total: 8 connections
 - **Tương tự**: AdjustBrightnessCommand → Command
 - **Đường nối**: ——————————◁
 
-#### MacroCommand implements Command:
-- **Tương tự**: MacroCommand → Command  
-- **Đường nối**: ——————————◁
 
 ### 2. Association - VideoEditor uses Command
 
@@ -315,16 +279,6 @@ Total: 8 connections
 - **Tương tự**: AdjustBrightnessCommand → VideoClip
 - **Label**: `video 1`
 
-### 5. Composition - MacroCommand contains Commands
-
-#### MacroCommand ◆→ Command:
-- **Toolbox**: Chọn **Composition**
-- **Từ**: MacroCommand  
-- **Đến**: Command interface
-- **Kiểu đường**: Đường liền nét ——————————
-- **Hình thoi**: Đặc, màu đen ♦ (ở phía MacroCommand)
-- **Label**: `commands *` (ở phía Command)
-- **Multiplicity**: `*`
 
 ---
 
@@ -345,31 +299,22 @@ Total: 8 connections
    - End2 Multiplicity: `*`
 5. **Kết quả**: ——————————→ commands *
 
-### Composition (Quan hệ chứa đựng):
-1. Chọn **Composition** từ Toolbox
-2. Click vào class chứa (MacroCommand)
-3. Kéo đến class được chứa (Command)
-4. **Kết quả**: ♦——————————→ commands *
 
 ---
 
 ## Thứ Tự Vẽ Đường Nối
 
-### Bước 1: Vẽ Realization trước (3 đường)
+### Bước 1: Vẽ Realization trước (2 đường)
 1. AddTextCommand → Command
-2. AdjustBrightnessCommand → Command  
-3. MacroCommand → Command
+2. AdjustBrightnessCommand → Command
 
 ### Bước 2: Vẽ Association từ VideoEditor (2 đường)
-4. VideoEditor → Command
-5. VideoEditor → VideoClip
+3. VideoEditor → Command
+4. VideoEditor → VideoClip
 
 ### Bước 3: Vẽ Association từ Commands đến VideoClip (2 đường)
-6. AddTextCommand → VideoClip
-7. AdjustBrightnessCommand → VideoClip
-
-### Bước 4: Vẽ Composition cuối cùng (1 đường)
-8. MacroCommand ◆→ Command
+5. AddTextCommand → VideoClip
+6. AdjustBrightnessCommand → VideoClip
 
 ---
 
@@ -390,17 +335,15 @@ Total: 8 connections
 ### 📐 Practical Steps:
 1. **Đặt Command interface trước** (anchor point)
 2. **VideoEditor và VideoClip** trên cùng hàng với Command
-3. **Concrete Commands** xuống hàng dưới
-4. **MacroCommand** ở vị trí đặc biệt (vừa implement vừa contain)
+3. **Concrete Commands** xuống hàng dưới (2 commands cạnh nhau)
 
 ---
 
 ## Checklist Đường Nối
 
-### ✅ Realization Arrows (3 đường):
+### ✅ Realization Arrows (2 đường):
 - [ ] AddTextCommand ——————————◁ Command
-- [ ] AdjustBrightnessCommand ——————————◁ Command  
-- [ ] MacroCommand ——————————◁ Command
+- [ ] AdjustBrightnessCommand ——————————◁ Command
 
 ### ✅ Association Lines (4 đường):
 - [ ] VideoEditor ——————————→ Command [commands *]
@@ -408,10 +351,7 @@ Total: 8 connections
 - [ ] AddTextCommand ——————————→ VideoClip [video 1]
 - [ ] AdjustBrightnessCommand ——————————→ VideoClip [video 1]
 
-### ✅ Composition Line (1 đường):
-- [ ] MacroCommand ♦——————————→ Command [commands *]
-
-**Tổng cộng: 8 đường nối**
+**Tổng cộng: 6 đường nối**
 
 ---
 

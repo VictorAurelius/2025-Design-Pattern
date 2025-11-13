@@ -43,18 +43,14 @@ public class AdjustBrightnessCommand implements Command {
 		video.setBrightness(newBrightness);
 
 		// Feedback
-		System.out.println("Adjusting brightness " +
-		                   (adjustment >= 0 ? "+" : "") + adjustment + "...");
-		System.out.println("  Previous brightness: " + previousBrightness);
-		System.out.println("  New brightness: " + video.getBrightness());
+		System.out.println("Brightness: " + previousBrightness + " → " + newBrightness);
 	}
 
 	@Override
 	public void undo() {
 		// Restore previous brightness
 		video.setBrightness(previousBrightness);
-		System.out.println("  Brightness restored: " + video.getBrightness() +
-		                   " → " + previousBrightness);
+		System.out.println("Brightness restored to: " + previousBrightness);
 	}
 
 	@Override

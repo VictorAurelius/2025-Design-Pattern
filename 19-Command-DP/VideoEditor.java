@@ -71,7 +71,7 @@ public class VideoEditor {
 		}
 
 		// Confirmation message
-		System.out.println("✓ Executed: " + command.getDescription());
+		System.out.println("Executed: " + command.getDescription());
 	}
 
 	/**
@@ -92,13 +92,11 @@ public class VideoEditor {
 		Command command = undoStack.pop();
 
 		// Undo the command
-		System.out.println("\n[UNDO] Undoing: " + command.getDescription());
+		System.out.println("Undoing: " + command.getDescription());
 		command.undo();
 
 		// Push to redo stack
 		redoStack.push(command);
-
-		System.out.println("✓ Undone: " + command.getDescription());
 	}
 
 	/**
@@ -119,13 +117,11 @@ public class VideoEditor {
 		Command command = redoStack.pop();
 
 		// Re-execute the command
-		System.out.println("\n[REDO] Redoing: " + command.getDescription());
+		System.out.println("Redoing: " + command.getDescription());
 		command.execute();
 
 		// Push back to undo stack
 		undoStack.push(command);
-
-		System.out.println("✓ Redone: " + command.getDescription());
 	}
 
 	/**
@@ -134,7 +130,7 @@ public class VideoEditor {
 	 * @param count Number of commands to undo
 	 */
 	public void undoMultiple(int count) {
-		System.out.println("\n[UNDO MULTIPLE] Undoing " + count + " operations...");
+		System.out.println("Undoing " + count + " operations...");
 		for (int i = 0; i < count && !undoStack.isEmpty(); i++) {
 			undo();
 		}

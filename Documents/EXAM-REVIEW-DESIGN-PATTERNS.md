@@ -203,66 +203,263 @@ public void display() {
 
 ---
 
-## 6. ƯU ĐIỂM CỦA MEDIATOR, OBSERVER, FLYWEIGHT
+## 6. MEDIATOR PATTERN
 
-### A. MEDIATOR PATTERN - [`SmartHomeController`](7-Mediator-DP/SmartHomeController.java:1)
+### Câu hỏi: Mediator là gì, cái nào là mediator trong code, devices giao tiếp với nhau thế nào, ưu điểm của mediator?
 
-#### Ưu điểm:
-1. **Loose Coupling**: Devices không biết nhau, chỉ biết hub
-2. **Centralized Logic**: Tất cả coordination logic ở 1 chỗ
-3. **Easy Maintenance**: Thay đổi behavior chỉ sửa mediator
-4. **Reusable Components**: Device classes độc lập, tái sử dụng được
+**Trả lời:**
 
-#### Ví dụ thực tế:
+#### Mediator là gì?
+**Mediator** là object trung gian điều phối giao tiếp giữa các objects khác, tránh chúng tham chiếu trực tiếp đến nhau.
+
+#### Cái nào là Mediator: [`SmartHomeController`](7-Mediator-DP/SmartHomeController.java:1) class
 ```java
-// Without Mediator: MotionSensor phải biết tất cả devices
-// With Mediator: 
-public void notify(SmartDevice device, String event) {
-    switch(event) {
-        case "motion_detected":
-            securityCamera.startRecording();  // ← Mediator coordinate
-            smartLight.turnOn(100);
-            break;
+public class SmartHomeController implements SmartHomeHub {
+    private MotionSensor motionSensor;     // ← Devices không biết nhau
+    private SecurityCamera securityCamera;
+    private SmartLight smartLight;
+    private Thermostat thermostat;
+    
+    @Override
+    public void notify(SmartDevice device, String event) {  // ← Mediator method
+        switch (event) {
+            case "motion_detected":
+                handleMotionDetection();  // ← Coordinate devices
+                break;
+        }
     }
 }
 ```
 
-### B. OBSERVER PATTERN - [`Channel`](6-Observer-DP/Channel.java:1) interface
+#### Devices giao tiếp thế nào?
+**Qua Mediator Hub, KHÔNG trực tiếp:**
+```java
+// Device gửi event đến Hub
+public void notify(SmartDevice device, String event) {
+    switch(event) {
+        case "motion_detected":
+            securityCamera.startRecording();  // ← Hub coordinate
+            smartLight.turnOn(100);           // ← Hub coordinate
+            break;
+    }
+}
 
-#### Ưu điểm:
+// Device KHÔNG biết devices khác:
+// ❌ motionSensor.getSecurityCamera().startRecording()  // Vi phạm Mediator
+// ✅ hub.notify(this, "motion_detected")                // Đúng Mediator
+```
+
+#### Ưu điểm của Mediator:
+1. **Loose Coupling**: Devices không phụ thuộc nhau
+2. **Centralized Logic**: Logic coordination ở 1 chỗ
+3. **Easy Maintenance**: Sửa behavior chỉ cần sửa mediator
+4. **Reusable Components**: Device classes tái sử dụng được
+
+---
+
+## 7. OBSERVER PATTERN
+
+### Câu hỏi: Observer pattern hoạt động thế nào, subject và observer là gì, cách subscribe/unsubscribe, ưu điểm của observer?
+
+**Trả lời:**
+
+#### Subject (Observable): [`Channel`](6-Observer-DP/Channel.java:1) interface
+```java
+public interface Channel {
+    void attach(Subscriber subscriber);    // ← Subscribe
+    void detach(Subscriber subscriber);    // ← Unsubscribe
+    void notifySubscribers();             // ← Broadcast to all
+    String getChannelName();
+}
+```
+
+#### Observer: [`Subscriber`](6-Observer-DP/Subscriber.java:1) interface
+```java
+public interface Subscriber {
+    void update(String videoTitle);       // ← Receive notification
+    void subscribe();
+    void unsubscribe();
+}
+```
+
+#### Cách hoạt động:
+```java
+// 1. Subscribers đăng ký với Channel
+channel.attach(emailSubscriber);
+channel.attach(smsSubscriber);
+channel.attach(mobileAppSubscriber);
+
+// 2. Channel có video mới → notify ALL subscribers
+channel.notifySubscribers();  // ← 1 to many broadcast
+
+// 3. Mỗi subscriber nhận notification riêng
+emailSubscriber.update("New Video: Design Patterns");
+smsSubscriber.update("New Video: Design Patterns");
+mobileAppSubscriber.update("New Video: Design Patterns");
+```
+
+#### Subscribe/Unsubscribe:
+```java
+// Subscribe: Add to subscriber list
+public void attach(Subscriber subscriber) {
+    subscribers.add(subscriber);
+}
+
+// Unsubscribe: Remove from subscriber list
+public void detach(Subscriber subscriber) {
+    subscribers.remove(subscriber);
+}
+```
+
+#### Ưu điểm của Observer:
 1. **Dynamic Relationships**: Subscribe/unsubscribe runtime
 2. **Broadcast Communication**: 1 subject → nhiều observers
 3. **Open/Closed Principle**: Thêm observer mới không sửa subject
 4. **Loose Coupling**: Subject không biết concrete observers
 
-#### Ví dụ thực tế:
+---
+
+## 8. FLYWEIGHT PATTERN
+
+### Câu hỏi: Flyweight tiết kiệm memory thế nào, intrinsic vs extrinsic state, factory pattern trong flyweight, ưu điểm của flyweight?
+
+**Trả lời:**
+
+#### Flyweight tiết kiệm memory thế nào?
+**Chia sẻ intrinsic state, truyền extrinsic state:**
 ```java
-// YouTube channel upload video → notify all subscribers
-channel.attach(emailSubscriber);     // Subscribe
-channel.attach(mobileAppSubscriber);
-channel.notifySubscribers();         // Broadcast to all!
+// 1000 videos but only 4 icon types shared
+VideoIcon playIcon = IconFactory.getIcon("play");   // ← Shared intrinsic
+playIcon.render(100, 50, "Video 1");               // ← Different extrinsic
+
+VideoIcon samePlayIcon = IconFactory.getIcon("play"); // ← Reuse same object!
+// playIcon == samePlayIcon  ← true (same memory address)
 ```
 
-### C. FLYWEIGHT PATTERN - [`IconFactory`](10-Flyweight-DP/IconFactory.java:1)
+#### Intrinsic vs Extrinsic State:
 
-#### Ưu điểm:
+**Intrinsic State (shared)** - trong [`VideoIcon`](10-Flyweight-DP/VideoIcon.java:1):
+```java
+public class PlayIcon implements VideoIcon {
+    private String iconType = "PLAY";     // ← Intrinsic: không đổi
+    private int iconSize = 24;            // ← Intrinsic: shared by all
+}
+```
+
+**Extrinsic State (unique)** - passed to render():
+```java
+public void render(int x, int y, String videoTitle) {  // ← Extrinsic parameters
+    // x, y: position - unique for each video
+    // videoTitle: content - unique for each video
+}
+```
+
+#### Factory Pattern trong Flyweight - [`IconFactory`](10-Flyweight-DP/IconFactory.java:1):
+```java
+private static Map<String, VideoIcon> iconPool = new HashMap<>();  // ← Object pool
+
+public static VideoIcon getIcon(String iconType) {
+    VideoIcon icon = iconPool.get(iconType);
+    
+    if (icon == null) {                    // ← Not in pool
+        icon = new PlayIcon();             // ← Create new flyweight
+        iconPool.put(iconType, icon);      // ← Store in pool
+    }
+    return icon;                           // ← Return shared flyweight
+}
+```
+
+#### Ưu điểm của Flyweight:
 1. **Memory Optimization**: Share common state giữa nhiều objects
 2. **Performance**: Giảm object creation overhead
-3. **Object Pool**: Reuse existing flyweights thay vì tạo mới
+3. **Object Pool**: Reuse thay vì tạo mới
 4. **Scalability**: Support hàng ngàn objects với ít memory
 
-#### Ví dụ thực tế:
-```java
-// 1000 videos but only 4 unique icon types
-VideoIcon playIcon = IconFactory.getIcon("play");  // Created once
-VideoIcon sameIcon = IconFactory.getIcon("play");  // Reused!
+**Thống kê**: 1000 videos → 4 flyweight objects → Tiết kiệm 99.6% memory
 
-// Statistics: 1000 requests → 4 objects created, 996 reused
-// Memory saved: 99.6%
+---
+
+## 9. SINGLETON PATTERN
+
+### Câu hỏi: Singleton đảm bảo chỉ 1 instance thế nào, cách implement thread-safe, khi nào dùng singleton, ưu nhược điểm?
+
+**Trả lời:**
+
+#### Đảm bảo chỉ 1 instance thế nào?
+**Bill Pugh method trong [`ConfigurationManager`](5-Singleton-DP/ConfigurationManager.java:1):**
+```java
+public class ConfigurationManager {
+    // Private constructor - prevent direct instantiation
+    private ConfigurationManager() {
+        loadConfiguration();
+    }
+    
+    // Inner static class - lazy initialization
+    private static class SingletonHelper {
+        private static final ConfigurationManager INSTANCE = new ConfigurationManager();
+    }
+    
+    // Public access point - only way to get instance
+    public static ConfigurationManager getInstance() {
+        return SingletonHelper.INSTANCE;  // ← Always same object
+    }
+}
 ```
 
-**Intrinsic state**: Icon shape, color (shared)
-**Extrinsic state**: Position, video title (passed in render())
+#### Thread-safe implementation:
+**Bill Pugh (code hiện tại)** - Thread-safe tự nhiên:
+- **Class loading**: JVM đảm bảo thread-safe khi load class
+- **Static final**: INSTANCE được tạo duy nhất 1 lần
+- **Lazy loading**: Chỉ tạo khi gọi `getInstance()` lần đầu
+
+#### Verification - Same instance:
+```java
+ConfigurationManager config1 = ConfigurationManager.getInstance();  // InventoryModule
+ConfigurationManager config2 = ConfigurationManager.getInstance();  // SalesModule
+
+// config1 == config2          ← true (same reference)
+// config1.hashCode() == config2.hashCode()  ← true (same object)
+```
+
+#### Khi nào dùng Singleton?
+- **Configuration**: 1 config duy nhất cho toàn app
+- **Logger**: 1 logging system duy nhất
+- **Database Connection Pool**: 1 pool manager
+- **Cache**: 1 cache system shared
+
+#### Ưu điểm của Singleton:
+1. **Global Access**: Truy cập từ mọi nơi
+2. **Single Instance**: Đảm bảo duy nhất 1 object
+3. **Resource Sharing**: Share tài nguyên expensive
+4. **Memory Efficient**: Tiết kiệm bộ nhớ
+
+#### Nhược điểm của Singleton:
+1. **Global State**: Khó test, khó debug
+2. **Hidden Dependencies**: Dependencies không rõ ràng
+3. **Violates SRP**: Quản lý instance + business logic
+4. **Difficult to Mock**: Khó mock cho unit testing
+
+---
+
+## 10. SO SÁNH PATTERNS THÔNG QUA ƯU ĐIỂM
+
+### SUMMARY: Ưu điểm chính của từng pattern
+
+#### MEDIATOR:
+- **Loose Coupling**: Devices không reference trực tiếp nhau
+- **Centralized Logic**: Coordination logic tập trung ở SmartHomeController
+
+#### OBSERVER:
+- **Dynamic Relationships**: Subscribe/unsubscribe runtime
+- **Broadcast Communication**: 1 subject → many observers
+
+#### FLYWEIGHT:
+- **Memory Optimization**: Share intrinsic state giữa objects
+- **Object Pool**: Reuse flyweights thay vì create mới
+
+#### SINGLETON:
+- **Global Access**: Truy cập từ mọi nơi trong app
+- **Single Instance**: Đảm bảo duy nhất 1 object
 
 ---
 

@@ -8,7 +8,8 @@
       "Bash(ls:*)",
       "Bash(done)",
       "Bash(java:*)",
-      "Bash(mkdir:*)"
+      "Bash(mkdir:*)",
+      "Bash(tree:*)"
     ],
     "deny": [],
     "ask": []

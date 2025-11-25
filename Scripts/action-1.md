@@ -96,3 +96,15 @@ session cũ đang do req-24 đến mẫu 16 thì dừng, hãy kiểm tra mẫu 1
 hãy đọc 99-B-Learing/DTPM_B-Learning.pdf và thực hiện đánh giá chi tiết về thiết kế database này 
 
 hãy viết lại báo cáo thành file md trong 99-B-Learing/documents
+
+bây giờ hãy tạo 99-B-Learing/req-1.md là plan task cho claude để tạo lại thiết kế db B-Learning này:
+1. tôi sẽ vẽ lại sơ đồ BFD và ERD trên starUML (giống các design pattern: Scripts/req-1.md) hãy gen code hoặc mã thuận lợi reserver tốt trên starUML
+2. hệ thống này không yêu cầu forum và review hoặc discussion nữa
+3. có cấp chứng chỉ
+4. thiết kế lại giống 1 hệ thống B-learing thông dụng (theo dạng assignment) thay vì submission như hiện tại
+5. mô tả PK, FK, thuộc tính rõ ràng
+6. mô tả lại chức năng mới cập nhật rõ ràng
+
+Mục tiêu: đưa ra 1 đặc tả hệ thống B-Learing (BFD, ERD, đặc tả) hoàn thiện.
+
+Tất cả các báo cáo ở dạng md

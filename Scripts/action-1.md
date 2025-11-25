@@ -108,3 +108,4 @@ bây giờ hãy tạo 99-B-Learing/req-1.md là plan task cho claude để tạo
 Mục tiêu: đưa ra 1 đặc tả hệ thống B-Learing (BFD, ERD, đặc tả) hoàn thiện.
 
 Tất cả các báo cáo ở dạng md
+do req-1

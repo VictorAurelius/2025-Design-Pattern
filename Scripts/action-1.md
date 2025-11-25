@@ -92,3 +92,7 @@ sau đó hãy viết req-24 để thực hiện task:
 3. các solution.md của các mẫu cần mô tả rõ ý nghĩa, mục đích, cách triển khai của các testcase trong hàm main (demo)
 
 session cũ đang do req-24 đến mẫu 16 thì dừng, hãy kiểm tra mẫu 16 đúng chưa và do tiếp req-24
+
+hãy đọc 99-B-Learing/DTPM_B-Learning.pdf và thực hiện đánh giá chi tiết về thiết kế database này 
+
+hãy viết lại báo cáo thành file md trong 99-B-Learing/documents

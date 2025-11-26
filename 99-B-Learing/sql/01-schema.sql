@@ -480,7 +480,7 @@ CREATE TABLE "GradeBook" (
   weighted_score DECIMAL(6,2) DEFAULT 0.00,
   letter_grade VARCHAR(5),
   last_updated_at TIMESTAMP,
- 
+  
   -- Note: expression (COALESCE) cannot be used inside a table-level
   -- UNIQUE constraint. We'll enforce the intended uniqueness with
   -- a unique index created after the table definition.

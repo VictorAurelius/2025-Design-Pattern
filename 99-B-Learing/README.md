@@ -166,6 +166,8 @@ cd 99-B-Learing
 
 2. **Create database**
 
+set PGPASSWORD=YourPass
+
 ```bash
 createdb -U postgres -h localhost blelearning_db
 ```
@@ -173,6 +175,7 @@ createdb -U postgres -h localhost blelearning_db
 psql -U postgres -h localhost -d blelearning_db -f "sql/run-all.sql"
 psql -U postgres -h localhost -d blelearning_db -f "sql/01-schema.sql"
 psql -U postgres -h localhost -d blelearning_db -f "sql/02-indexes.sql"
+
 
 3. **Run SQL scripts in order**
 

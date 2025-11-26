@@ -252,12 +252,10 @@ CREATE TABLE "Progress" (
   completed_at TIMESTAMP,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-
-  CONSTRAINT uq_progress UNIQUE(
-    user_id, course_id,
-    COALESCE(class_id, '00000000-0000-0000-0000-000000000000'::UUID),
-    module_id, lecture_id
-  ),
+  
+  -- Note: expression (COALESCE) cannot be used inside a table-level
+  -- UNIQUE constraint. We will create an equivalent unique index after
+  -- the table definition to treat NULL class_id as the zero-UUID.
   CONSTRAINT chk_progress_status CHECK (status IN (
     'NOT_STARTED', 'IN_PROGRESS', 'COMPLETED', 'SKIPPED'
   )),
@@ -267,6 +265,13 @@ CREATE TABLE "Progress" (
 );
 
 COMMENT ON TABLE "Progress" IS 'Learning progress tracking (REDESIGNED from v1.0)';
+
+-- Unique index to enforce uniqueness treating NULL class_id as zero-UUID
+CREATE UNIQUE INDEX IF NOT EXISTS uq_progress ON "Progress" (
+  user_id, course_id,
+  COALESCE(class_id, '00000000-0000-0000-0000-000000000000'::UUID),
+  module_id, lecture_id
+);
 
 CREATE TABLE "Attendance" (
   attendance_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -475,11 +480,19 @@ CREATE TABLE "GradeBook" (
   weighted_score DECIMAL(6,2) DEFAULT 0.00,
   letter_grade VARCHAR(5),
   last_updated_at TIMESTAMP,
-
-  CONSTRAINT uq_gradebook UNIQUE(user_id, course_id, COALESCE(class_id, '00000000-0000-0000-0000-000000000000'::UUID))
+ 
+  -- Note: expression (COALESCE) cannot be used inside a table-level
+  -- UNIQUE constraint. We'll enforce the intended uniqueness with
+  -- a unique index created after the table definition.
 );
 
 COMMENT ON TABLE "GradeBook" IS 'Aggregated grades per student per course (NEW)';
+
+-- Unique index to treat NULL class_id as zero-UUID for uniqueness
+CREATE UNIQUE INDEX IF NOT EXISTS uq_gradebook ON "GradeBook" (
+  user_id, course_id,
+  COALESCE(class_id, '00000000-0000-0000-0000-000000000000'::UUID)
+);
 
 -- ============================================
 -- 6. CERTIFICATE (3 tables)

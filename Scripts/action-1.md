@@ -109,3 +109,17 @@ Mục tiêu: đưa ra 1 đặc tả hệ thống B-Learing (BFD, ERD, đặc t�
 
 Tất cả các báo cáo ở dạng md
 do req-1
+
+hãy đọc 99-B-Learing/req-1.md để hiểu context
+
+Hiện tại db này đang bị vấn đề là quá nhiều bảng mà liên kết quá chặt chẽ, khó nắm bắt cho người tìm hiểu. Tôi muốn tinh giảm nó:
+1. bỏ các chức năng không phải core
+2. giản lược bảng cho 1 số chức năng
+
+hãy tạo 1 báo cáo md đề xuất
+
+tôi đồng ý với phương án chỉnh sửa này, hãy tạo req-2.md là plan task để chỉnh sửa lại db:
+1. hãy tạo file trong thư mực 98-B-Learing-Core
+2. tài liệu đầy đủ như 99 (BFD, ERD, SQL, ...)
+3. tạo thêm file giải thích ý nghĩa bảng và thuộc tính dạng tiếng việt để hiểu rõ db hơn
+4. không cần trigger, view, drop ... chỉ cần schema, index, constraints, seed-data

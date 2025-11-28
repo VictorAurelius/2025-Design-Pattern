@@ -133,3 +133,5 @@ hãy dùng code python và next js để tạo 2 giao diện này:
 2. theo chuẩn restful, query bằng lệnh sql
 3. chọn bảng là đặc trưng của B-learning
 4. có tài liệu giải thích code dễ dàng
+
+hãy tạo docker compose để build web này, tự tạo image db bằng 98-B-learning-core

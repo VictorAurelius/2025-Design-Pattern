@@ -1,0 +1,99 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  db:
+    build:
+      context: ./db
+      dockerfile: Dockerfile
+    container_name: blearning-db
+    environment:
+      POSTGRES_DB: b_learning
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_HOST_AUTH_METHOD: trust
+    ports:
+      - "5432:5432"
+    volumes:
+      # Persist database data
+      - postgres_data:/var/lib/postgresql/data
+      # Init scripts are copied in Dockerfile
+    networks:
+      - blearning-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d b_learning"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+
+  # FastAPI Backend
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: blearning-backend
+    environment:
+      # Database connection
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: b_learning
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      # API settings
+      API_HOST: 0.0.0.0
+      API_PORT: 8000
+      API_RELOAD: "false"
+      # CORS
+      CORS_ORIGINS: http://localhost:3000,http://localhost:80,http://frontend:3000
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - blearning-network
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import requests; requests.get('http://localhost:8000/health')\" || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+
+  # Next.js Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: blearning-frontend
+    environment:
+      # API URL (internal Docker network)
+      NEXT_PUBLIC_API_URL: http://backend:8000
+      # For browser (external)
+      # User should access via http://localhost:8000
+    ports:
+      - "3000:3000"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - blearning-network
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"require('http').get('http://localhost:3000', (r) => {if (r.statusCode === 200) process.exit(0); else process.exit(1);})\""]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+
+# Networks
+networks:
+  blearning-network:
+    driver: bridge
+
+# Volumes
+volumes:
+  postgres_data:
+    driver: local

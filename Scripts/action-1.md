@@ -123,3 +123,13 @@ tôi đồng ý với phương án chỉnh sửa này, hãy tạo req-2.md là p
 2. tài liệu đầy đủ như 99 (BFD, ERD, SQL, ...)
 3. tạo thêm file giải thích ý nghĩa bảng và thuộc tính dạng tiếng việt để hiểu rõ db hơn
 4. không cần trigger, view, drop ... chỉ cần schema, index, constraints, seed-data
+
+hãy đọc 98-B-Learing-Core/req-2.md để hiểu context
+hãy tạo req-3 là plan task cho claude code để:
+
+bây giờ tôi cần 2 giao diện web để thao tác chứng minh database
+hãy dùng code python và next js để tạo 2 giao diện này:
+1. 2 giao diện (2 page), 1 page thao tác với 1 bảng, 1 page thao tác với nhiều bảng, giao diện dễ sử dụng
+2. theo chuẩn restful, query bằng lệnh sql
+3. chọn bảng là đặc trưng của B-learning
+4. có tài liệu giải thích code dễ dàng

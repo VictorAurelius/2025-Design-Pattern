@@ -9,7 +9,8 @@
       "Bash(done)",
       "Bash(java:*)",
       "Bash(mkdir:*)",
-      "Bash(tree:*)"
+      "Bash(tree:*)",
+      "Bash(npm init:*)"
     ],
     "deny": [],
     "ask": []

@@ -169,7 +169,7 @@ Nếu bạn muốn develop và sửa code, dùng local setup.
 
 ```bash
 # Tạo database
-createdb b_learning
+createdb -U postgres -h localhost b_learning
 
 # Chạy SQL scripts (từ 98-B-Learning-Core)
 psql -U postgres -d b_learning -f ../98-B-Learing-Core/sql/01-schema.sql

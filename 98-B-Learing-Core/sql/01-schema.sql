@@ -1,9 +1,10 @@
 -- ============================================
 -- B-LEARNING CORE DATABASE SCHEMA
--- Version: 1.0 (Core - 16 bảng)
+-- Version: 1.0 (Core - 16 tables)
 -- Database: PostgreSQL 14+
--- Author: Nguyễn Văn Kiệt - CNTT1-K63
+-- Author: Nguyen Van Kiet - CNTT1-K63
 -- Created: 2025-11-27
+-- Fixed: UTF-8 Encoding
 -- ============================================
 
 -- ============================================
@@ -12,13 +13,13 @@
 
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";  -- UUID generation
 CREATE EXTENSION IF NOT EXISTS "pg_trgm";    -- Full-text search
-CREATE EXTENSION IF NOT EXISTS "btree_gin";  -- GIN indexes cho arrays và JSON
+CREATE EXTENSION IF NOT EXISTS "btree_gin";  -- GIN indexes for arrays and JSON
 
 -- ============================================
--- DOMAIN 1: QUẢN LÝ NGƯỜI DÙNG (3 bảng)
+-- DOMAIN 1: USER MANAGEMENT (3 tables)
 -- ============================================
 
--- Bảng 1: User (Người dùng)
+-- Table 1: User
 CREATE TABLE "User" (
   user_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   email VARCHAR(255) NOT NULL UNIQUE,
@@ -39,20 +40,20 @@ CREATE TABLE "User" (
   ))
 );
 
-COMMENT ON TABLE "User" IS 'Bảng người dùng - lưu thông tin tài khoản';
-COMMENT ON COLUMN "User".user_id IS 'Mã định danh duy nhất của người dùng';
-COMMENT ON COLUMN "User".email IS 'Email đăng nhập (duy nhất)';
-COMMENT ON COLUMN "User".password_hash IS 'Mật khẩu đã mã hóa (bcrypt)';
-COMMENT ON COLUMN "User".first_name IS 'Tên';
-COMMENT ON COLUMN "User".last_name IS 'Họ và tên đệm';
-COMMENT ON COLUMN "User".avatar_url IS 'Đường dẫn ảnh đại diện (S3/GCS)';
-COMMENT ON COLUMN "User".phone IS 'Số điện thoại';
-COMMENT ON COLUMN "User".account_status IS 'Trạng thái tài khoản: PENDING_VERIFICATION, ACTIVE, SUSPENDED, DELETED';
-COMMENT ON COLUMN "User".preferences IS 'Tùy chọn người dùng (JSON): notifications, locale, timezone';
-COMMENT ON COLUMN "User".email_verified_at IS 'Thời điểm xác thực email';
-COMMENT ON COLUMN "User".last_login_at IS 'Lần đăng nhập gần nhất';
+COMMENT ON TABLE "User" IS 'User accounts - store account information';
+COMMENT ON COLUMN "User".user_id IS 'Unique user identifier';
+COMMENT ON COLUMN "User".email IS 'Login email (unique)';
+COMMENT ON COLUMN "User".password_hash IS 'Hashed password (bcrypt)';
+COMMENT ON COLUMN "User".first_name IS 'First name';
+COMMENT ON COLUMN "User".last_name IS 'Last name and middle name';
+COMMENT ON COLUMN "User".avatar_url IS 'Avatar image path (S3/GCS)';
+COMMENT ON COLUMN "User".phone IS 'Phone number';
+COMMENT ON COLUMN "User".account_status IS 'Account status: PENDING_VERIFICATION, ACTIVE, SUSPENDED, DELETED';
+COMMENT ON COLUMN "User".preferences IS 'User preferences (JSON): notifications, locale, timezone';
+COMMENT ON COLUMN "User".email_verified_at IS 'Email verification time';
+COMMENT ON COLUMN "User".last_login_at IS 'Last login time';
 
--- Bảng 2: Role (Vai trò)
+-- Table 2: Role
 CREATE TABLE "Role" (
   role_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name VARCHAR(50) NOT NULL UNIQUE,
@@ -61,12 +62,12 @@ CREATE TABLE "Role" (
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-COMMENT ON TABLE "Role" IS 'Vai trò hệ thống - RBAC (Role-Based Access Control)';
-COMMENT ON COLUMN "Role".name IS 'Tên vai trò: STUDENT, INSTRUCTOR, TA, ADMIN';
-COMMENT ON COLUMN "Role".description IS 'Mô tả vai trò';
-COMMENT ON COLUMN "Role".permissions IS 'Danh sách quyền hạn (JSON)';
+COMMENT ON TABLE "Role" IS 'System roles - RBAC (Role-Based Access Control)';
+COMMENT ON COLUMN "Role".name IS 'Role name: STUDENT, INSTRUCTOR, TA, ADMIN';
+COMMENT ON COLUMN "Role".description IS 'Role description';
+COMMENT ON COLUMN "Role".permissions IS 'List of permissions (JSON)';
 
--- Bảng 3: UserRole (Phân quyền)
+-- Table 3: UserRole
 CREATE TABLE "UserRole" (
   user_role_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES "User"(user_id) ON DELETE CASCADE,
@@ -78,16 +79,16 @@ CREATE TABLE "UserRole" (
   CONSTRAINT uq_user_role UNIQUE(user_id, role_id)
 );
 
-COMMENT ON TABLE "UserRole" IS 'Gán vai trò cho người dùng (many-to-many)';
-COMMENT ON COLUMN "UserRole".granted_at IS 'Thời điểm cấp quyền';
-COMMENT ON COLUMN "UserRole".granted_by IS 'Người cấp quyền (admin)';
-COMMENT ON COLUMN "UserRole".expires_at IS 'Thời điểm hết hạn (NULL = vĩnh viễn)';
+COMMENT ON TABLE "UserRole" IS 'Assign roles to users (many-to-many)';
+COMMENT ON COLUMN "UserRole".granted_at IS 'Time when permission was granted';
+COMMENT ON COLUMN "UserRole".granted_by IS 'Who granted the permission (admin)';
+COMMENT ON COLUMN "UserRole".expires_at IS 'Expiration time (NULL = permanent)';
 
 -- ============================================
--- DOMAIN 2: NỘI DUNG KHÓA HỌC (4 bảng)
+-- DOMAIN 2: COURSE CONTENT (4 tables)
 -- ============================================
 
--- Bảng 4: Course (Khóa học)
+-- Table 4: Course
 CREATE TABLE "Course" (
   course_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   code VARCHAR(50) NOT NULL UNIQUE,
@@ -112,20 +113,20 @@ CREATE TABLE "Course" (
   ))
 );
 
-COMMENT ON TABLE "Course" IS 'Khóa học';
-COMMENT ON COLUMN "Course".code IS 'Mã khóa học (duy nhất, ví dụ: JAVA101)';
-COMMENT ON COLUMN "Course".title IS 'Tên khóa học';
-COMMENT ON COLUMN "Course".description IS 'Mô tả chi tiết (HTML/Markdown)';
-COMMENT ON COLUMN "Course".short_description IS 'Mô tả ngắn (cho danh sách)';
-COMMENT ON COLUMN "Course".thumbnail_url IS 'Ảnh đại diện khóa học';
-COMMENT ON COLUMN "Course".category IS 'Danh mục (Programming, Math, Design...)';
-COMMENT ON COLUMN "Course".difficulty_level IS 'Độ khó: BEGINNER, INTERMEDIATE, ADVANCED';
-COMMENT ON COLUMN "Course".estimated_hours IS 'Thời lượng ước tính (giờ)';
-COMMENT ON COLUMN "Course".status IS 'Trạng thái: DRAFT (nháp), PUBLISHED (public), ARCHIVED (lưu trữ)';
-COMMENT ON COLUMN "Course".published_at IS 'Thời điểm xuất bản';
-COMMENT ON COLUMN "Course".created_by IS 'Người tạo (Instructor)';
+COMMENT ON TABLE "Course" IS 'Course catalog';
+COMMENT ON COLUMN "Course".code IS 'Course code (unique, e.g. JAVA101)';
+COMMENT ON COLUMN "Course".title IS 'Course title';
+COMMENT ON COLUMN "Course".description IS 'Detailed description (HTML/Markdown)';
+COMMENT ON COLUMN "Course".short_description IS 'Short description (for listing)';
+COMMENT ON COLUMN "Course".thumbnail_url IS 'Course thumbnail image';
+COMMENT ON COLUMN "Course".category IS 'Category (Programming, Math, Design...)';
+COMMENT ON COLUMN "Course".difficulty_level IS 'Difficulty: BEGINNER, INTERMEDIATE, ADVANCED';
+COMMENT ON COLUMN "Course".estimated_hours IS 'Estimated duration (hours)';
+COMMENT ON COLUMN "Course".status IS 'Status: DRAFT (draft), PUBLISHED (public), ARCHIVED (archived)';
+COMMENT ON COLUMN "Course".published_at IS 'Publication time';
+COMMENT ON COLUMN "Course".created_by IS 'Creator (Instructor)';
 
--- Bảng 5: Module (Chương/Module)
+-- Table 5: Module
 CREATE TABLE "Module" (
   module_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   course_id UUID NOT NULL REFERENCES "Course"(course_id) ON DELETE CASCADE,
@@ -140,13 +141,13 @@ CREATE TABLE "Module" (
   CONSTRAINT uq_module_order UNIQUE(course_id, order_num)
 );
 
-COMMENT ON TABLE "Module" IS 'Chương/Module trong khóa học';
-COMMENT ON COLUMN "Module".title IS 'Tên chương (ví dụ: Chương 1: Giới thiệu Java)';
-COMMENT ON COLUMN "Module".order_num IS 'Thứ tự hiển thị (1, 2, 3...)';
-COMMENT ON COLUMN "Module".prerequisite_module_ids IS 'Mảng UUID của modules cần học trước';
-COMMENT ON COLUMN "Module".estimated_duration_minutes IS 'Thời lượng ước tính (phút)';
+COMMENT ON TABLE "Module" IS 'Modules/Chapters in course';
+COMMENT ON COLUMN "Module".title IS 'Module title (e.g. Chapter 1: Java Introduction)';
+COMMENT ON COLUMN "Module".order_num IS 'Display order (1, 2, 3...)';
+COMMENT ON COLUMN "Module".prerequisite_module_ids IS 'Array of prerequisite module UUIDs';
+COMMENT ON COLUMN "Module".estimated_duration_minutes IS 'Estimated duration (minutes)';
 
--- Bảng 6: Lecture (Bài giảng)
+-- Table 6: Lecture
 CREATE TABLE "Lecture" (
   lecture_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   module_id UUID NOT NULL REFERENCES "Module"(module_id) ON DELETE CASCADE,
@@ -168,17 +169,17 @@ CREATE TABLE "Lecture" (
   CONSTRAINT uq_lecture_order UNIQUE(module_id, order_num)
 );
 
-COMMENT ON TABLE "Lecture" IS 'Bài giảng (bao gồm cả Assignment)';
-COMMENT ON COLUMN "Lecture".title IS 'Tiêu đề bài giảng';
-COMMENT ON COLUMN "Lecture".type IS 'Loại: VIDEO, PDF, SLIDE, AUDIO, TEXT, ASSIGNMENT';
-COMMENT ON COLUMN "Lecture".content_url IS 'Đường dẫn nội dung (S3/GCS URL)';
-COMMENT ON COLUMN "Lecture".duration_seconds IS 'Thời lượng (giây)';
-COMMENT ON COLUMN "Lecture".order_num IS 'Thứ tự trong module';
-COMMENT ON COLUMN "Lecture".assignment_config IS 'Cấu hình bài tập (JSON) - chỉ dùng khi type=ASSIGNMENT';
-COMMENT ON COLUMN "Lecture".is_preview IS 'Cho phép xem trước không cần đăng ký?';
-COMMENT ON COLUMN "Lecture".is_downloadable IS 'Cho phép tải về?';
+COMMENT ON TABLE "Lecture" IS 'Lectures (including Assignments)';
+COMMENT ON COLUMN "Lecture".title IS 'Lecture title';
+COMMENT ON COLUMN "Lecture".type IS 'Type: VIDEO, PDF, SLIDE, AUDIO, TEXT, ASSIGNMENT';
+COMMENT ON COLUMN "Lecture".content_url IS 'Content URL (S3/GCS URL)';
+COMMENT ON COLUMN "Lecture".duration_seconds IS 'Duration (seconds)';
+COMMENT ON COLUMN "Lecture".order_num IS 'Order in module';
+COMMENT ON COLUMN "Lecture".assignment_config IS 'Assignment configuration (JSON) - only when type=ASSIGNMENT';
+COMMENT ON COLUMN "Lecture".is_preview IS 'Allow preview without registration?';
+COMMENT ON COLUMN "Lecture".is_downloadable IS 'Allow download?';
 
--- Bảng 7: Resource (Tài liệu đính kèm)
+-- Table 7: Resource
 CREATE TABLE "Resource" (
   resource_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   lecture_id UUID NOT NULL REFERENCES "Lecture"(lecture_id) ON DELETE CASCADE,
@@ -189,17 +190,17 @@ CREATE TABLE "Resource" (
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-COMMENT ON TABLE "Resource" IS 'Tài liệu đính kèm cho bài giảng';
-COMMENT ON COLUMN "Resource".title IS 'Tên file hiển thị';
-COMMENT ON COLUMN "Resource".file_url IS 'Đường dẫn file (S3/GCS)';
-COMMENT ON COLUMN "Resource".file_type IS 'Loại file (MIME type, ví dụ: application/pdf)';
-COMMENT ON COLUMN "Resource".file_size_bytes IS 'Kích thước file (bytes)';
+COMMENT ON TABLE "Resource" IS 'Supplementary files for lectures';
+COMMENT ON COLUMN "Resource".title IS 'Display file name';
+COMMENT ON COLUMN "Resource".file_url IS 'File path (S3/GCS)';
+COMMENT ON COLUMN "Resource".file_type IS 'File type (MIME type, e.g. application/pdf)';
+COMMENT ON COLUMN "Resource".file_size_bytes IS 'File size (bytes)';
 
 -- ============================================
--- DOMAIN 3: ĐÁNH GIÁ (5 bảng)
+-- DOMAIN 3: ASSESSMENT (5 tables)
 -- ============================================
 
--- Bảng 8: Quiz (Bài kiểm tra)
+-- Table 8: Quiz
 CREATE TABLE "Quiz" (
   quiz_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   course_id UUID NOT NULL REFERENCES "Course"(course_id) ON DELETE CASCADE,
@@ -216,16 +217,16 @@ CREATE TABLE "Quiz" (
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-COMMENT ON TABLE "Quiz" IS 'Bài kiểm tra trắc nghiệm/tự luận';
-COMMENT ON COLUMN "Quiz".title IS 'Tên quiz';
-COMMENT ON COLUMN "Quiz".time_limit_minutes IS 'Giới hạn thời gian (phút, 0 = không giới hạn)';
-COMMENT ON COLUMN "Quiz".pass_score IS 'Điểm đạt (%, NULL = không yêu cầu)';
-COMMENT ON COLUMN "Quiz".questions IS 'Danh sách câu hỏi (JSON): [{"question_id": "uuid", "points": 10, "order": 1}]';
-COMMENT ON COLUMN "Quiz".shuffle_questions IS 'Xáo trộn thứ tự câu hỏi?';
-COMMENT ON COLUMN "Quiz".show_correct_answers IS 'Hiện đáp án đúng sau khi nộp bài?';
-COMMENT ON COLUMN "Quiz".is_published IS 'Đã public cho student làm?';
+COMMENT ON TABLE "Quiz" IS 'Quiz/assessment configuration';
+COMMENT ON COLUMN "Quiz".title IS 'Quiz title';
+COMMENT ON COLUMN "Quiz".time_limit_minutes IS 'Time limit (minutes, 0 = unlimited)';
+COMMENT ON COLUMN "Quiz".pass_score IS 'Passing score (%, NULL = no requirement)';
+COMMENT ON COLUMN "Quiz".questions IS 'Question list (JSON): [{"question_id": "uuid", "points": 10, "order": 1}]';
+COMMENT ON COLUMN "Quiz".shuffle_questions IS 'Shuffle question order?';
+COMMENT ON COLUMN "Quiz".show_correct_answers IS 'Show correct answers after submission?';
+COMMENT ON COLUMN "Quiz".is_published IS 'Published for students?';
 
--- Bảng 9: Question (Câu hỏi)
+-- Table 9: Question
 CREATE TABLE "Question" (
   question_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   course_id UUID NOT NULL REFERENCES "Course"(course_id) ON DELETE CASCADE,
@@ -247,15 +248,15 @@ CREATE TABLE "Question" (
   ))
 );
 
-COMMENT ON TABLE "Question" IS 'Ngân hàng câu hỏi (dùng chung cho nhiều quiz)';
-COMMENT ON COLUMN "Question".text IS 'Nội dung câu hỏi';
-COMMENT ON COLUMN "Question".type IS 'Loại câu hỏi: MCQ (trắc nghiệm), TRUE_FALSE (đúng/sai), ESSAY (tự luận), SHORT_ANSWER';
-COMMENT ON COLUMN "Question".difficulty IS 'Độ khó: EASY, MEDIUM, HARD';
-COMMENT ON COLUMN "Question".max_points IS 'Điểm tối đa mặc định';
-COMMENT ON COLUMN "Question".explanation IS 'Giải thích đáp án';
-COMMENT ON COLUMN "Question".is_active IS 'Còn sử dụng không?';
+COMMENT ON TABLE "Question" IS 'Question bank (reusable across quizzes)';
+COMMENT ON COLUMN "Question".text IS 'Question content';
+COMMENT ON COLUMN "Question".type IS 'Question type: MCQ (multiple choice), TRUE_FALSE, ESSAY, SHORT_ANSWER';
+COMMENT ON COLUMN "Question".difficulty IS 'Difficulty: EASY, MEDIUM, HARD';
+COMMENT ON COLUMN "Question".max_points IS 'Default maximum points';
+COMMENT ON COLUMN "Question".explanation IS 'Answer explanation';
+COMMENT ON COLUMN "Question".is_active IS 'Is still in use?';
 
--- Bảng 10: Option (Lựa chọn)
+-- Table 10: Option
 CREATE TABLE "Option" (
   option_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   question_id UUID NOT NULL REFERENCES "Question"(question_id) ON DELETE CASCADE,
@@ -267,13 +268,76 @@ CREATE TABLE "Option" (
   CONSTRAINT uq_option_order UNIQUE(question_id, order_num)
 );
 
-COMMENT ON TABLE "Option" IS 'Lựa chọn cho câu hỏi trắc nghiệm (MCQ, TRUE_FALSE)';
-COMMENT ON COLUMN "Option".option_text IS 'Nội dung lựa chọn';
-COMMENT ON COLUMN "Option".is_correct IS 'Đây có phải đáp án đúng?';
-COMMENT ON COLUMN "Option".order_num IS 'Thứ tự hiển thị (A, B, C, D)';
-COMMENT ON COLUMN "Option".feedback IS 'Giải thích cho lựa chọn này';
+COMMENT ON TABLE "Option" IS 'Answer options for MCQ and TRUE_FALSE questions';
+COMMENT ON COLUMN "Option".option_text IS 'Option content';
+COMMENT ON COLUMN "Option".is_correct IS 'Is this the correct answer?';
+COMMENT ON COLUMN "Option".order_num IS 'Display order (A, B, C, D)';
+COMMENT ON COLUMN "Option".feedback IS 'Explanation for this option';
 
--- Bảng 11: Attempt (Lần làm bài quiz)
+-- ============================================
+-- DOMAIN 5: CLASS & CERTIFICATES (2 tables)
+-- Must be created BEFORE Enrollment table
+-- ============================================
+
+-- Table 15: Class
+CREATE TABLE "Class" (
+  class_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  course_id UUID NOT NULL REFERENCES "Course"(course_id) ON DELETE CASCADE,
+  instructor_id UUID REFERENCES "User"(user_id) ON DELETE SET NULL,
+  name VARCHAR(100) NOT NULL,
+  start_date DATE,
+  end_date DATE,
+  status VARCHAR(20) DEFAULT 'SCHEDULED',
+  max_students INT,
+  location VARCHAR(200),
+  schedules JSON,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+  CONSTRAINT chk_class_status CHECK (status IN ('SCHEDULED', 'ONGOING', 'COMPLETED', 'CANCELLED'))
+);
+
+COMMENT ON TABLE "Class" IS 'Class (blended learning)';
+COMMENT ON COLUMN "Class".name IS 'Class name (e.g. Java K63 - Morning T2-T4-T6)';
+COMMENT ON COLUMN "Class".start_date IS 'Start date';
+COMMENT ON COLUMN "Class".end_date IS 'End date';
+COMMENT ON COLUMN "Class".status IS 'Status: SCHEDULED, ONGOING, COMPLETED, CANCELLED';
+COMMENT ON COLUMN "Class".max_students IS 'Maximum capacity';
+COMMENT ON COLUMN "Class".location IS 'Learning location';
+COMMENT ON COLUMN "Class".schedules IS 'Schedule + attendance (JSON): [{"date": "2025-12-01", "attendances": [...]}]';
+
+-- ============================================
+-- DOMAIN 4: ENROLLMENT & PROGRESS (2 tables)
+-- ============================================
+
+-- Table 13: Enrollment
+CREATE TABLE "Enrollment" (
+  enrollment_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES "User"(user_id) ON DELETE CASCADE,
+  course_id UUID NOT NULL REFERENCES "Course"(course_id) ON DELETE CASCADE,
+  class_id UUID REFERENCES "Class"(class_id) ON DELETE SET NULL,
+  role VARCHAR(20) NOT NULL,
+  status VARCHAR(20) DEFAULT 'ACTIVE',
+  enrolled_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  completed_at TIMESTAMP,
+  final_grade DECIMAL(5,2),
+  completion_percentage DECIMAL(5,2) DEFAULT 0,
+  last_accessed_at TIMESTAMP,
+
+  CONSTRAINT uq_enrollment UNIQUE(user_id, course_id, COALESCE(class_id, '00000000-0000-0000-0000-000000000000'::UUID)),
+  CONSTRAINT chk_enrollment_role CHECK (role IN ('STUDENT', 'INSTRUCTOR', 'TA')),
+  CONSTRAINT chk_enrollment_status CHECK (status IN ('ACTIVE', 'COMPLETED', 'DROPPED', 'SUSPENDED'))
+);
+
+COMMENT ON TABLE "Enrollment" IS 'Course enrollment (self-paced or class-based)';
+COMMENT ON COLUMN "Enrollment".class_id IS 'Class (NULL = self-paced, UUID = blended learning)';
+COMMENT ON COLUMN "Enrollment".role IS 'Role in course: STUDENT, INSTRUCTOR, TA';
+COMMENT ON COLUMN "Enrollment".status IS 'Status: ACTIVE, COMPLETED, DROPPED, SUSPENDED';
+COMMENT ON COLUMN "Enrollment".final_grade IS 'Final course grade';
+COMMENT ON COLUMN "Enrollment".completion_percentage IS 'Completion percentage (%)';
+COMMENT ON COLUMN "Enrollment".last_accessed_at IS 'Last access time';
+
+-- Table 11: Attempt
 CREATE TABLE "Attempt" (
   attempt_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   quiz_id UUID NOT NULL REFERENCES "Quiz"(quiz_id) ON DELETE CASCADE,
@@ -297,20 +361,20 @@ CREATE TABLE "Attempt" (
   ))
 );
 
-COMMENT ON TABLE "Attempt" IS 'Lần làm bài quiz (bao gồm câu trả lời trong answers JSON)';
-COMMENT ON COLUMN "Attempt".attempt_number IS 'Lần thứ mấy (1, 2, 3...)';
-COMMENT ON COLUMN "Attempt".started_at IS 'Thời điểm bắt đầu làm';
-COMMENT ON COLUMN "Attempt".submitted_at IS 'Thời điểm nộp bài';
-COMMENT ON COLUMN "Attempt".time_spent_seconds IS 'Thời gian làm bài (giây)';
-COMMENT ON COLUMN "Attempt".status IS 'Trạng thái: IN_PROGRESS (đang làm), SUBMITTED (đã nộp)';
-COMMENT ON COLUMN "Attempt".answers IS 'Câu trả lời (JSON): [{"question_id": "uuid", "answer_text": "...", "score": 10}]';
-COMMENT ON COLUMN "Attempt".total_score IS 'Tổng điểm';
-COMMENT ON COLUMN "Attempt".max_possible_score IS 'Điểm tối đa có thể đạt';
-COMMENT ON COLUMN "Attempt".percentage_score IS 'Điểm phần trăm (%)';
-COMMENT ON COLUMN "Attempt".graded_at IS 'Thời điểm chấm xong';
-COMMENT ON COLUMN "Attempt".graded_by IS 'Người chấm (Instructor)';
+COMMENT ON TABLE "Attempt" IS 'Quiz attempts (includes answers in JSON)';
+COMMENT ON COLUMN "Attempt".attempt_number IS 'Attempt number (1, 2, 3...)';
+COMMENT ON COLUMN "Attempt".started_at IS 'Start time';
+COMMENT ON COLUMN "Attempt".submitted_at IS 'Submission time';
+COMMENT ON COLUMN "Attempt".time_spent_seconds IS 'Time spent (seconds)';
+COMMENT ON COLUMN "Attempt".status IS 'Status: IN_PROGRESS, SUBMITTED';
+COMMENT ON COLUMN "Attempt".answers IS 'Answers (JSON): [{"question_id": "uuid", "answer_text": "...", "score": 10}]';
+COMMENT ON COLUMN "Attempt".total_score IS 'Total score';
+COMMENT ON COLUMN "Attempt".max_possible_score IS 'Maximum possible score';
+COMMENT ON COLUMN "Attempt".percentage_score IS 'Percentage score (%)';
+COMMENT ON COLUMN "Attempt".graded_at IS 'Grading completion time';
+COMMENT ON COLUMN "Attempt".graded_by IS 'Grader (Instructor)';
 
--- Bảng 12: AssignmentSubmission (Nộp bài tập)
+-- Table 12: AssignmentSubmission
 CREATE TABLE "AssignmentSubmission" (
   submission_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   lecture_id UUID NOT NULL REFERENCES "Lecture"(lecture_id) ON DELETE CASCADE,
@@ -335,52 +399,21 @@ CREATE TABLE "AssignmentSubmission" (
   ))
 );
 
-COMMENT ON TABLE "AssignmentSubmission" IS 'Nộp bài tập (Assignment)';
-COMMENT ON COLUMN "AssignmentSubmission".lecture_id IS 'Bài giảng nào (type = ASSIGNMENT)';
-COMMENT ON COLUMN "AssignmentSubmission".submission_number IS 'Lần nộp thứ mấy';
-COMMENT ON COLUMN "AssignmentSubmission".submitted_at IS 'Thời điểm nộp';
-COMMENT ON COLUMN "AssignmentSubmission".content IS 'Nội dung text (nếu type = text)';
-COMMENT ON COLUMN "AssignmentSubmission".file_urls IS 'Danh sách file đính kèm (JSON array): ["s3://...", "s3://..."]';
-COMMENT ON COLUMN "AssignmentSubmission".code_submission IS 'Code (nếu type = code)';
-COMMENT ON COLUMN "AssignmentSubmission".is_late IS 'Nộp trễ?';
-COMMENT ON COLUMN "AssignmentSubmission".status IS 'Trạng thái: SUBMITTED, GRADING, GRADED, RETURNED';
-COMMENT ON COLUMN "AssignmentSubmission".score IS 'Điểm';
-COMMENT ON COLUMN "AssignmentSubmission".max_score IS 'Điểm tối đa';
-COMMENT ON COLUMN "AssignmentSubmission".feedback IS 'Nhận xét từ giảng viên';
-COMMENT ON COLUMN "AssignmentSubmission".graded_by IS 'Người chấm (Instructor)';
+COMMENT ON TABLE "AssignmentSubmission" IS 'Assignment submissions';
+COMMENT ON COLUMN "AssignmentSubmission".lecture_id IS 'Which lecture (type = ASSIGNMENT)';
+COMMENT ON COLUMN "AssignmentSubmission".submission_number IS 'Submission attempt number';
+COMMENT ON COLUMN "AssignmentSubmission".submitted_at IS 'Submission time';
+COMMENT ON COLUMN "AssignmentSubmission".content IS 'Text content (if text type)';
+COMMENT ON COLUMN "AssignmentSubmission".file_urls IS 'Attached files list (JSON array): ["s3://...", "s3://..."]';
+COMMENT ON COLUMN "AssignmentSubmission".code_submission IS 'Code (if code type)';
+COMMENT ON COLUMN "AssignmentSubmission".is_late IS 'Submitted late?';
+COMMENT ON COLUMN "AssignmentSubmission".status IS 'Status: SUBMITTED, GRADING, GRADED, RETURNED';
+COMMENT ON COLUMN "AssignmentSubmission".score IS 'Score';
+COMMENT ON COLUMN "AssignmentSubmission".max_score IS 'Maximum score';
+COMMENT ON COLUMN "AssignmentSubmission".feedback IS 'Instructor feedback';
+COMMENT ON COLUMN "AssignmentSubmission".graded_by IS 'Grader (Instructor)';
 
--- ============================================
--- DOMAIN 4: ĐĂNG KÝ & TIẾN ĐỘ (2 bảng)
--- ============================================
-
--- Bảng 13: Enrollment (Đăng ký)
-CREATE TABLE "Enrollment" (
-  enrollment_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL REFERENCES "User"(user_id) ON DELETE CASCADE,
-  course_id UUID NOT NULL REFERENCES "Course"(course_id) ON DELETE CASCADE,
-  class_id UUID REFERENCES "Class"(class_id) ON DELETE SET NULL,
-  role VARCHAR(20) NOT NULL,
-  status VARCHAR(20) DEFAULT 'ACTIVE',
-  enrolled_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  completed_at TIMESTAMP,
-  final_grade DECIMAL(5,2),
-  completion_percentage DECIMAL(5,2) DEFAULT 0,
-  last_accessed_at TIMESTAMP,
-
-  CONSTRAINT uq_enrollment UNIQUE(user_id, course_id, COALESCE(class_id, '00000000-0000-0000-0000-000000000000'::UUID)),
-  CONSTRAINT chk_enrollment_role CHECK (role IN ('STUDENT', 'INSTRUCTOR', 'TA')),
-  CONSTRAINT chk_enrollment_status CHECK (status IN ('ACTIVE', 'COMPLETED', 'DROPPED', 'SUSPENDED'))
-);
-
-COMMENT ON TABLE "Enrollment" IS 'Đăng ký khóa học (self-paced hoặc theo lớp)';
-COMMENT ON COLUMN "Enrollment".class_id IS 'Lớp học (NULL = self-paced, UUID = blended learning)';
-COMMENT ON COLUMN "Enrollment".role IS 'Vai trò trong khóa: STUDENT, INSTRUCTOR, TA';
-COMMENT ON COLUMN "Enrollment".status IS 'Trạng thái: ACTIVE, COMPLETED, DROPPED, SUSPENDED';
-COMMENT ON COLUMN "Enrollment".final_grade IS 'Điểm cuối khóa';
-COMMENT ON COLUMN "Enrollment".completion_percentage IS 'Phần trăm hoàn thành (%)';
-COMMENT ON COLUMN "Enrollment".last_accessed_at IS 'Lần truy cập gần nhất';
-
--- Bảng 14: Progress (Tiến độ)
+-- Table 14: Progress
 CREATE TABLE "Progress" (
   progress_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES "User"(user_id) ON DELETE CASCADE,
@@ -395,44 +428,13 @@ CREATE TABLE "Progress" (
   CONSTRAINT chk_progress_status CHECK (status IN ('NOT_STARTED', 'IN_PROGRESS', 'COMPLETED'))
 );
 
-COMMENT ON TABLE "Progress" IS 'Tiến độ học tập (module level)';
-COMMENT ON COLUMN "Progress".status IS 'Trạng thái: NOT_STARTED, IN_PROGRESS, COMPLETED';
-COMMENT ON COLUMN "Progress".started_at IS 'Thời điểm bắt đầu học module';
-COMMENT ON COLUMN "Progress".completed_at IS 'Thời điểm hoàn thành module';
-COMMENT ON COLUMN "Progress".lecture_progress IS 'Tiến độ lecture (JSON, optional): {"lecture_uuid": {"percent": 80, "last_position": 1200}}';
+COMMENT ON TABLE "Progress" IS 'Learning progress (module level)';
+COMMENT ON COLUMN "Progress".status IS 'Status: NOT_STARTED, IN_PROGRESS, COMPLETED';
+COMMENT ON COLUMN "Progress".started_at IS 'Module start time';
+COMMENT ON COLUMN "Progress".completed_at IS 'Module completion time';
+COMMENT ON COLUMN "Progress".lecture_progress IS 'Lecture progress (JSON, optional): {"lecture_uuid": {"percent": 80, "last_position": 1200}}';
 
--- ============================================
--- DOMAIN 5: LỚP HỌC & CHỨNG CHỈ (2 bảng)
--- ============================================
-
--- Bảng 15: Class (Lớp học)
-CREATE TABLE "Class" (
-  class_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  course_id UUID NOT NULL REFERENCES "Course"(course_id) ON DELETE CASCADE,
-  instructor_id UUID REFERENCES "User"(user_id) ON DELETE SET NULL,
-  name VARCHAR(100) NOT NULL,
-  start_date DATE,
-  end_date DATE,
-  status VARCHAR(20) DEFAULT 'SCHEDULED',
-  max_students INT,
-  location VARCHAR(200),
-  schedules JSON,
-  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-  CONSTRAINT chk_class_status CHECK (status IN ('SCHEDULED', 'ONGOING', 'COMPLETED', 'CANCELLED'))
-);
-
-COMMENT ON TABLE "Class" IS 'Lớp học (blended learning)';
-COMMENT ON COLUMN "Class".name IS 'Tên lớp (ví dụ: Java K63 - Sáng T2-T4-T6)';
-COMMENT ON COLUMN "Class".start_date IS 'Ngày bắt đầu';
-COMMENT ON COLUMN "Class".end_date IS 'Ngày kết thúc';
-COMMENT ON COLUMN "Class".status IS 'Trạng thái: SCHEDULED, ONGOING, COMPLETED, CANCELLED';
-COMMENT ON COLUMN "Class".max_students IS 'Sĩ số tối đa';
-COMMENT ON COLUMN "Class".location IS 'Địa điểm học';
-COMMENT ON COLUMN "Class".schedules IS 'Lịch học + điểm danh (JSON): [{"date": "2025-12-01", "attendances": [...]}]';
-
--- Bảng 16: Certificate (Chứng chỉ)
+-- Table 16: Certificate
 CREATE TABLE "Certificate" (
   certificate_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES "User"(user_id) ON DELETE CASCADE,
@@ -449,13 +451,13 @@ CREATE TABLE "Certificate" (
   CONSTRAINT chk_certificate_status CHECK (status IN ('ACTIVE', 'REVOKED'))
 );
 
-COMMENT ON TABLE "Certificate" IS 'Chứng chỉ hoàn thành khóa học';
-COMMENT ON COLUMN "Certificate".certificate_code IS 'Mã chứng chỉ công khai (ví dụ: BL-2025-000001)';
-COMMENT ON COLUMN "Certificate".verification_code IS 'Mã xác thực bí mật (hash)';
-COMMENT ON COLUMN "Certificate".issue_date IS 'Ngày cấp chứng chỉ';
-COMMENT ON COLUMN "Certificate".final_grade IS 'Điểm cuối khóa';
-COMMENT ON COLUMN "Certificate".pdf_url IS 'Đường dẫn file PDF chứng chỉ (S3/GCS)';
-COMMENT ON COLUMN "Certificate".status IS 'Trạng thái: ACTIVE (hiệu lực), REVOKED (đã thu hồi)';
+COMMENT ON TABLE "Certificate" IS 'Course completion certificates';
+COMMENT ON COLUMN "Certificate".certificate_code IS 'Public certificate code (e.g. BL-2025-000001)';
+COMMENT ON COLUMN "Certificate".verification_code IS 'Secret verification code (hash)';
+COMMENT ON COLUMN "Certificate".issue_date IS 'Certificate issue date';
+COMMENT ON COLUMN "Certificate".final_grade IS 'Final course grade';
+COMMENT ON COLUMN "Certificate".pdf_url IS 'Certificate PDF file path (S3/GCS)';
+COMMENT ON COLUMN "Certificate".status IS 'Status: ACTIVE (valid), REVOKED (revoked)';
 
 -- ============================================
 -- END OF SCHEMA

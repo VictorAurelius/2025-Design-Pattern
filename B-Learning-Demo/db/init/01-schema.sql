@@ -4,6 +4,7 @@
 -- Database: PostgreSQL 14+
 -- Author: Nguyễn Văn Kiệt - CNTT1-K63
 -- Created: 2025-11-27
+-- Fixed: Encoding issues resolved (UTF-8)
 -- ============================================
 
 -- ============================================
@@ -273,7 +274,69 @@ COMMENT ON COLUMN "Option".is_correct IS 'Đây có phải đáp án đúng?';
 COMMENT ON COLUMN "Option".order_num IS 'Thứ tự hiển thị (A, B, C, D)';
 COMMENT ON COLUMN "Option".feedback IS 'Giải thích cho lựa chọn này';
 
--- Bảng 11: Attempt (Lần làm bài quiz)
+-- ============================================
+-- DOMAIN 5: LỚP HỌC & CHỨNG CHỈ (2 bảng)
+-- ============================================
+
+-- Bảng 15: Class (Lớp học) - CREATE FIRST
+CREATE TABLE "Class" (
+  class_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  course_id UUID NOT NULL REFERENCES "Course"(course_id) ON DELETE CASCADE,
+  instructor_id UUID REFERENCES "User"(user_id) ON DELETE SET NULL,
+  name VARCHAR(100) NOT NULL,
+  start_date DATE,
+  end_date DATE,
+  status VARCHAR(20) DEFAULT 'SCHEDULED',
+  max_students INT,
+  location VARCHAR(200),
+  schedules JSON,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+  CONSTRAINT chk_class_status CHECK (status IN ('SCHEDULED', 'ONGOING', 'COMPLETED', 'CANCELLED'))
+);
+
+COMMENT ON TABLE "Class" IS 'Lớp học (blended learning)';
+COMMENT ON COLUMN "Class".name IS 'Tên lớp (ví dụ: Java K63 - Sáng T2-T4-T6)';
+COMMENT ON COLUMN "Class".start_date IS 'Ngày bắt đầu';
+COMMENT ON COLUMN "Class".end_date IS 'Ngày kết thúc';
+COMMENT ON COLUMN "Class".status IS 'Trạng thái: SCHEDULED, ONGOING, COMPLETED, CANCELLED';
+COMMENT ON COLUMN "Class".max_students IS 'Sĩ số tối đa';
+COMMENT ON COLUMN "Class".location IS 'Địa điểm học';
+COMMENT ON COLUMN "Class".schedules IS 'Lịch học + điểm danh (JSON): [{"date": "2025-12-01", "attendances": [...]}]';
+
+-- ============================================
+-- DOMAIN 4: ĐĂNG KÝ & TIẾN ĐỘ (2 bảng)
+-- ============================================
+
+-- Bảng 13: Enrollment (Đăng ký) - CREATE AFTER Class
+CREATE TABLE "Enrollment" (
+  enrollment_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES "User"(user_id) ON DELETE CASCADE,
+  course_id UUID NOT NULL REFERENCES "Course"(course_id) ON DELETE CASCADE,
+  class_id UUID REFERENCES "Class"(class_id) ON DELETE SET NULL,
+  role VARCHAR(20) NOT NULL,
+  status VARCHAR(20) DEFAULT 'ACTIVE',
+  enrolled_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  completed_at TIMESTAMP,
+  final_grade DECIMAL(5,2),
+  completion_percentage DECIMAL(5,2) DEFAULT 0,
+  last_accessed_at TIMESTAMP,
+
+  CONSTRAINT uq_enrollment UNIQUE(user_id, course_id, COALESCE(class_id, '00000000-0000-0000-0000-000000000000'::UUID)),
+  CONSTRAINT chk_enrollment_role CHECK (role IN ('STUDENT', 'INSTRUCTOR', 'TA')),
+  CONSTRAINT chk_enrollment_status CHECK (status IN ('ACTIVE', 'COMPLETED', 'DROPPED', 'SUSPENDED'))
+);
+
+COMMENT ON TABLE "Enrollment" IS 'Đăng ký khóa học (self-paced hoặc theo lớp)';
+COMMENT ON COLUMN "Enrollment".class_id IS 'Lớp học (NULL = self-paced, UUID = blended learning)';
+COMMENT ON COLUMN "Enrollment".role IS 'Vai trò trong khóa: STUDENT, INSTRUCTOR, TA';
+COMMENT ON COLUMN "Enrollment".status IS 'Trạng thái: ACTIVE, COMPLETED, DROPPED, SUSPENDED';
+COMMENT ON COLUMN "Enrollment".final_grade IS 'Điểm cuối khóa';
+COMMENT ON COLUMN "Enrollment".completion_percentage IS 'Phần trăm hoàn thành (%)';
+COMMENT ON COLUMN "Enrollment".last_accessed_at IS 'Lần truy cập gần nhất';
+
+-- Bảng 11: Attempt (Lần làm bài quiz) - CREATE AFTER Enrollment
 CREATE TABLE "Attempt" (
   attempt_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   quiz_id UUID NOT NULL REFERENCES "Quiz"(quiz_id) ON DELETE CASCADE,
@@ -310,7 +373,7 @@ COMMENT ON COLUMN "Attempt".percentage_score IS 'Điểm phần trăm (%)';
 COMMENT ON COLUMN "Attempt".graded_at IS 'Thời điểm chấm xong';
 COMMENT ON COLUMN "Attempt".graded_by IS 'Người chấm (Instructor)';
 
--- Bảng 12: AssignmentSubmission (Nộp bài tập)
+-- Bảng 12: AssignmentSubmission (Nộp bài tập) - CREATE AFTER Enrollment
 CREATE TABLE "AssignmentSubmission" (
   submission_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   lecture_id UUID NOT NULL REFERENCES "Lecture"(lecture_id) ON DELETE CASCADE,
@@ -349,37 +412,6 @@ COMMENT ON COLUMN "AssignmentSubmission".max_score IS 'Điểm tối đa';
 COMMENT ON COLUMN "AssignmentSubmission".feedback IS 'Nhận xét từ giảng viên';
 COMMENT ON COLUMN "AssignmentSubmission".graded_by IS 'Người chấm (Instructor)';
 
--- ============================================
--- DOMAIN 4: ĐĂNG KÝ & TIẾN ĐỘ (2 bảng)
--- ============================================
-
--- Bảng 13: Enrollment (Đăng ký)
-CREATE TABLE "Enrollment" (
-  enrollment_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL REFERENCES "User"(user_id) ON DELETE CASCADE,
-  course_id UUID NOT NULL REFERENCES "Course"(course_id) ON DELETE CASCADE,
-  class_id UUID REFERENCES "Class"(class_id) ON DELETE SET NULL,
-  role VARCHAR(20) NOT NULL,
-  status VARCHAR(20) DEFAULT 'ACTIVE',
-  enrolled_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  completed_at TIMESTAMP,
-  final_grade DECIMAL(5,2),
-  completion_percentage DECIMAL(5,2) DEFAULT 0,
-  last_accessed_at TIMESTAMP,
-
-  CONSTRAINT uq_enrollment UNIQUE(user_id, course_id, COALESCE(class_id, '00000000-0000-0000-0000-000000000000'::UUID)),
-  CONSTRAINT chk_enrollment_role CHECK (role IN ('STUDENT', 'INSTRUCTOR', 'TA')),
-  CONSTRAINT chk_enrollment_status CHECK (status IN ('ACTIVE', 'COMPLETED', 'DROPPED', 'SUSPENDED'))
-);
-
-COMMENT ON TABLE "Enrollment" IS 'Đăng ký khóa học (self-paced hoặc theo lớp)';
-COMMENT ON COLUMN "Enrollment".class_id IS 'Lớp học (NULL = self-paced, UUID = blended learning)';
-COMMENT ON COLUMN "Enrollment".role IS 'Vai trò trong khóa: STUDENT, INSTRUCTOR, TA';
-COMMENT ON COLUMN "Enrollment".status IS 'Trạng thái: ACTIVE, COMPLETED, DROPPED, SUSPENDED';
-COMMENT ON COLUMN "Enrollment".final_grade IS 'Điểm cuối khóa';
-COMMENT ON COLUMN "Enrollment".completion_percentage IS 'Phần trăm hoàn thành (%)';
-COMMENT ON COLUMN "Enrollment".last_accessed_at IS 'Lần truy cập gần nhất';
-
 -- Bảng 14: Progress (Tiến độ)
 CREATE TABLE "Progress" (
   progress_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -400,37 +432,6 @@ COMMENT ON COLUMN "Progress".status IS 'Trạng thái: NOT_STARTED, IN_PROGRESS,
 COMMENT ON COLUMN "Progress".started_at IS 'Thời điểm bắt đầu học module';
 COMMENT ON COLUMN "Progress".completed_at IS 'Thời điểm hoàn thành module';
 COMMENT ON COLUMN "Progress".lecture_progress IS 'Tiến độ lecture (JSON, optional): {"lecture_uuid": {"percent": 80, "last_position": 1200}}';
-
--- ============================================
--- DOMAIN 5: LỚP HỌC & CHỨNG CHỈ (2 bảng)
--- ============================================
-
--- Bảng 15: Class (Lớp học)
-CREATE TABLE "Class" (
-  class_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  course_id UUID NOT NULL REFERENCES "Course"(course_id) ON DELETE CASCADE,
-  instructor_id UUID REFERENCES "User"(user_id) ON DELETE SET NULL,
-  name VARCHAR(100) NOT NULL,
-  start_date DATE,
-  end_date DATE,
-  status VARCHAR(20) DEFAULT 'SCHEDULED',
-  max_students INT,
-  location VARCHAR(200),
-  schedules JSON,
-  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-  CONSTRAINT chk_class_status CHECK (status IN ('SCHEDULED', 'ONGOING', 'COMPLETED', 'CANCELLED'))
-);
-
-COMMENT ON TABLE "Class" IS 'Lớp học (blended learning)';
-COMMENT ON COLUMN "Class".name IS 'Tên lớp (ví dụ: Java K63 - Sáng T2-T4-T6)';
-COMMENT ON COLUMN "Class".start_date IS 'Ngày bắt đầu';
-COMMENT ON COLUMN "Class".end_date IS 'Ngày kết thúc';
-COMMENT ON COLUMN "Class".status IS 'Trạng thái: SCHEDULED, ONGOING, COMPLETED, CANCELLED';
-COMMENT ON COLUMN "Class".max_students IS 'Sĩ số tối đa';
-COMMENT ON COLUMN "Class".location IS 'Địa điểm học';
-COMMENT ON COLUMN "Class".schedules IS 'Lịch học + điểm danh (JSON): [{"date": "2025-12-01", "attendances": [...]}]';
 
 -- Bảng 16: Certificate (Chứng chỉ)
 CREATE TABLE "Certificate" (

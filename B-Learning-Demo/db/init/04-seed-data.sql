@@ -803,3 +803,42 @@ WHERE c.class_id = 'b0000000-0000-0000-0000-000000000001';
 -- ============================================
 
 COMMENT ON EXTENSION "uuid-ossp" IS 'Seed data created with gen_random_uuid()';
+
+-- Demo Courses
+INSERT INTO "Course" (id, name, description) VALUES
+  ('course-01', 'Demo Course 1', 'Description for Demo Course 1'),
+  ('course-02', 'Demo Course 2', 'Description for Demo Course 2'),
+  ('course-03', 'Demo Course 3', 'Description for Demo Course 3'),
+  ('course-04', 'Demo Course 4', 'Description for Demo Course 4'),
+  ('course-05', 'Demo Course 5', 'Description for Demo Course 5'),
+  ('course-06', 'Demo Course 6', 'Description for Demo Course 6'),
+  ('course-07', 'Demo Course 7', 'Description for Demo Course 7'),
+  ('course-08', 'Demo Course 8', 'Description for Demo Course 8'),
+  ('course-09', 'Demo Course 9', 'Description for Demo Course 9'),
+  ('course-10', 'Demo Course 10', 'Description for Demo Course 10');
+
+-- Demo Modules
+INSERT INTO "Module" (id, course_id, name) VALUES
+  ('module-01', 'course-01', 'Module 1 of Course 1'),
+  ('module-02', 'course-02', 'Module 1 of Course 2'),
+  ('module-03', 'course-03', 'Module 1 of Course 3'),
+  ('module-04', 'course-04', 'Module 1 of Course 4'),
+  ('module-05', 'course-05', 'Module 1 of Course 5'),
+  ('module-06', 'course-06', 'Module 1 of Course 6'),
+  ('module-07', 'course-07', 'Module 1 of Course 7'),
+  ('module-08', 'course-08', 'Module 1 of Course 8'),
+  ('module-09', 'course-09', 'Module 1 of Course 9'),
+  ('module-10', 'course-10', 'Module 1 of Course 10');
+
+-- Demo Lectures
+INSERT INTO "Lecture" (id, module_id, title) VALUES
+  ('lecture-01', 'module-01', 'Lecture 1 of Module 1'),
+  ('lecture-02', 'module-02', 'Lecture 1 of Module 2'),
+  ('lecture-03', 'module-03', 'Lecture 1 of Module 3'),
+  ('lecture-04', 'module-04', 'Lecture 1 of Module 4'),
+  ('lecture-05', 'module-05', 'Lecture 1 of Module 5'),
+  ('lecture-06', 'module-06', 'Lecture 1 of Module 6'),
+  ('lecture-07', 'module-07', 'Lecture 1 of Module 7'),
+  ('lecture-08', 'module-08', 'Lecture 1 of Module 8'),
+  ('lecture-09', 'module-09', 'Lecture 1 of Module 9'),
+  ('lecture-10', 'module-10', 'Lecture 1 of Module 10');

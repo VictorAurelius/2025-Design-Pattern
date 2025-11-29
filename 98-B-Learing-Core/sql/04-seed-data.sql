@@ -40,24 +40,86 @@ INSERT INTO "UserRole" (user_role_id, user_id, role_id, granted_at) VALUES
 -- DOMAIN 2: COURSE CONTENT  
 -- ============================================
 
--- Insert Courses
+-- Insert 10 Courses for comprehensive demo
 INSERT INTO "Course" (course_id, code, title, description, difficulty_level, status, created_by, published_at) VALUES
-('40000000-0000-0000-0000-000000000001', 'JAVA101', 'Introduction to Java Programming', 'Learn the fundamentals of Java programming language', 'BEGINNER', 'PUBLISHED', '20000000-0000-0000-0000-000000000102', CURRENT_TIMESTAMP),
-('40000000-0000-0000-0000-000000000002', 'WEB201', 'Web Development with HTML/CSS', 'Master frontend web development technologies', 'INTERMEDIATE', 'PUBLISHED', '20000000-0000-0000-0000-000000000102', CURRENT_TIMESTAMP);
+('40000000-0000-0000-0000-000000000001', 'JAVA101', 'Lập Trình Java Cơ Bản', 'Học các khái niệm cơ bản về lập trình Java và OOP', 'BEGINNER', 'PUBLISHED', '20000000-0000-0000-0000-000000000102', CURRENT_TIMESTAMP),
+('40000000-0000-0000-0000-000000000002', 'WEB201', 'Phát Triển Web Frontend', 'Thành thạo HTML, CSS, JavaScript và React', 'INTERMEDIATE', 'PUBLISHED', '20000000-0000-0000-0000-000000000102', CURRENT_TIMESTAMP),
+('40000000-0000-0000-0000-000000000003', 'DB301', 'Cơ Sở Dữ Liệu Nâng Cao', 'PostgreSQL, MongoDB, thiết kế database và tối ưu hóa', 'ADVANCED', 'PUBLISHED', '20000000-0000-0000-0000-000000000102', CURRENT_TIMESTAMP),
+('40000000-0000-0000-0000-000000000004', 'ALGO201', 'Cấu Trúc Dữ Liệu & Giải Thuật', 'Arrays, Linked Lists, Trees, Sorting, Searching algorithms', 'INTERMEDIATE', 'PUBLISHED', '20000000-0000-0000-0000-000000000102', CURRENT_TIMESTAMP),
+('40000000-0000-0000-0000-000000000005', 'MOBILE101', 'Phát Triển Ứng Dụng Mobile', 'React Native và Flutter cho iOS/Android', 'BEGINNER', 'PUBLISHED', '20000000-0000-0000-0000-000000000102', CURRENT_TIMESTAMP),
+('40000000-0000-0000-0000-000000000006', 'CLOUD301', 'Cloud Computing AWS', 'Amazon Web Services, EC2, S3, Lambda, RDS', 'ADVANCED', 'PUBLISHED', '20000000-0000-0000-0000-000000000102', CURRENT_TIMESTAMP),
+('40000000-0000-0000-0000-000000000007', 'AI201', 'Trí Tuệ Nhân Tạo Cơ Bản', 'Machine Learning, Neural Networks với Python', 'INTERMEDIATE', 'PUBLISHED', '20000000-0000-0000-0000-000000000102', CURRENT_TIMESTAMP),
+('40000000-0000-0000-0000-000000000008', 'SEC301', 'Bảo Mật Ứng Dụng Web', 'OWASP Top 10, Authentication, Authorization, HTTPS', 'ADVANCED', 'PUBLISHED', '20000000-0000-0000-0000-000000000102', CURRENT_TIMESTAMP),
+('40000000-0000-0000-0000-000000000009', 'DEVOPS201', 'DevOps và CI/CD', 'Docker, Kubernetes, Jenkins, GitLab CI/CD pipeline', 'INTERMEDIATE', 'PUBLISHED', '20000000-0000-0000-0000-000000000102', CURRENT_TIMESTAMP),
+('40000000-0000-0000-0000-000000000010', 'UI101', 'UI/UX Design Fundamentals', 'Figma, Adobe XD, Design principles, User research', 'BEGINNER', 'PUBLISHED', '20000000-0000-0000-0000-000000000102', CURRENT_TIMESTAMP);
 
--- Insert Modules
+-- Insert Modules for all 10 courses
 INSERT INTO "Module" (module_id, course_id, title, description, order_num) VALUES
-('50000000-0000-0000-0000-000000000001', '40000000-0000-0000-0000-000000000001', 'Getting Started with Java', 'Introduction to Java environment and basic syntax', 1),
-('50000000-0000-0000-0000-000000000002', '40000000-0000-0000-0000-000000000001', 'Object-Oriented Programming', 'Classes, objects, inheritance and polymorphism', 2),
-('50000000-0000-0000-0000-000000000003', '40000000-0000-0000-0000-000000000002', 'HTML Fundamentals', 'HTML structure, elements and semantic markup', 1),
-('50000000-0000-0000-0000-000000000004', '40000000-0000-0000-0000-000000000002', 'CSS Styling', 'CSS selectors, properties and responsive design', 2);
+-- JAVA101 modules
+('50000000-0000-0000-0000-000000000001', '40000000-0000-0000-0000-000000000001', 'Cơ Bản Java', 'Cú pháp, biến, vòng lặp, điều kiện', 1),
+('50000000-0000-0000-0000-000000000002', '40000000-0000-0000-0000-000000000001', 'Lập Trình Hướng Đối Tượng', 'Class, Object, Inheritance, Polymorphism', 2),
+-- WEB201 modules
+('50000000-0000-0000-0000-000000000003', '40000000-0000-0000-0000-000000000002', 'HTML & CSS Cơ Bản', 'Cấu trúc HTML và styling với CSS', 1),
+('50000000-0000-0000-0000-000000000004', '40000000-0000-0000-0000-000000000002', 'JavaScript & React', 'JS ES6 và React components', 2),
+-- DB301 modules
+('50000000-0000-0000-0000-000000000005', '40000000-0000-0000-0000-000000000003', 'SQL Nâng Cao', 'Complex queries, indexing, optimization', 1),
+('50000000-0000-0000-0000-000000000006', '40000000-0000-0000-0000-000000000003', 'NoSQL & MongoDB', 'Document databases và aggregation', 2),
+-- ALGO201 modules
+('50000000-0000-0000-0000-000000000007', '40000000-0000-0000-0000-000000000004', 'Cấu Trúc Dữ Liệu', 'Arrays, LinkedList, Stack, Queue, Trees', 1),
+('50000000-0000-0000-0000-000000000008', '40000000-0000-0000-0000-000000000004', 'Giải Thuật Sắp Xếp', 'Bubble, Quick, Merge sort algorithms', 2),
+-- MOBILE101 modules
+('50000000-0000-0000-0000-000000000009', '40000000-0000-0000-0000-000000000005', 'React Native Basics', 'Components, Navigation, State management', 1),
+('50000000-0000-0000-0000-000000000010', '40000000-0000-0000-0000-000000000005', 'Flutter Development', 'Dart language và Widget system', 2),
+-- CLOUD301 modules
+('50000000-0000-0000-0000-000000000011', '40000000-0000-0000-0000-000000000006', 'AWS Core Services', 'EC2, S3, VPC, RDS setup and management', 1),
+('50000000-0000-0000-0000-000000000012', '40000000-0000-0000-0000-000000000006', 'Serverless Architecture', 'Lambda functions và API Gateway', 2),
+-- AI201 modules
+('50000000-0000-0000-0000-000000000013', '40000000-0000-0000-0000-000000000007', 'Machine Learning Cơ Bản', 'Supervised/Unsupervised learning, algorithms', 1),
+('50000000-0000-0000-0000-000000000014', '40000000-0000-0000-0000-000000000007', 'Neural Networks', 'Deep learning với TensorFlow/Keras', 2),
+-- SEC301 modules
+('50000000-0000-0000-0000-000000000015', '40000000-0000-0000-0000-000000000008', 'Web Security Fundamentals', 'OWASP Top 10, XSS, CSRF, SQL Injection', 1),
+('50000000-0000-0000-0000-000000000016', '40000000-0000-0000-0000-000000000008', 'Authentication & Authorization', 'JWT, OAuth2, RBAC implementation', 2),
+-- DEVOPS201 modules
+('50000000-0000-0000-0000-000000000017', '40000000-0000-0000-0000-000000000009', 'Containerization', 'Docker containers và Docker Compose', 1),
+('50000000-0000-0000-0000-000000000018', '40000000-0000-0000-0000-000000000009', 'CI/CD Pipelines', 'Jenkins, GitLab CI automated deployment', 2),
+-- UI101 modules
+('50000000-0000-0000-0000-000000000019', '40000000-0000-0000-0000-000000000010', 'Design Principles', 'Color theory, Typography, Layout principles', 1),
+('50000000-0000-0000-0000-000000000020', '40000000-0000-0000-0000-000000000010', 'Prototyping Tools', 'Figma advanced features và user testing', 2);
 
--- Insert Lectures
-INSERT INTO "Lecture" (lecture_id, module_id, title, description, type, order_num) VALUES
-('60000000-0000-0000-0000-000000000001', '50000000-0000-0000-0000-000000000001', 'Java Installation and Setup', 'Setting up Java development environment', 'VIDEO', 1),
-('60000000-0000-0000-0000-000000000002', '50000000-0000-0000-0000-000000000001', 'Hello World Program', 'Your first Java program', 'TEXT', 2),
-('60000000-0000-0000-0000-000000000003', '50000000-0000-0000-0000-000000000002', 'Classes and Objects', 'Understanding OOP concepts', 'VIDEO', 1),
-('60000000-0000-0000-0000-000000000004', '50000000-0000-0000-0000-000000000003', 'HTML Document Structure', 'Basic HTML document layout', 'TEXT', 1);
+-- Insert Lectures (including ASSIGNMENT type for submissions)
+INSERT INTO "Lecture" (lecture_id, module_id, title, description, type, order_num, assignment_config) VALUES
+-- JAVA101 lectures
+('60000000-0000-0000-0000-000000000001', '50000000-0000-0000-0000-000000000001', 'Cài Đặt Môi Trường Java', 'Hướng dẫn cài đặt JDK và IDE', 'VIDEO', 1, NULL),
+('60000000-0000-0000-0000-000000000002', '50000000-0000-0000-0000-000000000001', 'Bài Tập: Hello World', 'Viết chương trình Java đầu tiên', 'ASSIGNMENT', 2, '{"max_points": 100, "due_date": "2025-12-31", "instructions": "Viết chương trình Hello World bằng Java"}'),
+('60000000-0000-0000-0000-000000000003', '50000000-0000-0000-0000-000000000002', 'Bài Tập: OOP Calculator', 'Tạo máy tính sử dụng OOP', 'ASSIGNMENT', 1, '{"max_points": 150, "due_date": "2025-12-31", "instructions": "Tạo lớp Calculator với các phương thức +, -, *, /"}'),
+-- WEB201 lectures
+('60000000-0000-0000-0000-000000000004', '50000000-0000-0000-0000-000000000003', 'HTML Cơ Bản', 'Cấu trúc HTML và semantic tags', 'VIDEO', 1, NULL),
+('60000000-0000-0000-0000-000000000005', '50000000-0000-0000-0000-000000000003', 'Bài Tập: Personal Website', 'Tạo website cá nhân với HTML/CSS', 'ASSIGNMENT', 2, '{"max_points": 120, "due_date": "2025-12-31", "instructions": "Tạo website cá nhân responsive với HTML5 và CSS3"}'),
+('60000000-0000-0000-0000-000000000006', '50000000-0000-0000-0000-000000000004', 'Bài Tập: Todo App React', 'Xây dựng ứng dụng Todo với React', 'ASSIGNMENT', 1, '{"max_points": 180, "due_date": "2025-12-31", "instructions": "Tạo Todo App với React hooks, CRUD operations"}'),
+-- DB301 lectures
+('60000000-0000-0000-0000-000000000007', '50000000-0000-0000-0000-000000000005', 'Bài Tập: Database Design', 'Thiết kế ERD cho hệ thống bán hàng', 'ASSIGNMENT', 1, '{"max_points": 140, "due_date": "2025-12-31", "instructions": "Thiết kế ERD và implement database cho hệ thống e-commerce"}'),
+('60000000-0000-0000-0000-000000000008', '50000000-0000-0000-0000-000000000006', 'Bài Tập: MongoDB Queries', 'Viết queries phức tạp với MongoDB', 'ASSIGNMENT', 1, '{"max_points": 130, "due_date": "2025-12-31", "instructions": "Viết aggregation pipeline và complex queries với MongoDB"}'),
+-- ALGO201 lectures
+('60000000-0000-0000-0000-000000000009', '50000000-0000-0000-0000-000000000007', 'Bài Tập: Binary Tree Implementation', 'Cài đặt cây nhị phân và các thuật toán duyệt', 'ASSIGNMENT', 1, '{"max_points": 160, "due_date": "2025-12-31", "instructions": "Implement Binary Tree với insert, delete, search, và các phương thức duyệt"}'),
+('60000000-0000-0000-0000-000000000010', '50000000-0000-0000-0000-000000000008', 'Bài Tập: Sorting Algorithms', 'So sánh hiệu suất các thuật toán sắp xếp', 'ASSIGNMENT', 1, '{"max_points": 140, "due_date": "2025-12-31", "instructions": "Implement và benchmark Quick Sort, Merge Sort, Heap Sort"}'),
+-- MOBILE101 lectures
+('60000000-0000-0000-0000-000000000011', '50000000-0000-0000-0000-000000000009', 'Bài Tập: Weather App React Native', 'Ứng dụng thời tiết với API integration', 'ASSIGNMENT', 1, '{"max_points": 170, "due_date": "2025-12-31", "instructions": "Tạo ứng dụng thời tiết với React Native, API call, navigation"}'),
+('60000000-0000-0000-0000-000000000012', '50000000-0000-0000-0000-000000000010', 'Bài Tập: Flutter Quiz App', 'Quiz app với Flutter và local storage', 'ASSIGNMENT', 1, '{"max_points": 160, "due_date": "2025-12-31", "instructions": "Tạo quiz app với Flutter, SQLite local database"}'),
+-- CLOUD301 lectures
+('60000000-0000-0000-0000-000000000013', '50000000-0000-0000-0000-000000000011', 'Bài Tập: AWS Infrastructure Setup', 'Deploy web app lên AWS với EC2, RDS', 'ASSIGNMENT', 1, '{"max_points": 200, "due_date": "2025-12-31", "instructions": "Deploy full-stack app lên AWS sử dụng EC2, RDS, S3"}'),
+('60000000-0000-0000-0000-000000000014', '50000000-0000-0000-0000-000000000012', 'Bài Tập: Serverless API', 'Xây dựng API serverless với Lambda', 'ASSIGNMENT', 1, '{"max_points": 180, "due_date": "2025-12-31", "instructions": "Tạo REST API với AWS Lambda, API Gateway, DynamoDB"}'),
+-- AI201 lectures
+('60000000-0000-0000-0000-000000000015', '50000000-0000-0000-0000-000000000013', 'Bài Tập: Linear Regression Model', 'Xây dựng mô hình dự đoán giá nhà', 'ASSIGNMENT', 1, '{"max_points": 150, "due_date": "2025-12-31", "instructions": "Implement linear regression từ scratch và với scikit-learn"}'),
+('60000000-0000-0000-0000-000000000016', '50000000-0000-0000-0000-000000000014', 'Bài Tập: Image Classification CNN', 'Phân loại ảnh với Convolutional Neural Network', 'ASSIGNMENT', 1, '{"max_points": 190, "due_date": "2025-12-31", "instructions": "Xây dựng CNN model cho image classification với TensorFlow"}'),
+-- SEC301 lectures
+('60000000-0000-0000-0000-000000000017', '50000000-0000-0000-0000-000000000015', 'Bài Tập: Secure Web App', 'Implement bảo mật cho web application', 'ASSIGNMENT', 1, '{"max_points": 170, "due_date": "2025-12-31", "instructions": "Secure web app: implement authentication, authorization, input validation"}'),
+('60000000-0000-0000-0000-000000000018', '50000000-0000-0000-0000-000000000016', 'Bài Tập: JWT Authentication System', 'Hệ thống xác thực với JWT và refresh tokens', 'ASSIGNMENT', 1, '{"max_points": 160, "due_date": "2025-12-31", "instructions": "Implement JWT auth system với access/refresh tokens, role-based access"}'),
+-- DEVOPS201 lectures
+('60000000-0000-0000-0000-000000000019', '50000000-0000-0000-0000-000000000017', 'Bài Tập: Docker Multi-Container App', 'Containerize full-stack application', 'ASSIGNMENT', 1, '{"max_points": 150, "due_date": "2025-12-31", "instructions": "Dockerize frontend, backend, database với Docker Compose"}'),
+('60000000-0000-0000-0000-000000000020', '50000000-0000-0000-0000-000000000018', 'Bài Tập: CI/CD Pipeline Setup', 'Thiết lập pipeline tự động deploy', 'ASSIGNMENT', 1, '{"max_points": 180, "due_date": "2025-12-31", "instructions": "Setup GitLab CI/CD pipeline: test, build, deploy to staging/production"}'),
+-- UI101 lectures
+('60000000-0000-0000-0000-000000000021', '50000000-0000-0000-0000-000000000019', 'Bài Tập: Mobile App UI Design', 'Thiết kế giao diện ứng dụng mobile', 'ASSIGNMENT', 1, '{"max_points": 130, "due_date": "2025-12-31", "instructions": "Design complete mobile app UI/UX với Figma: wireframes, prototypes, style guide"}'),
+('60000000-0000-0000-0000-000000000022', '50000000-0000-0000-0000-000000000020', 'Bài Tập: User Experience Research', 'Nghiên cứu và phân tích trải nghiệm người dùng', 'ASSIGNMENT', 1, '{"max_points": 140, "due_date": "2025-12-31", "instructions": "Conduct user research, create personas, user journey maps, usability testing report"}');
 
 -- Insert Resources
 INSERT INTO "Resource" (resource_id, lecture_id, title, file_url, file_type) VALUES
@@ -122,6 +184,14 @@ INSERT INTO "Attempt" (attempt_id, quiz_id, user_id, enrollment_id, attempt_numb
 INSERT INTO "AssignmentSubmission" (submission_id, lecture_id, user_id, enrollment_id, content, status) VALUES
 ('f0000000-0000-0000-0000-000000000001', '60000000-0000-0000-0000-000000000002', '20000000-0000-0000-0000-000000000104', 'c0000000-0000-0000-0000-000000000001', 'public class HelloWorld { public static void main(String[] args) { System.out.println("Hello World!"); } }', 'GRADED'),
 ('f0000000-0000-0000-0000-000000000002', '60000000-0000-0000-0000-000000000002', '20000000-0000-0000-0000-000000000105', 'c0000000-0000-0000-0000-000000000002', 'public class Hello { public static void main(String[] args) { System.out.println("Hello!"); } }', 'SUBMITTED');
+('f0000000-0000-0000-0000-000000000003', '60000000-0000-0000-0000-000000000003', '20000000-0000-0000-0000-000000000104', 'c0000000-0000-0000-0000-000000000001', 'class Calculator { ... }', 'SUBMITTED'),
+('f0000000-0000-0000-0000-000000000004', '60000000-0000-0000-0000-000000000005', '20000000-0000-0000-0000-000000000105', 'c0000000-0000-0000-0000-000000000002', '<html><body>My Website</body></html>', 'GRADED'),
+('f0000000-0000-0000-0000-000000000005', '60000000-0000-0000-0000-000000000006', '20000000-0000-0000-0000-000000000104', 'c0000000-0000-0000-0000-000000000001', 'function TodoApp() { ... }', 'SUBMITTED'),
+('f0000000-0000-0000-0000-000000000006', '60000000-0000-0000-0000-000000000008', '20000000-0000-0000-0000-000000000105', 'c0000000-0000-0000-0000-000000000002', 'db.orders.aggregate([...])', 'GRADED'),
+('f0000000-0000-0000-0000-000000000007', '60000000-0000-0000-0000-000000000010', '20000000-0000-0000-0000-000000000104', 'c0000000-0000-0000-0000-000000000001', 'def quick_sort(arr): ...', 'SUBMITTED'),
+('f0000000-0000-0000-0000-000000000008', '60000000-0000-0000-0000-000000000012', '20000000-0000-0000-0000-000000000105', 'c0000000-0000-0000-0000-000000000002', 'Flutter quiz app code', 'GRADED'),
+('f0000000-0000-0000-0000-000000000009', '60000000-0000-0000-0000-000000000014', '20000000-0000-0000-0000-000000000104', 'c0000000-0000-0000-0000-000000000001', 'AWS Lambda handler code', 'SUBMITTED'),
+('f0000000-0000-0000-0000-000000000010', '60000000-0000-0000-0000-000000000016', '20000000-0000-0000-0000-000000000105', 'c0000000-0000-0000-0000-000000000002', 'CNN model code', 'GRADED'),
 
 -- Insert Certificates (fixed UUID format)
 INSERT INTO "Certificate" (certificate_id, user_id, course_id, certificate_code, verification_code, issue_date, final_grade, status) VALUES
@@ -168,3 +238,42 @@ COMMENT ON TABLE "Enrollment" IS 'Student enrollments in courses and classes';
 -- ============================================
 -- END OF SEED DATA
 -- ============================================
+
+-- Demo Courses
+INSERT INTO "Course" (id, name, description) VALUES
+  ('course-01', 'Demo Course 1', 'Description for Demo Course 1'),
+  ('course-02', 'Demo Course 2', 'Description for Demo Course 2'),
+  ('course-03', 'Demo Course 3', 'Description for Demo Course 3'),
+  ('course-04', 'Demo Course 4', 'Description for Demo Course 4'),
+  ('course-05', 'Demo Course 5', 'Description for Demo Course 5'),
+  ('course-06', 'Demo Course 6', 'Description for Demo Course 6'),
+  ('course-07', 'Demo Course 7', 'Description for Demo Course 7'),
+  ('course-08', 'Demo Course 8', 'Description for Demo Course 8'),
+  ('course-09', 'Demo Course 9', 'Description for Demo Course 9'),
+  ('course-10', 'Demo Course 10', 'Description for Demo Course 10');
+
+-- Demo Modules
+INSERT INTO "Module" (id, course_id, name) VALUES
+  ('module-01', 'course-01', 'Module 1 of Course 1'),
+  ('module-02', 'course-02', 'Module 1 of Course 2'),
+  ('module-03', 'course-03', 'Module 1 of Course 3'),
+  ('module-04', 'course-04', 'Module 1 of Course 4'),
+  ('module-05', 'course-05', 'Module 1 of Course 5'),
+  ('module-06', 'course-06', 'Module 1 of Course 6'),
+  ('module-07', 'course-07', 'Module 1 of Course 7'),
+  ('module-08', 'course-08', 'Module 1 of Course 8'),
+  ('module-09', 'course-09', 'Module 1 of Course 9'),
+  ('module-10', 'course-10', 'Module 1 of Course 10');
+
+-- Demo Lectures
+INSERT INTO "Lecture" (id, module_id, title) VALUES
+  ('lecture-01', 'module-01', 'Lecture 1 of Module 1'),
+  ('lecture-02', 'module-02', 'Lecture 1 of Module 2'),
+  ('lecture-03', 'module-03', 'Lecture 1 of Module 3'),
+  ('lecture-04', 'module-04', 'Lecture 1 of Module 4'),
+  ('lecture-05', 'module-05', 'Lecture 1 of Module 5'),
+  ('lecture-06', 'module-06', 'Lecture 1 of Module 6'),
+  ('lecture-07', 'module-07', 'Lecture 1 of Module 7'),
+  ('lecture-08', 'module-08', 'Lecture 1 of Module 8'),
+  ('lecture-09', 'module-09', 'Lecture 1 of Module 9'),
+  ('lecture-10', 'module-10', 'Lecture 1 of Module 10');

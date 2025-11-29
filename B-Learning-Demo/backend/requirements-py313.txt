@@ -1,13 +1,12 @@
 # Backend Dependencies for B-Learning Demo
-# Python 3.11+ (Updated for Python 3.13 compatibility)
+# Python 3.13+ Fully Compatible Versions
 
 # Web Framework
 fastapi==0.115.4
 uvicorn[standard]==0.32.1
 
-# Database (Updated for Python 3.13 compatibility)
+# Database - Updated for Python 3.13 compatibility
 psycopg2-binary==2.9.10
-# Alternative: asyncpg==0.29.0 for async support
 
 # CORS
 fastapi-cors==0.0.6
@@ -15,7 +14,7 @@ fastapi-cors==0.0.6
 # Environment Variables
 python-dotenv==1.0.1
 
-# Data Validation (Updated for Python 3.13 compatibility)
+# Data Validation (Python 3.13 compatible with pre-compiled wheels)
 pydantic==2.10.2
 pydantic-settings==2.6.1
 

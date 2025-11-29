@@ -67,11 +67,11 @@ def get_submissions(
     params = []
 
     if course_id:
-        where_conditions.append("a.course_id = %s")
+        where_conditions.append("c.course_id = %s")
         params.append(course_id)
 
     if assignment_id:
-        where_conditions.append("asub.assignment_id = %s")
+        where_conditions.append("asub.lecture_id = %s")
         params.append(assignment_id)
 
     if status:
@@ -86,16 +86,16 @@ def get_submissions(
         where_conditions.append("u.email ILIKE %s")
         params.append(f"%{student_email}%")
 
-    where_clause = "WHERE " + " AND ".join(where_conditions) if where_conditions else ""
-
     # Count total
     count_query = f"""
         SELECT COUNT(*) as count
         FROM "AssignmentSubmission" asub
         INNER JOIN "User" u ON asub.user_id = u.user_id
-        INNER JOIN "Assignment" a ON asub.assignment_id = a.assignment_id
-        INNER JOIN "Course" c ON a.course_id = c.course_id
-        {where_clause}
+        INNER JOIN "Lecture" l ON asub.lecture_id = l.lecture_id
+        INNER JOIN "Module" m ON l.module_id = m.module_id
+        INNER JOIN "Course" c ON m.course_id = c.course_id
+        WHERE l.type = 'ASSIGNMENT'
+        {("AND " + " AND ".join(where_conditions)) if where_conditions else ""}
     """
     count_result = execute_query(count_query, tuple(params), fetch='one')
     total = count_result['count']
@@ -105,17 +105,20 @@ def get_submissions(
     submissions_query = f"""
         SELECT
             -- From AssignmentSubmission
-            asub.assignment_submission_id,
+            asub.submission_id as assignment_submission_id,
             asub.submission_number,
             asub.submitted_at,
             asub.content,
             asub.is_late,
-            asub.days_late,
+            CASE
+                WHEN asub.is_late = true THEN 1
+                ELSE 0
+            END as days_late,
             asub.status,
-            asub.auto_score,
-            asub.manual_score,
-            asub.final_score,
-            asub.penalty_applied,
+            COALESCE(asub.score, 0) as auto_score,
+            COALESCE(asub.score, 0) as manual_score,
+            COALESCE(asub.score, 0) as final_score,
+            0 as penalty_applied,
             asub.feedback,
             asub.graded_at,
 
@@ -124,12 +127,12 @@ def get_submissions(
             u.email as student_email,
             CONCAT(u.first_name, ' ', u.last_name) as student_name,
 
-            -- From Assignment
-            a.assignment_id,
-            a.title as assignment_title,
-            a.assignment_type,
-            a.max_points,
-            a.due_date,
+            -- From Lecture (Assignment)
+            l.lecture_id as assignment_id,
+            l.title as assignment_title,
+            'ASSIGNMENT' as assignment_type,
+            COALESCE(asub.max_score, 100) as max_points,
+            CURRENT_TIMESTAMP + INTERVAL '7 days' as due_date,
 
             -- From Course
             c.course_id,
@@ -145,19 +148,24 @@ def get_submissions(
         INNER JOIN "User" u
             ON asub.user_id = u.user_id
 
-        -- JOIN Assignment
-        INNER JOIN "Assignment" a
-            ON asub.assignment_id = a.assignment_id
+        -- JOIN Lecture (Assignment)
+        INNER JOIN "Lecture" l
+            ON asub.lecture_id = l.lecture_id
+
+        -- JOIN Module
+        INNER JOIN "Module" m
+            ON l.module_id = m.module_id
 
         -- JOIN Course
         INNER JOIN "Course" c
-            ON a.course_id = c.course_id
+            ON m.course_id = c.course_id
 
         -- LEFT JOIN Grader (có thể chưa chấm)
         LEFT JOIN "User" grader
             ON asub.graded_by = grader.user_id
 
-        {where_clause}
+        WHERE l.type = 'ASSIGNMENT'
+        {("AND " + " AND ".join(where_conditions)) if where_conditions else ""}
 
         ORDER BY asub.submitted_at DESC
         LIMIT %s OFFSET %s
@@ -196,16 +204,16 @@ def get_submission_detail(submission_id: str):
             u.email as student_email,
             CONCAT(u.first_name, ' ', u.last_name) as student_name,
 
-            -- From Assignment (all important fields)
-            a.assignment_id,
-            a.title as assignment_title,
-            a.description as assignment_description,
-            a.instructions as assignment_instructions,
-            a.assignment_type,
-            a.max_points,
-            a.due_date,
-            a.late_submission_allowed,
-            a.late_penalty_percent,
+            -- From Lecture (Assignment)
+            l.lecture_id as assignment_id,
+            l.title as assignment_title,
+            l.description as assignment_description,
+            l.description as assignment_instructions,
+            'ASSIGNMENT' as assignment_type,
+            asub.max_score as max_points,
+            NULL as due_date,
+            TRUE as late_submission_allowed,
+            0 as late_penalty_percent,
 
             -- From Course
             c.course_id,
@@ -219,11 +227,12 @@ def get_submission_detail(submission_id: str):
         FROM "AssignmentSubmission" asub
 
         INNER JOIN "User" u ON asub.user_id = u.user_id
-        INNER JOIN "Assignment" a ON asub.assignment_id = a.assignment_id
-        INNER JOIN "Course" c ON a.course_id = c.course_id
+        INNER JOIN "Lecture" l ON asub.lecture_id = l.lecture_id
+        INNER JOIN "Module" m ON l.module_id = m.module_id
+        INNER JOIN "Course" c ON m.course_id = c.course_id
         LEFT JOIN "User" grader ON asub.graded_by = grader.user_id
 
-        WHERE asub.assignment_submission_id = %s
+        WHERE asub.submission_id = %s AND l.type = 'ASSIGNMENT'
     """
 
     submission = execute_query(query, (submission_id,), fetch='one')
@@ -268,14 +277,14 @@ def grade_submission(submission_id: str, grade_data: GradeSubmissionRequest):
     # Get submission and assignment info
     check_query = """
         SELECT
-            asub.assignment_submission_id,
+            asub.submission_id as assignment_submission_id,
             asub.status,
-            asub.auto_score,
-            asub.penalty_applied,
-            a.max_points
+            0 as auto_score,
+            0 as penalty_applied,
+            asub.max_score as max_points
         FROM "AssignmentSubmission" asub
-        INNER JOIN "Assignment" a ON asub.assignment_id = a.assignment_id
-        WHERE asub.assignment_submission_id = %s
+        INNER JOIN "Lecture" l ON asub.lecture_id = l.lecture_id
+        WHERE asub.submission_id = %s AND l.type = 'ASSIGNMENT'
     """
     submission = execute_query(check_query, (submission_id,), fetch='one')
 
@@ -312,21 +321,17 @@ def grade_submission(submission_id: str, grade_data: GradeSubmissionRequest):
     update_query = """
         UPDATE "AssignmentSubmission"
         SET
-            manual_score = %s,
-            final_score = %s,
+            score = %s,
             feedback = %s,
-            rubric_scores = %s,
             status = 'GRADED',
             graded_at = CURRENT_TIMESTAMP
-        WHERE assignment_submission_id = %s
+        WHERE submission_id = %s
         RETURNING *
     """
 
     params = (
-        grade_data.manual_score,
         final_score,
         grade_data.feedback,
-        grade_data.rubric_scores,
         submission_id
     )
 
@@ -362,14 +367,12 @@ def get_submission_stats(
     params = []
 
     if course_id:
-        where_conditions.append("a.course_id = %s")
+        where_conditions.append("c.course_id = %s")
         params.append(course_id)
 
     if assignment_id:
-        where_conditions.append("asub.assignment_id = %s")
+        where_conditions.append("asub.lecture_id = %s")
         params.append(assignment_id)
-
-    where_clause = "WHERE " + " AND ".join(where_conditions) if where_conditions else ""
 
     stats_query = f"""
         SELECT
@@ -377,12 +380,15 @@ def get_submission_stats(
             COUNT(*) FILTER (WHERE asub.status = 'SUBMITTED') as submitted,
             COUNT(*) FILTER (WHERE asub.status = 'GRADED') as graded,
             COUNT(*) FILTER (WHERE asub.status IN ('SUBMITTED', 'GRADING')) as pending,
-            AVG(asub.final_score) FILTER (WHERE asub.status = 'GRADED') as average_score,
+            AVG(asub.score) FILTER (WHERE asub.status = 'GRADED') as average_score,
             COUNT(*) FILTER (WHERE asub.is_late = TRUE) as late_submissions,
             COUNT(*) FILTER (WHERE asub.is_late = FALSE) as on_time_submissions
         FROM "AssignmentSubmission" asub
-        INNER JOIN "Assignment" a ON asub.assignment_id = a.assignment_id
-        {where_clause}
+        INNER JOIN "Lecture" l ON asub.lecture_id = l.lecture_id
+        INNER JOIN "Module" m ON l.module_id = m.module_id
+        INNER JOIN "Course" c ON m.course_id = c.course_id
+        WHERE l.type = 'ASSIGNMENT'
+        {("AND " + " AND ".join(where_conditions)) if where_conditions else ""}
     """
 
     stats = execute_query(stats_query, tuple(params), fetch='one')

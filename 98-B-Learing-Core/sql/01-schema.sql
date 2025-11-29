@@ -324,7 +324,6 @@ CREATE TABLE "Enrollment" (
   completion_percentage DECIMAL(5,2) DEFAULT 0,
   last_accessed_at TIMESTAMP,
 
-  CONSTRAINT uq_enrollment UNIQUE(user_id, course_id, COALESCE(class_id, '00000000-0000-0000-0000-000000000000'::UUID)),
   CONSTRAINT chk_enrollment_role CHECK (role IN ('STUDENT', 'INSTRUCTOR', 'TA')),
   CONSTRAINT chk_enrollment_status CHECK (status IN ('ACTIVE', 'COMPLETED', 'DROPPED', 'SUSPENDED'))
 );
@@ -336,6 +335,10 @@ COMMENT ON COLUMN "Enrollment".status IS 'Status: ACTIVE, COMPLETED, DROPPED, SU
 COMMENT ON COLUMN "Enrollment".final_grade IS 'Final course grade';
 COMMENT ON COLUMN "Enrollment".completion_percentage IS 'Completion percentage (%)';
 COMMENT ON COLUMN "Enrollment".last_accessed_at IS 'Last access time';
+-- Create unique index for enrollment (handles NULL class_id as zero-UUID)
+CREATE UNIQUE INDEX uq_enrollment_idx ON "Enrollment" (
+  user_id, course_id, COALESCE(class_id, '00000000-0000-0000-0000-000000000000'::UUID)
+);
 
 -- Table 11: Attempt
 CREATE TABLE "Attempt" (

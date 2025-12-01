@@ -397,3 +397,5 @@ hãy tạo 98-B-Learning-Core/req-4.md là plan task cho claude để tạo báo
 4. tạo 1 báo cáo riêng, giải thích đầy đủ ý nghĩa các bảng, quan hệ các bảng, đề xuất tất các câu hỏi vấn đáp cụ thể về DB này cho từng bảng (ví dụ tại sao lại phải có bảng submission, tại sao lại cần quan hệ này, ....) => mục tiêu giúp tôi hiểu và vấn đáp được với DB này
 
 Lưu ý: đây là plan task
+
+claude code đang làm dở 98-B-Learning-Core/req-4.md, hãy làm tiếp phần FAQ (đang xong main_report)

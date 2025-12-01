@@ -14,7 +14,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import apiClient from '@/lib/api';
+import Link from 'next/link';
 import type {
   SubmissionListItem,
   SubmissionDetail,
@@ -24,6 +26,7 @@ import type {
 } from '@/types/submission';
 
 export default function SubmissionsPage() {
+  const searchParams = useSearchParams();
   // State
   const [submissions, setSubmissions] = useState<SubmissionListItem[]>([]);
   const [total, setTotal] = useState(0);
@@ -101,6 +104,23 @@ export default function SubmissionsPage() {
       console.error('Error fetching stats:', err);
     }
   };
+
+  // Initialize filters from URL query parameters
+  useEffect(() => {
+    const studentEmailParam = searchParams.get('student_email');
+    const assignmentIdParam = searchParams.get('assignment_id');
+    const courseIdParam = searchParams.get('course_id');
+
+    if (studentEmailParam) {
+      setStudentSearch(studentEmailParam);
+    }
+    if (assignmentIdParam) {
+      setAssignmentFilter(assignmentIdParam);
+    }
+    if (courseIdParam) {
+      setCourseFilter(courseIdParam);
+    }
+  }, []);
 
   useEffect(() => {
     fetchSubmissions();
@@ -347,14 +367,22 @@ export default function SubmissionsPage() {
                         )}
                       </td>
                       <td className="px-3 py-2 border">
-                        <button
-                          onClick={() =>
-                            handleGrade(sub.assignment_submission_id)
-                          }
-                          className="text-blue-600 hover:underline text-sm"
-                        >
-                          {sub.status === 'GRADED' ? 'View' : 'Grade'}
-                        </button>
+                        <div className="flex flex-col gap-1">
+                          <Link
+                            href={`/submissions/${sub.assignment_submission_id}`}
+                            className="text-purple-600 hover:underline text-sm font-semibold"
+                          >
+                            📝 Detail
+                          </Link>
+                          <button
+                            onClick={() =>
+                              handleGrade(sub.assignment_submission_id)
+                            }
+                            className="text-blue-600 hover:underline text-sm"
+                          >
+                            {sub.status === 'GRADED' ? 'View' : 'Grade'}
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}

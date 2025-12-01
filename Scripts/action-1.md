@@ -374,3 +374,10 @@ hãy sửa:
 4. JOIN: AssignmentSubmission, User, Assignment, Course, GradeBook => sửa lại đúng các bảng JOIN 
 
 phải sửa cả 98-B-Learing-Core/sql/04-seed-data.sql
+
+tôi cần các màn hình bổ trợ cho Submission Management
+hãy liệt kê các màn hình cần thiết, ý nghĩa, chức năng để tôi quyết định thêm màn hình nào
+
+tôi chỉ muốn làm demo cho DB thôi, tôi đang có Submission Management nên tôi cần các màn hình hỗ trợ thể hiện màn hình Submission Management đang thao tác đúng
+
+tôi đã có Course Management rồi, hãy tạo các màn cần thiết

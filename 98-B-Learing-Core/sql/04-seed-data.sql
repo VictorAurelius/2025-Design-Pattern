@@ -444,7 +444,7 @@ INSERT INTO "Enrollment" (enrollment_id, user_id, course_id, class_id, role, sta
 ('c0000000-0000-0000-0000-000000000012', '20000000-0000-0000-0000-000000000105', '40000000-0000-0000-0000-000000000003', NULL, 'STUDENT', 'ACTIVE', CURRENT_TIMESTAMP - INTERVAL '20 days'),
 ('c0000000-0000-0000-0000-000000000013', '20000000-0000-0000-0000-000000000101', '40000000-0000-0000-0000-000000000002', NULL, 'STUDENT', 'ACTIVE', CURRENT_TIMESTAMP - INTERVAL '25 days'),
 ('c0000000-0000-0000-0000-000000000014', '20000000-0000-0000-0000-000000000102', '40000000-0000-0000-0000-000000000002', NULL, 'STUDENT', 'ACTIVE', CURRENT_TIMESTAMP - INTERVAL '22 days'),
-('c0000000-0000-0000-0000-000000000015', '20000000-0000-0000-0000-000000000103', '40000000-0000-0000-0000-000000000004', NULL, 'STUDENT', 'ACTIVE', CURRENT_TIMESTAMP - INTERVAL '18 days');
+('c0000000-0000-0000-0000-000000000015', '20000000-0000-0000-0000-000000000103', '40000000-0000-0000-0000-000000000003', NULL, 'STUDENT', 'ACTIVE', CURRENT_TIMESTAMP - INTERVAL '18 days');
 
 -- --------------------------------------------
 -- 4.3. Progress Tracking (2 progress records)
@@ -529,11 +529,11 @@ INSERT INTO "AssignmentSubmission" (submission_id, lecture_id, user_id, enrollme
   100.00,
   'Code chay tot, logic dung. Can improve code documentation.',
   CURRENT_TIMESTAMP - INTERVAL '11 days',
-  '20000000-0000-0000-0000-000000000002',  -- Graded by instructor Kiet
+  '20000000-0000-0000-0000-000000000002',
   '["https://s3.amazonaws.com/blearning/submissions/minh-le-hello-world.zip"]'::json
 ),
 
--- Student 2 (Huong) - Java Hello World (submitted, not graded yet)
+-- Student 2 (Huong) - Java Hello World (submitted)
 (
   'f0000000-0000-0000-0000-000000000002',
   '60000000-0000-0000-0000-000000000002',
@@ -542,35 +542,35 @@ INSERT INTO "AssignmentSubmission" (submission_id, lecture_id, user_id, enrollme
   1,
   'SUBMITTED',
   CURRENT_TIMESTAMP - INTERVAL '2 days',
-  NULL,  -- score (not graded yet)
-  NULL,  -- max_score
-  NULL,  -- feedback
-  NULL,  -- graded_at (not graded yet)
-  NULL,  -- graded_by (not graded yet)
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
   '["https://s3.amazonaws.com/blearning/submissions/huong-pham-hello.java"]'::json
 ),
 
--- Student 3 (Tuan) - Java OOP Calculator (graded)
+-- Student 3 (Tuan) - Java Hello World (graded)
 (
   'f0000000-0000-0000-0000-000000000003',
-  '60000000-0000-0000-0000-000000000003',
+  '60000000-0000-0000-0000-000000000002',
   '20000000-0000-0000-0000-000000000103',
-  'c0000000-0000-0000-0000-000000000003',
+  'c0000000-0000-0000-0000-000000000015',
   1,
   'GRADED',
   CURRENT_TIMESTAMP - INTERVAL '5 days',
-  142.00,
-  150.00,
+  92.00,
+  100.00,
   'Xuat sac! Code clean va co error handling tot',
   CURRENT_TIMESTAMP - INTERVAL '4 days',
   '20000000-0000-0000-0000-000000000002',
-  '["https://s3.amazonaws.com/blearning/submissions/tuan-vo-calculator.zip"]'::json
+  '["https://s3.amazonaws.com/blearning/submissions/tuan-vo-hello-world.zip"]'::json
 ),
 
 -- Student 4 (Hoa) - Personal Website WEB201 (graded)
 (
   'f0000000-0000-0000-0000-000000000004',
-  '60000000-0000-0000-0000-000000000005',
+  '60000000-0000-0000-0000-000000000004',
   '20000000-0000-0000-0000-000000000104',
   'c0000000-0000-0000-0000-000000000011',
   1,
@@ -587,7 +587,7 @@ INSERT INTO "AssignmentSubmission" (submission_id, lecture_id, user_id, enrollme
 -- Student 5 (Dung) - Database Design DB301 (submitted)
 (
   'f0000000-0000-0000-0000-000000000005',
-  '60000000-0000-0000-0000-000000000007',
+  '60000000-0000-0000-0000-000000000006',
   '20000000-0000-0000-0000-000000000105',
   'c0000000-0000-0000-0000-000000000012',
   1,
@@ -604,7 +604,7 @@ INSERT INTO "AssignmentSubmission" (submission_id, lecture_id, user_id, enrollme
 -- Student 1 (Minh) - Personal Website WEB201 (graded)
 (
   'f0000000-0000-0000-0000-000000000006',
-  '60000000-0000-0000-0000-000000000005',
+  '60000000-0000-0000-0000-000000000004',
   '20000000-0000-0000-0000-000000000101',
   'c0000000-0000-0000-0000-000000000013',
   1,
@@ -621,7 +621,7 @@ INSERT INTO "AssignmentSubmission" (submission_id, lecture_id, user_id, enrollme
 -- Student 2 (Huong) - Personal Website WEB201 (submitted)
 (
   'f0000000-0000-0000-0000-000000000007',
-  '60000000-0000-0000-0000-000000000005',
+  '60000000-0000-0000-0000-000000000004',
   '20000000-0000-0000-0000-000000000102',
   'c0000000-0000-0000-0000-000000000014',
   1,
@@ -635,30 +635,30 @@ INSERT INTO "AssignmentSubmission" (submission_id, lecture_id, user_id, enrollme
   '["https://s3.amazonaws.com/blearning/submissions/huong-pham-website.zip"]'::json
 ),
 
--- Student 1 (Minh) - Todo App React WEB201 (graded - excellent)
+-- Student 1 (Minh) - Database Design DB301 (graded)
 (
   'f0000000-0000-0000-0000-000000000008',
   '60000000-0000-0000-0000-000000000006',
   '20000000-0000-0000-0000-000000000101',
-  'c0000000-0000-0000-0000-000000000013',
+  'c0000000-0000-0000-0000-000000000001',
   1,
   'GRADED',
   CURRENT_TIMESTAMP - INTERVAL '10 days',
-  175.00,
-  180.00,
-  'Xuat sac! Code structure tot, su dung hooks dung cach, co unit tests.',
+  135.00,
+  140.00,
+  'Xuat sac! ERD design tot, normalization dung 3NF.',
   CURRENT_TIMESTAMP - INTERVAL '9 days',
   '20000000-0000-0000-0000-000000000002',
-  '["https://s3.amazonaws.com/blearning/submissions/minh-le-todo-app.zip"]'::json
+  '["https://s3.amazonaws.com/blearning/submissions/minh-le-erd.pdf"]'::json
 ),
 
--- Student 4 (Hoa) - Todo App React WEB201 (grading)
+-- Student 4 (Hoa) - Personal Website WEB201 attempt 2 (grading)
 (
   'f0000000-0000-0000-0000-000000000009',
-  '60000000-0000-0000-0000-000000000006',
+  '60000000-0000-0000-0000-000000000004',
   '20000000-0000-0000-0000-000000000104',
   'c0000000-0000-0000-0000-000000000011',
-  1,
+  2,
   'GRADING',
   CURRENT_TIMESTAMP - INTERVAL '4 days',
   NULL,
@@ -666,33 +666,33 @@ INSERT INTO "AssignmentSubmission" (submission_id, lecture_id, user_id, enrollme
   NULL,
   NULL,
   NULL,
-  '["https://s3.amazonaws.com/blearning/submissions/hoa-nguyen-todo.zip"]'::json
+  '["https://s3.amazonaws.com/blearning/submissions/hoa-nguyen-website-v2.zip"]'::json
 ),
 
--- Student 3 (Tuan) - Data Structures Assignment ALGO201 (graded)
+-- Student 3 (Tuan) - Database Design DB301 (submitted)
 (
   'f0000000-0000-0000-0000-000000000010',
-  '60000000-0000-0000-0000-000000000008',
+  '60000000-0000-0000-0000-000000000006',
   '20000000-0000-0000-0000-000000000103',
   'c0000000-0000-0000-0000-000000000015',
   1,
-  'GRADED',
+  'SUBMITTED',
   CURRENT_TIMESTAMP - INTERVAL '7 days',
-  88.00,
-  100.00,
-  'Implement Binary Tree tot. Can optimize time complexity o search function.',
-  CURRENT_TIMESTAMP - INTERVAL '6 days',
-  '20000000-0000-0000-0000-000000000002',
-  '["https://s3.amazonaws.com/blearning/submissions/tuan-vo-binary-tree.java"]'::json
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  '["https://s3.amazonaws.com/blearning/submissions/tuan-vo-erd.pdf"]'::json
 ),
 
--- Student 2 (Huong) - Java OOP Calculator (submitted)
+-- Student 2 (Huong) - Java Hello World attempt 2 (submitted)
 (
   'f0000000-0000-0000-0000-000000000011',
-  '60000000-0000-0000-0000-000000000003',
+  '60000000-0000-0000-0000-000000000002',
   '20000000-0000-0000-0000-000000000102',
   'c0000000-0000-0000-0000-000000000002',
-  1,
+  2,
   'SUBMITTED',
   CURRENT_TIMESTAMP - INTERVAL '1 day',
   NULL,
@@ -700,24 +700,24 @@ INSERT INTO "AssignmentSubmission" (submission_id, lecture_id, user_id, enrollme
   NULL,
   NULL,
   NULL,
-  '["https://s3.amazonaws.com/blearning/submissions/huong-pham-calculator.zip"]'::json
+  '["https://s3.amazonaws.com/blearning/submissions/huong-pham-hello-v2.zip"]'::json
 ),
 
--- Student 1 (Minh) - Java OOP Calculator (graded)
+-- Student 5 (Dung) - Database Design DB301 attempt 2 (graded)
 (
   'f0000000-0000-0000-0000-000000000012',
-  '60000000-0000-0000-0000-000000000003',
-  '20000000-0000-0000-0000-000000000101',
-  'c0000000-0000-0000-0000-000000000001',
-  1,
+  '60000000-0000-0000-0000-000000000006',
+  '20000000-0000-0000-0000-000000000105',
+  'c0000000-0000-0000-0000-000000000012',
+  2,
   'GRADED',
   CURRENT_TIMESTAMP - INTERVAL '14 days',
-  148.00,
-  150.00,
-  'Tot lam! Co exception handling va validation day du.',
+  136.00,
+  140.00,
+  'Tot! ERD day du va co indexing strategy hop ly.',
   CURRENT_TIMESTAMP - INTERVAL '13 days',
   '20000000-0000-0000-0000-000000000002',
-  '["https://s3.amazonaws.com/blearning/submissions/minh-le-calculator.zip"]'::json
+  '["https://s3.amazonaws.com/blearning/submissions/dung-tran-erd-v2.pdf"]'::json
 );
 
 -- ============================================

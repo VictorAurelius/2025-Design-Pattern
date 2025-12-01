@@ -38,6 +38,18 @@ export default function RootLayout({
                     Courses
                   </Link>
                   <Link
+                    href="/assignments"
+                    className="hover:text-primary-200 transition"
+                  >
+                    Assignments
+                  </Link>
+                  <Link
+                    href="/students"
+                    className="hover:text-primary-200 transition"
+                  >
+                    Students
+                  </Link>
+                  <Link
                     href="/submissions"
                     className="hover:text-primary-200 transition"
                   >

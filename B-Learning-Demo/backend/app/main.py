@@ -27,7 +27,7 @@ from contextlib import asynccontextmanager
 import os
 
 from config.database import init_connection_pool, close_connection_pool
-from app.routes import courses, submissions
+from app.routes import courses, submissions, assignments, students
 
 
 # Lifespan context manager (startup/shutdown events)
@@ -95,6 +95,8 @@ app.add_middleware(
 # Include routers
 app.include_router(courses.router)
 app.include_router(submissions.router)
+app.include_router(assignments.router)
+app.include_router(students.router)
 
 
 # Root endpoint

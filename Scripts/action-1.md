@@ -383,3 +383,6 @@ tôi chỉ muốn làm demo cho DB thôi, tôi đang có Submission Management n
 tôi đã có Course Management rồi, hãy tạo các màn cần thiết
 
 thêm đủ luồng tính năng để từ tạo 1 course đến grade được submission của assigment trong course đó
+
+trong Enroll Student vào Course
+hãy đổi Student ID * (UUID) và Course ID * (UUID) thành combobox

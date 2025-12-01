@@ -3,7 +3,8 @@
  * ===============================
  *
  * Trang để student submit assignment.
- * - Nhập student ID, assignment ID
+ * - Chọn student từ dropdown
+ * - Chọn assignment từ dropdown
  * - Nhập content
  * - Submit assignment
  *
@@ -12,7 +13,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import apiClient from '@/lib/api';
 import Link from 'next/link';
@@ -22,6 +23,20 @@ interface SubmitForm {
   lecture_id: string;
   content: string;
   file_urls: string[];
+}
+
+interface Student {
+  user_id: string;
+  email: string;
+  full_name: string;
+}
+
+interface Assignment {
+  lecture_id: string;
+  title: string;
+  course_code: string;
+  course_title: string;
+  max_points: number;
 }
 
 export default function StudentSubmitPage() {
@@ -39,6 +54,37 @@ export default function StudentSubmitPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [submissionId, setSubmissionId] = useState<string | null>(null);
+
+  // Dropdown data
+  const [students, setStudents] = useState<Student[]>([]);
+  const [assignments, setAssignments] = useState<Assignment[]>([]);
+  const [loadingDropdowns, setLoadingDropdowns] = useState(true);
+
+  // Fetch students and assignments on mount
+  useEffect(() => {
+    fetchStudents();
+    fetchAssignments();
+  }, []);
+
+  const fetchStudents = async () => {
+    try {
+      const response = await apiClient.get('/api/students');
+      setStudents(response.data.students);
+    } catch (err: any) {
+      console.error('Error loading students:', err);
+    } finally {
+      setLoadingDropdowns(false);
+    }
+  };
+
+  const fetchAssignments = async () => {
+    try {
+      const response = await apiClient.get('/api/assignments');
+      setAssignments(response.data.assignments);
+    } catch (err: any) {
+      console.error('Error loading assignments:', err);
+    }
+  };
 
   const handleAddFileUrl = () => {
     if (fileUrlInput.trim()) {
@@ -138,52 +184,65 @@ export default function StudentSubmitPage() {
 
         {/* Submit Form */}
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Student ID */}
+          {/* Student Selection */}
           <div>
             <label className="block text-sm font-semibold mb-2">
-              Student ID * (UUID)
+              Student *
             </label>
-            <input
-              type="text"
-              required
-              value={submitForm.user_id}
-              onChange={(e) =>
-                setSubmitForm({ ...submitForm, user_id: e.target.value })
-              }
-              className="w-full border-2 border-gray-300 px-4 py-3 rounded-lg font-mono text-sm focus:border-blue-500 focus:outline-none"
-              placeholder="20000000-0000-0000-0000-000000000101"
-            />
+            {loadingDropdowns ? (
+              <div className="w-full border-2 border-gray-300 px-4 py-3 rounded-lg text-gray-500">
+                Đang tải students...
+              </div>
+            ) : (
+              <select
+                required
+                value={submitForm.user_id}
+                onChange={(e) =>
+                  setSubmitForm({ ...submitForm, user_id: e.target.value })
+                }
+                className="w-full border-2 border-gray-300 px-4 py-3 rounded-lg focus:border-blue-500 focus:outline-none"
+              >
+                <option value="">-- Chọn Student --</option>
+                {students.map((student) => (
+                  <option key={student.user_id} value={student.user_id}>
+                    {student.full_name} ({student.email})
+                  </option>
+                ))}
+              </select>
+            )}
             <p className="text-xs text-gray-500 mt-1">
-              💡 Tip: Lấy từ{' '}
-              <Link href="/students" className="text-blue-600 hover:underline">
-                Students page
-              </Link>
+              💡 Chọn student sẽ submit assignment này
             </p>
           </div>
 
-          {/* Assignment ID */}
+          {/* Assignment Selection */}
           <div>
             <label className="block text-sm font-semibold mb-2">
-              Assignment ID * (UUID)
+              Assignment *
             </label>
-            <input
-              type="text"
-              required
-              value={submitForm.lecture_id}
-              onChange={(e) =>
-                setSubmitForm({ ...submitForm, lecture_id: e.target.value })
-              }
-              className="w-full border-2 border-gray-300 px-4 py-3 rounded-lg font-mono text-sm focus:border-blue-500 focus:outline-none"
-              placeholder="60000000-0000-0000-0000-000000000002"
-            />
-            <p className="text-xs text-gray-500 mt-1">
-              💡 Tip: Lấy từ{' '}
-              <Link
-                href="/assignments"
-                className="text-blue-600 hover:underline"
+            {loadingDropdowns ? (
+              <div className="w-full border-2 border-gray-300 px-4 py-3 rounded-lg text-gray-500">
+                Đang tải assignments...
+              </div>
+            ) : (
+              <select
+                required
+                value={submitForm.lecture_id}
+                onChange={(e) =>
+                  setSubmitForm({ ...submitForm, lecture_id: e.target.value })
+                }
+                className="w-full border-2 border-gray-300 px-4 py-3 rounded-lg focus:border-blue-500 focus:outline-none"
               >
-                Assignments page
-              </Link>
+                <option value="">-- Chọn Assignment --</option>
+                {assignments.map((assignment) => (
+                  <option key={assignment.lecture_id} value={assignment.lecture_id}>
+                    [{assignment.course_code}] {assignment.title} (Max: {assignment.max_points} pts)
+                  </option>
+                ))}
+              </select>
+            )}
+            <p className="text-xs text-gray-500 mt-1">
+              💡 Chọn assignment cần submit
             </p>
           </div>
 
@@ -205,7 +264,7 @@ export default function StudentSubmitPage() {
 Ví dụ:
 public class HelloWorld {
     public static void main(String[] args) {
-        System.out.println(\"Hello, World!\");
+        System.out.println(&quot;Hello, World!&quot;);
     }
 }
 "
@@ -296,21 +355,10 @@ public class HelloWorld {
           </h3>
           <ol className="list-decimal list-inside space-y-2 text-sm text-gray-700">
             <li>
-              <strong>Lấy Student ID:</strong> Vào{' '}
-              <Link href="/students" className="text-blue-600 hover:underline">
-                Students page
-              </Link>{' '}
-              để lấy UUID của student
+              <strong>Chọn Student:</strong> Chọn student từ dropdown list (tự động load từ database)
             </li>
             <li>
-              <strong>Lấy Assignment ID:</strong> Vào{' '}
-              <Link
-                href="/assignments"
-                className="text-blue-600 hover:underline"
-              >
-                Assignments page
-              </Link>{' '}
-              để lấy UUID của assignment cần submit
+              <strong>Chọn Assignment:</strong> Chọn assignment cần submit từ dropdown list
             </li>
             <li>
               <strong>Nhập Content:</strong> Gõ câu trả lời, code, hoặc solution
@@ -318,10 +366,10 @@ public class HelloWorld {
             </li>
             <li>
               <strong>Thêm Files (Optional):</strong> Nếu có file đính kèm, nhập
-              URL của file và click "Add URL"
+              URL của file và click &quot;Add URL&quot;
             </li>
             <li>
-              <strong>Submit:</strong> Click "Submit Assignment" để nộp bài
+              <strong>Submit:</strong> Click &quot;Submit Assignment&quot; để nộp bài
             </li>
           </ol>
 
@@ -331,7 +379,7 @@ public class HelloWorld {
             </h4>
             <ul className="list-disc list-inside space-y-1 text-sm text-yellow-800">
               <li>Student phải đã enroll vào course chứa assignment này</li>
-              <li>Assignment phải có type = "ASSIGNMENT" (không phải VIDEO hay READING)</li>
+              <li>Assignment phải có type = &quot;ASSIGNMENT&quot; (không phải VIDEO hay READING)</li>
               <li>Có thể submit nhiều lần cho cùng 1 assignment (submission_number sẽ tăng dần)</li>
               <li>Instructor có thể grade submission sau khi student submit</li>
             </ul>

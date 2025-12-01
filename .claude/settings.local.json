@@ -11,7 +11,8 @@
       "Bash(mkdir:*)",
       "Bash(tree:*)",
       "Bash(npm init:*)",
-      "Bash(python -m py_compile:*)"
+      "Bash(python -m py_compile:*)",
+      "Bash(npx next lint:*)"
     ],
     "deny": [],
     "ask": []

@@ -39,6 +39,19 @@ interface EnrollmentCreate {
   role: string;
 }
 
+interface Student {
+  user_id: string;
+  email: string;
+  full_name: string;
+}
+
+interface Course {
+  course_id: string;
+  code: string;
+  title: string;
+  status: string;
+}
+
 export default function EnrollmentsPage() {
   const searchParams = useSearchParams();
 
@@ -57,6 +70,11 @@ export default function EnrollmentsPage() {
     course_id: '',
     role: 'STUDENT',
   });
+
+  // Dropdown data
+  const [students, setStudents] = useState<Student[]>([]);
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [loadingDropdowns, setLoadingDropdowns] = useState(false);
 
   // Initialize from URL params
   useEffect(() => {
@@ -130,6 +148,35 @@ export default function EnrollmentsPage() {
     });
   };
 
+  const fetchStudents = async () => {
+    setLoadingDropdowns(true);
+    try {
+      const response = await apiClient.get('/api/students');
+      setStudents(response.data.students);
+    } catch (err: any) {
+      console.error('Error loading students:', err);
+    } finally {
+      setLoadingDropdowns(false);
+    }
+  };
+
+  const fetchCourses = async () => {
+    try {
+      const response = await apiClient.get('/api/courses', {
+        params: { limit: 100 },
+      });
+      setCourses(response.data.courses);
+    } catch (err: any) {
+      console.error('Error loading courses:', err);
+    }
+  };
+
+  const openEnrollForm = () => {
+    setShowEnrollForm(true);
+    fetchStudents();
+    fetchCourses();
+  };
+
   return (
     <div className="max-w-7xl mx-auto">
       <div className="bg-white rounded-lg shadow-md p-6">
@@ -156,7 +203,7 @@ export default function EnrollmentsPage() {
             className="border px-4 py-2 rounded"
           />
           <button
-            onClick={() => setShowEnrollForm(true)}
+            onClick={openEnrollForm}
             className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
           >
             + Enroll Student
@@ -299,40 +346,65 @@ export default function EnrollmentsPage() {
             <h2 className="text-2xl font-bold mb-4">Enroll Student vào Course</h2>
             <form onSubmit={handleEnroll}>
               <div className="space-y-4">
+                {/* Student Selection */}
                 <div>
                   <label className="block text-sm font-semibold mb-1">
-                    Student ID * (UUID)
+                    Student *
                   </label>
-                  <input
-                    type="text"
-                    required
-                    value={enrollForm.user_id}
-                    onChange={(e) =>
-                      setEnrollForm({ ...enrollForm, user_id: e.target.value })
-                    }
-                    className="w-full border px-4 py-2 rounded font-mono text-sm"
-                    placeholder="20000000-0000-0000-0000-000000000101"
-                  />
+                  {loadingDropdowns ? (
+                    <div className="w-full border px-4 py-2 rounded text-gray-500">
+                      Đang tải students...
+                    </div>
+                  ) : (
+                    <select
+                      required
+                      value={enrollForm.user_id}
+                      onChange={(e) =>
+                        setEnrollForm({ ...enrollForm, user_id: e.target.value })
+                      }
+                      className="w-full border px-4 py-2 rounded"
+                    >
+                      <option value="">-- Chọn Student --</option>
+                      {students.map((student) => (
+                        <option key={student.user_id} value={student.user_id}>
+                          {student.full_name} ({student.email})
+                        </option>
+                      ))}
+                    </select>
+                  )}
                   <p className="text-xs text-gray-500 mt-1">
-                    Tip: Lấy từ Students page hoặc Users table
+                    💡 Chọn student từ danh sách
                   </p>
                 </div>
+
+                {/* Course Selection */}
                 <div>
                   <label className="block text-sm font-semibold mb-1">
-                    Course ID * (UUID)
+                    Course *
                   </label>
-                  <input
-                    type="text"
-                    required
-                    value={enrollForm.course_id}
-                    onChange={(e) =>
-                      setEnrollForm({ ...enrollForm, course_id: e.target.value })
-                    }
-                    className="w-full border px-4 py-2 rounded font-mono text-sm"
-                    placeholder="40000000-0000-0000-0000-000000000001"
-                  />
+                  {loadingDropdowns ? (
+                    <div className="w-full border px-4 py-2 rounded text-gray-500">
+                      Đang tải courses...
+                    </div>
+                  ) : (
+                    <select
+                      required
+                      value={enrollForm.course_id}
+                      onChange={(e) =>
+                        setEnrollForm({ ...enrollForm, course_id: e.target.value })
+                      }
+                      className="w-full border px-4 py-2 rounded"
+                    >
+                      <option value="">-- Chọn Course --</option>
+                      {courses.map((course) => (
+                        <option key={course.course_id} value={course.course_id}>
+                          {course.code} - {course.title} ({course.status})
+                        </option>
+                      ))}
+                    </select>
+                  )}
                   <p className="text-xs text-gray-500 mt-1">
-                    Tip: Lấy từ Courses page
+                    💡 Chọn course từ danh sách
                   </p>
                 </div>
                 <div>

@@ -381,3 +381,5 @@ hãy liệt kê các màn hình cần thiết, ý nghĩa, chức năng để tô
 tôi chỉ muốn làm demo cho DB thôi, tôi đang có Submission Management nên tôi cần các màn hình hỗ trợ thể hiện màn hình Submission Management đang thao tác đúng
 
 tôi đã có Course Management rồi, hãy tạo các màn cần thiết
+
+thêm đủ luồng tính năng để từ tạo 1 course đến grade được submission của assigment trong course đó

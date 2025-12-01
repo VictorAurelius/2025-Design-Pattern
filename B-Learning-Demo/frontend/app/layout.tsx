@@ -50,6 +50,18 @@ export default function RootLayout({
                     Students
                   </Link>
                   <Link
+                    href="/enrollments"
+                    className="hover:text-primary-200 transition"
+                  >
+                    Enrollments
+                  </Link>
+                  <Link
+                    href="/submit"
+                    className="hover:text-primary-200 transition bg-green-600 px-3 py-1 rounded"
+                  >
+                    📝 Submit
+                  </Link>
+                  <Link
                     href="/submissions"
                     className="hover:text-primary-200 transition"
                   >

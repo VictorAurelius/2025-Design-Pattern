@@ -14,6 +14,7 @@
 
 import { useState, useEffect } from 'react';
 import apiClient from '@/lib/api';
+import Link from 'next/link';
 import type {
   Course,
   CourseCreate,
@@ -259,18 +260,26 @@ export default function CoursesPage() {
                         </span>
                       </td>
                       <td className="px-4 py-2 border">
-                        <button
-                          onClick={() => handleEdit(course)}
-                          className="text-blue-600 hover:underline mr-2"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => handleDelete(course.course_id)}
-                          className="text-red-600 hover:underline"
-                        >
-                          Delete
-                        </button>
+                        <div className="flex flex-col gap-1">
+                          <Link
+                            href={`/courses/${course.course_id}`}
+                            className="text-green-600 hover:underline font-semibold text-sm"
+                          >
+                            📚 Modules →
+                          </Link>
+                          <button
+                            onClick={() => handleEdit(course)}
+                            className="text-blue-600 hover:underline text-sm text-left"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => handleDelete(course.course_id)}
+                            className="text-red-600 hover:underline text-sm text-left"
+                          >
+                            Delete
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}

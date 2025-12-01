@@ -10,7 +10,8 @@
       "Bash(java:*)",
       "Bash(mkdir:*)",
       "Bash(tree:*)",
-      "Bash(npm init:*)"
+      "Bash(npm init:*)",
+      "Bash(python -m py_compile:*)"
     ],
     "deny": [],
     "ask": []

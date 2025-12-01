@@ -16,6 +16,7 @@ Author: Nguyễn Văn Kiệt - CNTT1-K63
 from fastapi import APIRouter, HTTPException, Query
 from typing import Optional
 from decimal import Decimal
+from pydantic import BaseModel
 
 from app.models.submission import (
     SubmissionListItem,
@@ -25,6 +26,14 @@ from app.models.submission import (
     SubmissionStats
 )
 from config.database import execute_query, execute_query_with_returning
+
+
+class SubmissionCreate(BaseModel):
+    user_id: str  # Student ID
+    lecture_id: str  # Assignment ID
+    content: str
+    file_urls: Optional[list[str]] = None
+
 
 router = APIRouter(prefix="/api/submissions", tags=["Submissions"])
 
@@ -436,3 +445,111 @@ def get_submission_stats(
     stats = execute_query(stats_query, tuple(params), fetch='one')
 
     return stats
+
+
+@router.post("", response_model=SubmissionDetail)
+def create_submission(submission_data: SubmissionCreate):
+    """
+    Student submit assignment.
+
+    **Request Body:**
+    - user_id: Student ID
+    - lecture_id: Assignment ID
+    - content: Submission content (text)
+    - file_urls: Attached files (optional, array of URLs)
+
+    **Process:**
+    1. Validate assignment exists và type = 'ASSIGNMENT'
+    2. Check student đã enrolled vào course chưa
+    3. Tính submission_number (số lần submit)
+    4. Tính is_late (so sánh với due_date)
+    5. Insert submission với status = 'SUBMITTED'
+
+    **Returns:**
+    - Full submission detail
+
+    **Raises:**
+    - 404: Assignment không tồn tại
+    - 400: Student chưa enroll vào course
+    """
+
+    # Get assignment info and check enrollment
+    check_query = """
+        SELECT
+            l.lecture_id,
+            l.assignment_config->>'max_points' as max_points,
+            l.assignment_config->>'due_date' as due_date,
+            m.course_id,
+            e.enrollment_id,
+            (
+                SELECT COUNT(*) + 1
+                FROM "AssignmentSubmission"
+                WHERE lecture_id = %s AND user_id = %s
+            ) as next_submission_number
+        FROM "Lecture" l
+        INNER JOIN "Module" m ON l.module_id = m.module_id
+        LEFT JOIN "Enrollment" e ON m.course_id = e.course_id AND e.user_id = %s
+        WHERE l.lecture_id = %s AND l.type = 'ASSIGNMENT'
+    """
+
+    params = (
+        submission_data.lecture_id,
+        submission_data.user_id,
+        submission_data.user_id,
+        submission_data.lecture_id
+    )
+
+    assignment = execute_query(check_query, params, fetch='one')
+
+    if not assignment:
+        raise HTTPException(
+            status_code=404,
+            detail="Assignment không tồn tại hoặc không phải type ASSIGNMENT"
+        )
+
+    if not assignment['enrollment_id']:
+        raise HTTPException(
+            status_code=400,
+            detail="Student chưa enroll vào course này"
+        )
+
+    # Calculate is_late (for demo, assume all submissions are on time)
+    # In production, compare CURRENT_TIMESTAMP with due_date
+    is_late = False
+
+    # Insert submission
+    insert_query = """
+        INSERT INTO "AssignmentSubmission" (
+            user_id,
+            lecture_id,
+            enrollment_id,
+            submission_number,
+            content,
+            file_urls,
+            submitted_at,
+            is_late,
+            status,
+            max_score
+        )
+        VALUES (%s, %s, %s, %s, %s, %s::jsonb, CURRENT_TIMESTAMP, %s, 'SUBMITTED', %s)
+        RETURNING submission_id
+    """
+
+    import json
+    file_urls_json = json.dumps(submission_data.file_urls) if submission_data.file_urls else None
+
+    insert_params = (
+        submission_data.user_id,
+        submission_data.lecture_id,
+        assignment['enrollment_id'],
+        assignment['next_submission_number'],
+        submission_data.content,
+        file_urls_json,
+        is_late,
+        assignment['max_points'] or 100
+    )
+
+    result = execute_query_with_returning(insert_query, insert_params)
+
+    # Return full detail
+    return get_submission_detail(result['submission_id'])

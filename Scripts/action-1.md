@@ -386,3 +386,14 @@ thêm đủ luồng tính năng để từ tạo 1 course đến grade được 
 
 trong Enroll Student vào Course
 hãy đổi Student ID * (UUID) và Course ID * (UUID) thành combobox
+
+xem lại file docker xem đã đúng để build ra image phù hợp các chỉnh sửa chưa
+
+bây giờ tôi cần tạo báo cáo cho thiết kế database này
+hãy tạo 98-B-Learning-Core/req-4.md là plan task cho claude để tạo báo cáo:
+1. đọc file Scripts/Tham_khao.pdf đây là báo cáo tham khảo của 1 đề tài khác, và tôi muốn xây dựng báo cáo theo khuôn mẫu này
+2. đọc file Scripts/DTPM_B-Learning.pdf, đây là báo cáo của DB cũ, DB cũ sai và tôi đã thực hiện tạo lại => 98-B-Learning-Core
+3. tạo nội dung báo cáo, chỉ dẫn ảnh và sơ đồ, giọng văn chuyên nghiệp, nội dung đầy đủ, phong cách báo cáo sinh viên => mục tiêu tạo ra được báo cáo theo khuân mẫu, nội dung chính xác cho đề tài
+4. tạo 1 báo cáo riêng, giải thích đầy đủ ý nghĩa các bảng, quan hệ các bảng, đề xuất tất các câu hỏi vấn đáp cụ thể về DB này cho từng bảng (ví dụ tại sao lại phải có bảng submission, tại sao lại cần quan hệ này, ....) => mục tiêu giúp tôi hiểu và vấn đáp được với DB này
+
+Lưu ý: đây là plan task

@@ -140,3 +140,156 @@ hãy đọc 98-B-Learing-Core/req-2.md để hiểu context
 tôi có sửa lại các file sql của 98-B-Learing-Core , nhưng vẫn còn lỗi ở 4-seed-data.sql. File gốc của seed này nằm ở B-Learning-Demo/init/04-seed-data.sql, hãy giúp tôi sửa lại toàn bộ để tránh lỗi seed-data để Demo được thuận lợi
 
 cần sửa tất cả các file B-Learning-Demo/init/ để build được docker
+
+tôi đã tải postgresDB nhưng file B-Learning-Demo/setup-database.bat vẫn báo lỗi: 
+PS E:\person\2025-Design-Pattern\B-Learning-Demo> .\setup-database.bat 
+==========================================
+B-Learning Database Setup Script
+==========================================
+
+Step 1: Checking if PostgreSQL is installed...
+[ERROR] PostgreSQL is not installed or not in PATH
+Please install PostgreSQL 14+ from: https://www.postgresql.org/download/windows/
+
+After installation, add PostgreSQL bin directory to your PATH
+Example: C:\Program Files\PostgreSQL\15\bin
+
+Press any key to continue . . . 
+
+hãy đọc 98-B-Learing-Core/req-2.md để hiểu context
+hãy sửa lại 98-B-Learing-Core/sql/4-seed-data.sql để fix lỗi:
+psql:../98-B-Learing-Core/sql/04-seed-data.sql:54: ERROR:  character with byte sequence 0x81 in encoding "WIN1252" has no equivalent in encoding "UTF8"
+INSERT 0 1
+INSERT 0 2
+INSERT 0 5
+psql:../98-B-Learing-Core/sql/04-seed-data.sql:182: ERROR:  insert or update on table "UserRole" violates foreign key constraint "UserRole_role_id_fkey"
+DETAIL:  Key (role_id)=(10000000-0000-0000-0000-000000000001) is not present in table "Role".
+psql:../98-B-Learing-Core/sql/04-seed-data.sql:332: ERROR:  character with byte sequence 0x8d in encoding "WIN1252" has no equivalent in encoding "UTF8"
+psql:../98-B-Learing-Core/sql/04-seed-data.sql:377: ERROR:  character with byte sequence 0x81 in encoding "WIN1252" has no equivalent in encoding "UTF8"
+psql:../98-B-Learing-Core/sql/04-seed-data.sql:424: ERROR:  character with byte sequence 0x9d in encoding "WIN1252" has no equivalent in encoding "UTF8"
+psql:../98-B-Learing-Core/sql/04-seed-data.sql:433: ERROR:  insert or update on table "Resource" violates foreign key constraint "Resource_lecture_id_fkey"
+DETAIL:  Key (lecture_id)=(60000000-0000-0000-0000-000000000001) is not present in table "Lecture".
+psql:../98-B-Learing-Core/sql/04-seed-data.sql:521: ERROR:  character with byte sequence 0x81 in encoding "WIN1252" has no equivalent in encoding "UTF8"
+psql:../98-B-Learing-Core/sql/04-seed-data.sql:532: ERROR:  insert or update on table "Option" violates foreign key constraint "Option_question_id_fkey"
+DETAIL:  Key (question_id)=(80000000-0000-0000-0000-000000000001) is not present in table "Question".      
+psql:../98-B-Learing-Core/sql/04-seed-data.sql:539: ERROR:  character with byte sequence 0x90 in encoding "WIN1252" has no equivalent in encoding "UTF8"
+psql:../98-B-Learing-Core/sql/04-seed-data.sql:544: ERROR:  character with byte sequence 0x90 in encoding "WIN1252" has no equivalent in encoding "UTF8"
+psql:../98-B-Learing-Core/sql/04-seed-data.sql:549: ERROR:  character with byte sequence 0x90 in encoding "WIN1252" has no equivalent in encoding "UTF8"
+psql:../98-B-Learing-Core/sql/04-seed-data.sql:593: ERROR:  character with byte sequence 0x81 in encoding "WIN1252" has no equivalent in encoding "UTF8"
+psql:../98-B-Learing-Core/sql/04-seed-data.sql:660: ERROR:  character with byte sequence 0x8d in encoding "WIN1252" has no equivalent in encoding "UTF8"
+psql:../98-B-Learing-Core/sql/04-seed-data.sql:670: ERROR:  column "created_at" of relation "Enrollment" does not exist
+LINE 1: ..., course_id, class_id, role, status, enrolled_at, created_at...
+                                                             ^
+psql:../98-B-Learing-Core/sql/04-seed-data.sql:675: ERROR:  column "created_at" of relation "Enrollment" does not exist
+LINE 1: ..., course_id, class_id, role, status, enrolled_at, created_at...
+                                                             ^
+psql:../98-B-Learing-Core/sql/04-seed-data.sql:684: ERROR:  column "created_at" of relation "Progress" does not exist
+LINE 1: ..._id, module_id, status, started_at, completed_at, created_at...
+                                                             ^
+psql:../98-B-Learing-Core/sql/04-seed-data.sql:689: ERROR:  column "created_at" of relation "Progress" does not exist
+LINE 1: ..._id, module_id, status, started_at, completed_at, created_at...
+                                                             ^
+psql:../98-B-Learing-Core/sql/04-seed-data.sql:693: ERROR:  column "created_at" of relation "Progress" does not exist
+LINE 1: ...ser_id, course_id, module_id, status, started_at, created_at...
+                                                             ^
+psql:../98-B-Learing-Core/sql/04-seed-data.sql:697: ERROR:  column "created_at" of relation "Progress" does not exist
+LINE 1: ...ser_id, course_id, module_id, status, started_at, created_at...
+                                                             ^
+psql:../98-B-Learing-Core/sql/04-seed-data.sql:757: ERROR:  character with byte sequence 0x81 in encoding "WIN1252" has no equivalent in encoding "UTF8"
+psql:../98-B-Learing-Core/sql/04-seed-data.sql:774: ERROR:  column "created_at" of relation "Attempt" does not exist
+LINE 1: ...ted_at, total_score, max_possible_score, answers, created_at...
+                                                             ^
+psql:../98-B-Learing-Core/sql/04-seed-data.sql:859: ERROR:  column "created_at" of relation "AssignmentSubmission" does not exist
+LINE 1: ...mitted_at, score, max_score, feedback, file_urls, created_at...
+                                                             ^
+psql:../98-B-Learing-Core/sql/04-seed-data.sql:878: ERROR:  invalid input syntax for type uuid: "g0000000-0000-0000-0000-000000000001"
+LINE 3:   'g0000000-0000-0000-0000-000000000001',
+          ^
+psql:../98-B-Learing-Core/sql/04-seed-data.sql:913: NOTICE:  ========================================      
+psql:../98-B-Learing-Core/sql/04-seed-data.sql:913: NOTICE:  SEED DATA STATISTICS
+psql:../98-B-Learing-Core/sql/04-seed-data.sql:913: NOTICE:  ========================================      
+psql:../98-B-Learing-Core/sql/04-seed-data.sql:913: NOTICE:  AssignmentSubmission-30s : 0s records
+psql:../98-B-Learing-Core/sql/04-seed-data.sql:913: NOTICE:  Attempt-30s : 0s records
+psql:../98-B-Learing-Core/sql/04-seed-data.sql:913: NOTICE:  Certificate-30s : 0s records
+psql:../98-B-Learing-Core/sql/04-seed-data.sql:913: NOTICE:  Class-30s : 0s records
+psql:../98-B-Learing-Core/sql/04-seed-data.sql:913: NOTICE:  Course-30s : 0s records
+psql:../98-B-Learing-Core/sql/04-seed-data.sql:913: NOTICE:  Enrollment-30s : 0s records
+psql:../98-B-Learing-Core/sql/04-seed-data.sql:913: NOTICE:  Lecture-30s : 0s records
+psql:../98-B-Learing-Core/sql/04-seed-data.sql:913: NOTICE:  Module-30s : 0s records
+psql:../98-B-Learing-Core/sql/04-seed-data.sql:913: NOTICE:  Option-30s : 0s records
+psql:../98-B-Learing-Core/sql/04-seed-data.sql:913: NOTICE:  Progress-30s : 0s records
+psql:../98-B-Learing-Core/sql/04-seed-data.sql:913: NOTICE:  Question-30s : 0s records
+psql:../98-B-Learing-Core/sql/04-seed-data.sql:913: NOTICE:  Quiz-30s : 0s records
+psql:../98-B-Learing-Core/sql/04-seed-data.sql:913: NOTICE:  Resource-30s : 0s records
+psql:../98-B-Learing-Core/sql/04-seed-data.sql:913: NOTICE:  Role-30s : 0s records
+psql:../98-B-Learing-Core/sql/04-seed-data.sql:913: NOTICE:  User-30s : 8s records
+psql:../98-B-Learing-Core/sql/04-seed-data.sql:913: NOTICE:  UserRole-30s : 0s records
+psql:../98-B-Learing-Core/sql/04-seed-data.sql:913: NOTICE:  ========================================
+psql:../98-B-Learing-Core/sql/04-seed-data.sql:913: NOTICE:  Data demonstrates:
+psql:../98-B-Learing-Core/sql/04-seed-data.sql:913: NOTICE:  - Complete user management workflow
+psql:../98-B-Learing-Core/sql/04-seed-data.sql:913: NOTICE:  - 10 diverse courses with realistic content   
+psql:../98-B-Learing-Core/sql/04-seed-data.sql:913: NOTICE:  - 22 lectures including assignments
+psql:../98-B-Learing-Core/sql/04-seed-data.sql:913: NOTICE:  - Quiz system with multiple question types    
+psql:../98-B-Learing-Core/sql/04-seed-data.sql:913: NOTICE:  - Both class-based and self-paced learning
+psql:../98-B-Learing-Core/sql/04-seed-data.sql:913: NOTICE:  - Progress tracking and grading
+psql:../98-B-Learing-Core/sql/04-seed-data.sql:913: NOTICE:  - Certificate issuance
+psql:../98-B-Learing-Core/sql/04-seed-data.sql:913: NOTICE:  ========================================      
+DO
+
+hãy sửa lại setup-database.bat, nếu đã tồn tại schema thì drop force đi
+
+vẫn còn lỗi:
+SET
+INSERT 0 4
+INSERT 0 1
+INSERT 0 2
+INSERT 0 5
+INSERT 0 8
+INSERT 0 3
+INSERT 0 6
+INSERT 0 6
+INSERT 0 2
+INSERT 0 4
+INSERT 0 4
+INSERT 0 4
+INSERT 0 2
+INSERT 0 1
+INSERT 0 1
+INSERT 0 3
+INSERT 0 2
+psql:../98-B-Learing-Core/sql/04-seed-data.sql:501: ERROR:  new row for relation "Attempt" violates check constraint "chk_attempt_graded_has_info"
+DETAIL:  Failing row contains (e0000000-0000-0000-0000-000000000001, a0000000-0000-0000-0000-000000000001, 20000000-0000-0000-0000-000000000101, c0000000-0000-0000-0000-000000000001, 1, 2025-11-21 10:41:57.147231, 2025-11-21 11:06:57.147231, 0, SUBMITTED, [
+    {
+      "question_id": "80000000-0000-0000-0000-00000000..., 25.00, 25.00, 100.00, 2025-11-21 11:41:57.147231, null).
+INSERT 0 2
+INSERT 0 1
+psql:../98-B-Learing-Core/sql/04-seed-data.sql:591: NOTICE:  ========================================      
+psql:../98-B-Learing-Core/sql/04-seed-data.sql:591: NOTICE:  SEED DATA STATISTICS
+psql:../98-B-Learing-Core/sql/04-seed-data.sql:591: NOTICE:  ========================================      
+psql:../98-B-Learing-Core/sql/04-seed-data.sql:591: NOTICE:  AssignmentSubmission-30s : 2s records
+psql:../98-B-Learing-Core/sql/04-seed-data.sql:591: NOTICE:  Attempt-30s : 0s records
+psql:../98-B-Learing-Core/sql/04-seed-data.sql:591: NOTICE:  Certificate-30s : 1s records
+psql:../98-B-Learing-Core/sql/04-seed-data.sql:591: NOTICE:  Class-30s : 1s records
+psql:../98-B-Learing-Core/sql/04-seed-data.sql:591: NOTICE:  Course-30s : 3s records
+psql:../98-B-Learing-Core/sql/04-seed-data.sql:591: NOTICE:  Enrollment-30s : 3s records
+psql:../98-B-Learing-Core/sql/04-seed-data.sql:591: NOTICE:  Lecture-30s : 6s records
+psql:../98-B-Learing-Core/sql/04-seed-data.sql:591: NOTICE:  Module-30s : 6s records
+psql:../98-B-Learing-Core/sql/04-seed-data.sql:591: NOTICE:  Option-30s : 10s records
+psql:../98-B-Learing-Core/sql/04-seed-data.sql:591: NOTICE:  Progress-30s : 2s records
+psql:../98-B-Learing-Core/sql/04-seed-data.sql:591: NOTICE:  Question-30s : 4s records
+psql:../98-B-Learing-Core/sql/04-seed-data.sql:591: NOTICE:  Quiz-30s : 1s records
+psql:../98-B-Learing-Core/sql/04-seed-data.sql:591: NOTICE:  Resource-30s : 2s records
+psql:../98-B-Learing-Core/sql/04-seed-data.sql:591: NOTICE:  Role-30s : 4s records
+psql:../98-B-Learing-Core/sql/04-seed-data.sql:591: NOTICE:  User-30s : 8s records
+psql:../98-B-Learing-Core/sql/04-seed-data.sql:591: NOTICE:  UserRole-30s : 8s records
+psql:../98-B-Learing-Core/sql/04-seed-data.sql:591: NOTICE:  ========================================      
+psql:../98-B-Learing-Core/sql/04-seed-data.sql:591: NOTICE:  Data demonstrates:
+psql:../98-B-Learing-Core/sql/04-seed-data.sql:591: NOTICE:  - Complete user management workflow
+psql:../98-B-Learing-Core/sql/04-seed-data.sql:591: NOTICE:  - 3 diverse courses with realistic content    
+psql:../98-B-Learing-Core/sql/04-seed-data.sql:591: NOTICE:  - 6 lectures including assignments
+psql:../98-B-Learing-Core/sql/04-seed-data.sql:591: NOTICE:  - Quiz system with multiple question types    
+psql:../98-B-Learing-Core/sql/04-seed-data.sql:591: NOTICE:  - Both class-based and self-paced learning    
+psql:../98-B-Learing-Core/sql/04-seed-data.sql:591: NOTICE:  - Progress tracking and grading
+psql:../98-B-Learing-Core/sql/04-seed-data.sql:591: NOTICE:  - Certificate issuance
+psql:../98-B-Learing-Core/sql/04-seed-data.sql:591: NOTICE:  ========================================      
+DO

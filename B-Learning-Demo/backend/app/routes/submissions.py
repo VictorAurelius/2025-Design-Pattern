@@ -36,6 +36,8 @@ def get_submissions(
     status: Optional[str] = Query(None, description="Filter by status: SUBMITTED|GRADED|GRADING|DRAFT|RETURNED"),
     is_late: Optional[bool] = Query(None, description="Filter late submissions"),
     student_email: Optional[str] = Query(None, description="Search student by email"),
+    submitted_date_from: Optional[str] = Query(None, description="Filter submissions from date (YYYY-MM-DD)"),
+    submitted_date_to: Optional[str] = Query(None, description="Filter submissions to date (YYYY-MM-DD)"),
     limit: int = Query(50, ge=1, le=100),
     offset: int = Query(0, ge=0)
 ):
@@ -45,8 +47,9 @@ def get_submissions(
     **JOIN Tables:**
     - AssignmentSubmission (main)
     - User (student info)
-    - Assignment
+    - Lecture (Assignment)
     - Course
+    - Enrollment (for final grade tracking)
     - User (grader info) - LEFT JOIN
 
     **Query Parameters:**
@@ -55,6 +58,7 @@ def get_submissions(
     - status: Lọc theo trạng thái
     - is_late: Lọc submission nộp trễ
     - student_email: Tìm kiếm sinh viên
+    - submitted_date_from/to: Lọc theo ngày nộp
     - limit/offset: Pagination
 
     **Returns:**
@@ -86,6 +90,14 @@ def get_submissions(
         where_conditions.append("u.email ILIKE %s")
         params.append(f"%{student_email}%")
 
+    if submitted_date_from:
+        where_conditions.append("DATE(asub.submitted_at) >= %s")
+        params.append(submitted_date_from)
+
+    if submitted_date_to:
+        where_conditions.append("DATE(asub.submitted_at) <= %s")
+        params.append(submitted_date_to)
+
     # Count total
     count_query = f"""
         SELECT COUNT(*) as count
@@ -94,6 +106,7 @@ def get_submissions(
         INNER JOIN "Lecture" l ON asub.lecture_id = l.lecture_id
         INNER JOIN "Module" m ON l.module_id = m.module_id
         INNER JOIN "Course" c ON m.course_id = c.course_id
+        INNER JOIN "Enrollment" e ON asub.enrollment_id = e.enrollment_id
         WHERE l.type = 'ASSIGNMENT'
         {("AND " + " AND ".join(where_conditions)) if where_conditions else ""}
     """
@@ -139,6 +152,10 @@ def get_submissions(
             c.code as course_code,
             c.title as course_title,
 
+            -- From Enrollment (for grade tracking)
+            e.final_grade as course_final_grade,
+            e.status as enrollment_status,
+
             -- From User (grader) - LEFT JOIN
             CONCAT(grader.first_name, ' ', grader.last_name) as graded_by_name
 
@@ -159,6 +176,10 @@ def get_submissions(
         -- JOIN Course
         INNER JOIN "Course" c
             ON m.course_id = c.course_id
+
+        -- JOIN Enrollment (for grade tracking)
+        INNER JOIN "Enrollment" e
+            ON asub.enrollment_id = e.enrollment_id
 
         -- LEFT JOIN Grader (có thể chưa chấm)
         LEFT JOIN "User" grader
@@ -247,6 +268,7 @@ def get_submission_detail(submission_id: str):
         INNER JOIN "Lecture" l ON asub.lecture_id = l.lecture_id
         INNER JOIN "Module" m ON l.module_id = m.module_id
         INNER JOIN "Course" c ON m.course_id = c.course_id
+        INNER JOIN "Enrollment" e ON asub.enrollment_id = e.enrollment_id
         LEFT JOIN "User" grader ON asub.graded_by = grader.user_id
 
         WHERE asub.submission_id = %s AND l.type = 'ASSIGNMENT'
@@ -406,6 +428,7 @@ def get_submission_stats(
         INNER JOIN "Lecture" l ON asub.lecture_id = l.lecture_id
         INNER JOIN "Module" m ON l.module_id = m.module_id
         INNER JOIN "Course" c ON m.course_id = c.course_id
+        INNER JOIN "Enrollment" e ON asub.enrollment_id = e.enrollment_id
         WHERE l.type = 'ASSIGNMENT'
         {("AND " + " AND ".join(where_conditions)) if where_conditions else ""}
     """

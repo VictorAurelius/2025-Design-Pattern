@@ -672,7 +672,10 @@ INSERT INTO "Enrollment" (enrollment_id, user_id, course_id, class_id, role, sta
 -- Self-paced enrollments (class_id = NULL)
 INSERT INTO "Enrollment" (enrollment_id, user_id, course_id, class_id, role, status, enrolled_at, created_at) VALUES
 ('c0000000-0000-0000-0000-000000000011', '20000000-0000-0000-0000-000000000104', '40000000-0000-0000-0000-000000000002', NULL, 'STUDENT', 'ACTIVE', CURRENT_TIMESTAMP - INTERVAL '15 days', CURRENT_TIMESTAMP),
-('c0000000-0000-0000-0000-000000000012', '20000000-0000-0000-0000-000000000105', '40000000-0000-0000-0000-000000000003', NULL, 'STUDENT', 'ACTIVE', CURRENT_TIMESTAMP - INTERVAL '20 days', CURRENT_TIMESTAMP);
+('c0000000-0000-0000-0000-000000000012', '20000000-0000-0000-0000-000000000105', '40000000-0000-0000-0000-000000000003', NULL, 'STUDENT', 'ACTIVE', CURRENT_TIMESTAMP - INTERVAL '20 days', CURRENT_TIMESTAMP),
+('c0000000-0000-0000-0000-000000000013', '20000000-0000-0000-0000-000000000101', '40000000-0000-0000-0000-000000000002', NULL, 'STUDENT', 'ACTIVE', CURRENT_TIMESTAMP - INTERVAL '25 days', CURRENT_TIMESTAMP),
+('c0000000-0000-0000-0000-000000000014', '20000000-0000-0000-0000-000000000102', '40000000-0000-0000-0000-000000000002', NULL, 'STUDENT', 'ACTIVE', CURRENT_TIMESTAMP - INTERVAL '22 days', CURRENT_TIMESTAMP),
+('c0000000-0000-0000-0000-000000000015', '20000000-0000-0000-0000-000000000103', '40000000-0000-0000-0000-000000000004', NULL, 'STUDENT', 'ACTIVE', CURRENT_TIMESTAMP - INTERVAL '18 days', CURRENT_TIMESTAMP);
 
 -- --------------------------------------------
 -- 4.3. Progress Tracking (6 progress records)
@@ -855,6 +858,118 @@ INSERT INTO "AssignmentSubmission" (submission_id, lecture_id, user_id, enrollme
   NULL,
   NULL,
   '["https://s3.amazonaws.com/blearning/submissions/dung-tran-erd.pdf"]'::json,
+  CURRENT_TIMESTAMP
+),
+
+-- Student 1 (Minh) - Personal Website (graded)
+(
+  'f0000000-0000-0000-0000-000000000006',
+  '60000000-0000-0000-0000-000000000005',
+  '20000000-0000-0000-0000-000000000101',
+  'c0000000-0000-0000-0000-000000000013',
+  1,
+  'GRADED',
+  CURRENT_TIMESTAMP - INTERVAL '15 days',
+  115.00,
+  120.00,
+  'Website đẹp, responsive tốt. Cần thêm accessibility features.',
+  '["https://s3.amazonaws.com/blearning/submissions/minh-le-portfolio.zip"]'::json,
+  CURRENT_TIMESTAMP
+),
+
+-- Student 2 (Huong) - Personal Website (submitted - late)
+(
+  'f0000000-0000-0000-0000-000000000007',
+  '60000000-0000-0000-0000-000000000005',
+  '20000000-0000-0000-0000-000000000102',
+  'c0000000-0000-0000-0000-000000000014',
+  1,
+  'SUBMITTED',
+  CURRENT_TIMESTAMP - INTERVAL '1 day',
+  NULL,
+  NULL,
+  NULL,
+  '["https://s3.amazonaws.com/blearning/submissions/huong-pham-website.zip"]'::json,
+  CURRENT_TIMESTAMP
+),
+
+-- Student 1 (Minh) - Todo App React (graded - excellent)
+(
+  'f0000000-0000-0000-0000-000000000008',
+  '60000000-0000-0000-0000-000000000006',
+  '20000000-0000-0000-0000-000000000101',
+  'c0000000-0000-0000-0000-000000000013',
+  1,
+  'GRADED',
+  CURRENT_TIMESTAMP - INTERVAL '10 days',
+  175.00,
+  180.00,
+  'Xuất sắc! Code structure tốt, sử dụng hooks đúng cách, có unit tests.',
+  '["https://s3.amazonaws.com/blearning/submissions/minh-le-todo-app.zip"]'::json,
+  CURRENT_TIMESTAMP
+),
+
+-- Student 4 (Hoa) - Todo App React (grading)
+(
+  'f0000000-0000-0000-0000-000000000009',
+  '60000000-0000-0000-0000-000000000006',
+  '20000000-0000-0000-0000-000000000104',
+  'c0000000-0000-0000-0000-000000000011',
+  1,
+  'GRADING',
+  CURRENT_TIMESTAMP - INTERVAL '4 days',
+  NULL,
+  NULL,
+  NULL,
+  '["https://s3.amazonaws.com/blearning/submissions/hoa-nguyen-todo.zip"]'::json,
+  CURRENT_TIMESTAMP
+),
+
+-- Student 3 (Tuan) - Data Structures Assignment (graded)
+(
+  'f0000000-0000-0000-0000-000000000010',
+  '60000000-0000-0000-0000-000000000008',
+  '20000000-0000-0000-0000-000000000103',
+  'c0000000-0000-0000-0000-000000000015',
+  1,
+  'GRADED',
+  CURRENT_TIMESTAMP - INTERVAL '7 days',
+  88.00,
+  100.00,
+  'Implement Binary Tree tốt. Cần optimize time complexity ở search function.',
+  '["https://s3.amazonaws.com/blearning/submissions/tuan-vo-binary-tree.java"]'::json,
+  CURRENT_TIMESTAMP
+),
+
+-- Student 2 (Huong) - Java OOP Calculator (submitted)
+(
+  'f0000000-0000-0000-0000-000000000011',
+  '60000000-0000-0000-0000-000000000003',
+  '20000000-0000-0000-0000-000000000102',
+  'c0000000-0000-0000-0000-000000000002',
+  1,
+  'SUBMITTED',
+  CURRENT_TIMESTAMP - INTERVAL '1 day',
+  NULL,
+  NULL,
+  NULL,
+  '["https://s3.amazonaws.com/blearning/submissions/huong-pham-calculator.zip"]'::json,
+  CURRENT_TIMESTAMP
+),
+
+-- Student 1 (Minh) - Java OOP Calculator (graded)
+(
+  'f0000000-0000-0000-0000-000000000012',
+  '60000000-0000-0000-0000-000000000003',
+  '20000000-0000-0000-0000-000000000101',
+  'c0000000-0000-0000-0000-000000000001',
+  1,
+  'GRADED',
+  CURRENT_TIMESTAMP - INTERVAL '14 days',
+  148.00,
+  150.00,
+  'Tốt lắm! Có exception handling và validation đầy đủ.',
+  '["https://s3.amazonaws.com/blearning/submissions/minh-le-calculator.zip"]'::json,
   CURRENT_TIMESTAMP
 );
 

@@ -361,3 +361,16 @@ fastapi.exceptions.ResponseValidationError: 5 validation errors:
   {'type': 'missing', 'loc': ('response', 'penalty_applied'), 'msg': 'Field required', 'input': RealDictRow([('submission_id', 'f0000000-0000-0000-0000-000000000001'), ('lecture_id', '60000000-0000-0000-0000-000000000002'), ('user_id', '20000000-0000-0000-0000-000000000101'), ('enrollment_id', 'c0000000-0000-0000-0000-000000000001'), ('submission_number', 1), ('submitted_at', datetime.datetime(2025, 11, 19, 10, 52, 57, 783179)), ('content', None), ('file_urls', ['https://s3.amazonaws.com/blearning/submissions/minh-le-hello-world.zip']), ('code_submission', None), ('is_late', False), ('status', 'GRADED'), ('score', Decimal('85.00')), ('max_score', Decimal('100.00')), ('feedback', 'Code chay tot, logic dung. Can improve code documentation.'), ('graded_at', datetime.datetime(2025, 11, 20, 10, 52, 57, 783179)), ('graded_by', '20000000-0000-0000-0000-000000000002'), ('student_id', '20000000-0000-0000-0000-000000000101'), ('student_email', 'minh.le@student.blearning.edu.vn'), ('student_name', 'Minh Le Quang'), ('assignment_id', '60000000-0000-0000-0000-000000000002'), ('assignment_title', 'Bai Tap: Hello World'), ('assignment_description', 'Viet chuong trinh Java dau tien'), ('assignment_instructions', 'Viet chuong trinh Java dau tien'), ('assignment_type', 'ASSIGNMENT'), ('max_points', Decimal('100.00')), ('due_date', None), ('late_submission_allowed', True), ('late_penalty_percent', 0), ('course_id', '40000000-0000-0000-0000-000000000001'), ('course_code', 'JAVA101'), ('course_title', 'Lap Trinh Java Co Ban'), ('course_description', 'Khoa hoc gioi thieu ve lap trinh huong doi tuong voi Java. Hoc vien se nam vung cu phap Java, OOP principles, va Design Patterns co ban.'), ('graded_by_name', 'Kiet Nguyen Van')])}
   {'type': 'datetime_type', 'loc': ('response', 'due_date'), 'msg': 'Input should be a valid datetime', 'input': None}
   {'type': 'dict_type', 'loc': ('response', 'file_urls'), 'msg': 'Input should be a valid dictionary', 'input': ['https://s3.amazonaws.com/blearning/submissions/minh-le-hello-world.zip']}
+
+
+hãy tạo file document md giải thích lại cơ chế của demo cho submission 
+
+sửa lại dạng tiếng việt
+
+hãy sửa:
+1. seed data: hãy tạo thêm 10 submission, đa dạng course, ...
+2. sửa lại FE có locj theo course, assignment, submitted, ...
+3. phần thống kê tổng cũng cần filter theo
+4. JOIN: AssignmentSubmission, User, Assignment, Course, GradeBook => sửa lại đúng các bảng JOIN 
+
+phải sửa cả 98-B-Learing-Core/sql/04-seed-data.sql

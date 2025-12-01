@@ -438,6 +438,14 @@ INSERT INTO "Enrollment" (enrollment_id, user_id, course_id, class_id, role, sta
 ('c0000000-0000-0000-0000-000000000002', '20000000-0000-0000-0000-000000000102', '40000000-0000-0000-0000-000000000001', 'b0000000-0000-0000-0000-000000000001', 'STUDENT', 'ACTIVE', CURRENT_TIMESTAMP - INTERVAL '30 days'),
 ('c0000000-0000-0000-0000-000000000003', '20000000-0000-0000-0000-000000000103', '40000000-0000-0000-0000-000000000001', 'b0000000-0000-0000-0000-000000000001', 'STUDENT', 'ACTIVE', CURRENT_TIMESTAMP - INTERVAL '30 days');
 
+-- Self-paced enrollments (class_id = NULL) for diverse submissions
+INSERT INTO "Enrollment" (enrollment_id, user_id, course_id, class_id, role, status, enrolled_at) VALUES
+('c0000000-0000-0000-0000-000000000011', '20000000-0000-0000-0000-000000000104', '40000000-0000-0000-0000-000000000002', NULL, 'STUDENT', 'ACTIVE', CURRENT_TIMESTAMP - INTERVAL '15 days'),
+('c0000000-0000-0000-0000-000000000012', '20000000-0000-0000-0000-000000000105', '40000000-0000-0000-0000-000000000003', NULL, 'STUDENT', 'ACTIVE', CURRENT_TIMESTAMP - INTERVAL '20 days'),
+('c0000000-0000-0000-0000-000000000013', '20000000-0000-0000-0000-000000000101', '40000000-0000-0000-0000-000000000002', NULL, 'STUDENT', 'ACTIVE', CURRENT_TIMESTAMP - INTERVAL '25 days'),
+('c0000000-0000-0000-0000-000000000014', '20000000-0000-0000-0000-000000000102', '40000000-0000-0000-0000-000000000002', NULL, 'STUDENT', 'ACTIVE', CURRENT_TIMESTAMP - INTERVAL '22 days'),
+('c0000000-0000-0000-0000-000000000015', '20000000-0000-0000-0000-000000000103', '40000000-0000-0000-0000-000000000004', NULL, 'STUDENT', 'ACTIVE', CURRENT_TIMESTAMP - INTERVAL '18 days');
+
 -- --------------------------------------------
 -- 4.3. Progress Tracking (2 progress records)
 -- Note: Progress table does NOT have created_at column (schema mismatch fix)
@@ -502,8 +510,9 @@ INSERT INTO "Attempt" (attempt_id, quiz_id, user_id, enrollment_id, attempt_numb
 );
 
 -- --------------------------------------------
--- 5.2. Assignment Submissions (2 submissions)
+-- 5.2. Assignment Submissions (12 submissions - diverse courses)
 -- Note: AssignmentSubmission table does NOT have created_at column (schema mismatch fix)
+-- Submissions across JAVA101, WEB201, DB301, ALGO201 courses
 -- --------------------------------------------
 
 INSERT INTO "AssignmentSubmission" (submission_id, lecture_id, user_id, enrollment_id, submission_number, status, submitted_at, score, max_score, feedback, graded_at, graded_by, file_urls) VALUES
@@ -539,6 +548,176 @@ INSERT INTO "AssignmentSubmission" (submission_id, lecture_id, user_id, enrollme
   NULL,  -- graded_at (not graded yet)
   NULL,  -- graded_by (not graded yet)
   '["https://s3.amazonaws.com/blearning/submissions/huong-pham-hello.java"]'::json
+),
+
+-- Student 3 (Tuan) - Java OOP Calculator (graded)
+(
+  'f0000000-0000-0000-0000-000000000003',
+  '60000000-0000-0000-0000-000000000003',
+  '20000000-0000-0000-0000-000000000103',
+  'c0000000-0000-0000-0000-000000000003',
+  1,
+  'GRADED',
+  CURRENT_TIMESTAMP - INTERVAL '5 days',
+  142.00,
+  150.00,
+  'Xuat sac! Code clean va co error handling tot',
+  CURRENT_TIMESTAMP - INTERVAL '4 days',
+  '20000000-0000-0000-0000-000000000002',
+  '["https://s3.amazonaws.com/blearning/submissions/tuan-vo-calculator.zip"]'::json
+),
+
+-- Student 4 (Hoa) - Personal Website WEB201 (graded)
+(
+  'f0000000-0000-0000-0000-000000000004',
+  '60000000-0000-0000-0000-000000000005',
+  '20000000-0000-0000-0000-000000000104',
+  'c0000000-0000-0000-0000-000000000011',
+  1,
+  'GRADED',
+  CURRENT_TIMESTAMP - INTERVAL '8 days',
+  110.00,
+  120.00,
+  'Website dep va responsive. Can cai thien semantic HTML',
+  CURRENT_TIMESTAMP - INTERVAL '7 days',
+  '20000000-0000-0000-0000-000000000002',
+  '["https://s3.amazonaws.com/blearning/submissions/hoa-nguyen-website.zip"]'::json
+),
+
+-- Student 5 (Dung) - Database Design DB301 (submitted)
+(
+  'f0000000-0000-0000-0000-000000000005',
+  '60000000-0000-0000-0000-000000000007',
+  '20000000-0000-0000-0000-000000000105',
+  'c0000000-0000-0000-0000-000000000012',
+  1,
+  'SUBMITTED',
+  CURRENT_TIMESTAMP - INTERVAL '3 days',
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  '["https://s3.amazonaws.com/blearning/submissions/dung-tran-erd.pdf"]'::json
+),
+
+-- Student 1 (Minh) - Personal Website WEB201 (graded)
+(
+  'f0000000-0000-0000-0000-000000000006',
+  '60000000-0000-0000-0000-000000000005',
+  '20000000-0000-0000-0000-000000000101',
+  'c0000000-0000-0000-0000-000000000013',
+  1,
+  'GRADED',
+  CURRENT_TIMESTAMP - INTERVAL '15 days',
+  115.00,
+  120.00,
+  'Website dep, responsive tot. Can them accessibility features.',
+  CURRENT_TIMESTAMP - INTERVAL '14 days',
+  '20000000-0000-0000-0000-000000000002',
+  '["https://s3.amazonaws.com/blearning/submissions/minh-le-portfolio.zip"]'::json
+),
+
+-- Student 2 (Huong) - Personal Website WEB201 (submitted)
+(
+  'f0000000-0000-0000-0000-000000000007',
+  '60000000-0000-0000-0000-000000000005',
+  '20000000-0000-0000-0000-000000000102',
+  'c0000000-0000-0000-0000-000000000014',
+  1,
+  'SUBMITTED',
+  CURRENT_TIMESTAMP - INTERVAL '1 day',
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  '["https://s3.amazonaws.com/blearning/submissions/huong-pham-website.zip"]'::json
+),
+
+-- Student 1 (Minh) - Todo App React WEB201 (graded - excellent)
+(
+  'f0000000-0000-0000-0000-000000000008',
+  '60000000-0000-0000-0000-000000000006',
+  '20000000-0000-0000-0000-000000000101',
+  'c0000000-0000-0000-0000-000000000013',
+  1,
+  'GRADED',
+  CURRENT_TIMESTAMP - INTERVAL '10 days',
+  175.00,
+  180.00,
+  'Xuat sac! Code structure tot, su dung hooks dung cach, co unit tests.',
+  CURRENT_TIMESTAMP - INTERVAL '9 days',
+  '20000000-0000-0000-0000-000000000002',
+  '["https://s3.amazonaws.com/blearning/submissions/minh-le-todo-app.zip"]'::json
+),
+
+-- Student 4 (Hoa) - Todo App React WEB201 (grading)
+(
+  'f0000000-0000-0000-0000-000000000009',
+  '60000000-0000-0000-0000-000000000006',
+  '20000000-0000-0000-0000-000000000104',
+  'c0000000-0000-0000-0000-000000000011',
+  1,
+  'GRADING',
+  CURRENT_TIMESTAMP - INTERVAL '4 days',
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  '["https://s3.amazonaws.com/blearning/submissions/hoa-nguyen-todo.zip"]'::json
+),
+
+-- Student 3 (Tuan) - Data Structures Assignment ALGO201 (graded)
+(
+  'f0000000-0000-0000-0000-000000000010',
+  '60000000-0000-0000-0000-000000000008',
+  '20000000-0000-0000-0000-000000000103',
+  'c0000000-0000-0000-0000-000000000015',
+  1,
+  'GRADED',
+  CURRENT_TIMESTAMP - INTERVAL '7 days',
+  88.00,
+  100.00,
+  'Implement Binary Tree tot. Can optimize time complexity o search function.',
+  CURRENT_TIMESTAMP - INTERVAL '6 days',
+  '20000000-0000-0000-0000-000000000002',
+  '["https://s3.amazonaws.com/blearning/submissions/tuan-vo-binary-tree.java"]'::json
+),
+
+-- Student 2 (Huong) - Java OOP Calculator (submitted)
+(
+  'f0000000-0000-0000-0000-000000000011',
+  '60000000-0000-0000-0000-000000000003',
+  '20000000-0000-0000-0000-000000000102',
+  'c0000000-0000-0000-0000-000000000002',
+  1,
+  'SUBMITTED',
+  CURRENT_TIMESTAMP - INTERVAL '1 day',
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  '["https://s3.amazonaws.com/blearning/submissions/huong-pham-calculator.zip"]'::json
+),
+
+-- Student 1 (Minh) - Java OOP Calculator (graded)
+(
+  'f0000000-0000-0000-0000-000000000012',
+  '60000000-0000-0000-0000-000000000003',
+  '20000000-0000-0000-0000-000000000101',
+  'c0000000-0000-0000-0000-000000000001',
+  1,
+  'GRADED',
+  CURRENT_TIMESTAMP - INTERVAL '14 days',
+  148.00,
+  150.00,
+  'Tot lam! Co exception handling va validation day du.',
+  CURRENT_TIMESTAMP - INTERVAL '13 days',
+  '20000000-0000-0000-0000-000000000002',
+  '["https://s3.amazonaws.com/blearning/submissions/minh-le-calculator.zip"]'::json
 );
 
 -- ============================================

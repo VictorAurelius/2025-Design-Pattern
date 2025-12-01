@@ -37,6 +37,10 @@ export default function SubmissionsPage() {
   const [statusFilter, setStatusFilter] = useState('');
   const [isLateFilter, setIsLateFilter] = useState('');
   const [studentSearch, setStudentSearch] = useState('');
+  const [courseFilter, setCourseFilter] = useState('');
+  const [assignmentFilter, setAssignmentFilter] = useState('');
+  const [dateFromFilter, setDateFromFilter] = useState('');
+  const [dateToFilter, setDateToFilter] = useState('');
 
   // Pagination
   const [page, setPage] = useState(1);
@@ -63,6 +67,10 @@ export default function SubmissionsPage() {
       if (statusFilter) params.status = statusFilter;
       if (isLateFilter) params.is_late = isLateFilter === 'true';
       if (studentSearch) params.student_email = studentSearch;
+      if (courseFilter) params.course_id = courseFilter;
+      if (assignmentFilter) params.assignment_id = assignmentFilter;
+      if (dateFromFilter) params.submitted_date_from = dateFromFilter;
+      if (dateToFilter) params.submitted_date_to = dateToFilter;
 
       const response = await apiClient.get<SubmissionListResponse>(
         '/api/submissions',
@@ -80,8 +88,13 @@ export default function SubmissionsPage() {
   // Fetch stats
   const fetchStats = async () => {
     try {
+      const params: any = {};
+      if (courseFilter) params.course_id = courseFilter;
+      if (assignmentFilter) params.assignment_id = assignmentFilter;
+
       const response = await apiClient.get<SubmissionStats>(
-        '/api/submissions/stats/overview'
+        '/api/submissions/stats/overview',
+        { params }
       );
       setStats(response.data);
     } catch (err) {
@@ -92,7 +105,7 @@ export default function SubmissionsPage() {
   useEffect(() => {
     fetchSubmissions();
     fetchStats();
-  }, [page, statusFilter, isLateFilter, studentSearch]);
+  }, [page, statusFilter, isLateFilter, studentSearch, courseFilter, assignmentFilter, dateFromFilter, dateToFilter]);
 
   // Open grading modal
   const handleGrade = async (submissionId: string) => {
@@ -167,11 +180,11 @@ export default function SubmissionsPage() {
           📝 Submission Management (Nhiều Bảng)
         </h1>
         <p className="text-gray-600 mb-6">
-          JOIN: AssignmentSubmission, User, Assignment, Course, GradeBook
+          JOIN: AssignmentSubmission, User, Lecture (Assignment), Module, Course, Enrollment
         </p>
 
         {/* Filters */}
-        <div className="grid md:grid-cols-3 gap-4 mb-6">
+        <div className="grid md:grid-cols-3 gap-4 mb-4">
           <input
             type="text"
             placeholder="Tìm kiếm sinh viên (email)..."
@@ -182,6 +195,29 @@ export default function SubmissionsPage() {
             }}
             className="border px-4 py-2 rounded"
           />
+          <input
+            type="text"
+            placeholder="Course ID (40000000-...)"
+            value={courseFilter}
+            onChange={(e) => {
+              setCourseFilter(e.target.value);
+              setPage(1);
+            }}
+            className="border px-4 py-2 rounded"
+          />
+          <input
+            type="text"
+            placeholder="Assignment ID (60000000-...)"
+            value={assignmentFilter}
+            onChange={(e) => {
+              setAssignmentFilter(e.target.value);
+              setPage(1);
+            }}
+            className="border px-4 py-2 rounded"
+          />
+        </div>
+
+        <div className="grid md:grid-cols-4 gap-4 mb-6">
           <select
             value={statusFilter}
             onChange={(e) => {
@@ -208,6 +244,26 @@ export default function SubmissionsPage() {
             <option value="true">Nộp trễ</option>
             <option value="false">Đúng hạn</option>
           </select>
+          <input
+            type="date"
+            placeholder="Từ ngày"
+            value={dateFromFilter}
+            onChange={(e) => {
+              setDateFromFilter(e.target.value);
+              setPage(1);
+            }}
+            className="border px-4 py-2 rounded"
+          />
+          <input
+            type="date"
+            placeholder="Đến ngày"
+            value={dateToFilter}
+            onChange={(e) => {
+              setDateToFilter(e.target.value);
+              setPage(1);
+            }}
+            className="border px-4 py-2 rounded"
+          />
         </div>
 
         {/* Loading / Error */}

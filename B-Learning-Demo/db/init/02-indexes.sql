@@ -84,8 +84,8 @@ CREATE INDEX idx_lecture_order ON "Lecture"(module_id, order_num);
 CREATE INDEX idx_lecture_type ON "Lecture"(type);
 
 -- Quiz queries
-CREATE INDEX idx_quiz_status ON "Quiz"(status);
-CREATE INDEX idx_quiz_available ON "Quiz"(available_from, available_until);
+CREATE INDEX idx_quiz_published ON "Quiz"(is_published);
+-- Note: Quiz table does not have status, available_from, available_until columns
 
 -- Question queries
 CREATE INDEX idx_question_type ON "Question"(type);
@@ -124,28 +124,29 @@ CREATE INDEX idx_certificate_issue_date ON "Certificate"(issue_date DESC);
 -- GIN indexes cho JSON fields - hỗ trợ @>, ->, ->>, #> operators
 
 -- User.preferences - query notification settings, locale, timezone
-CREATE INDEX idx_user_preferences ON "User" USING GIN (preferences);
+-- Note: Using gin_trgm_ops for JSON since we're using JSON not JSONB
+CREATE INDEX idx_user_preferences ON "User" USING GIN (to_tsvector('english', preferences::text));
 
 -- Quiz.questions - query quiz structure, question order, points
-CREATE INDEX idx_quiz_questions ON "Quiz" USING GIN (questions);
+CREATE INDEX idx_quiz_questions ON "Quiz" USING GIN (to_tsvector('english', questions::text));
 
 -- Attempt.answers - query student responses, scores, grading status
-CREATE INDEX idx_attempt_answers ON "Attempt" USING GIN (answers);
+CREATE INDEX idx_attempt_answers ON "Attempt" USING GIN (to_tsvector('english', COALESCE(answers::text, '')));
 
 -- Lecture.assignment_config - query due dates, submission types, rubric
-CREATE INDEX idx_lecture_assignment_config ON "Lecture" USING GIN (assignment_config);
+CREATE INDEX idx_lecture_assignment_config ON "Lecture" USING GIN (to_tsvector('english', COALESCE(assignment_config::text, '')));
 
 -- AssignmentSubmission.file_urls - query submitted files
-CREATE INDEX idx_assignment_file_urls ON "AssignmentSubmission" USING GIN (file_urls);
+CREATE INDEX idx_assignment_file_urls ON "AssignmentSubmission" USING GIN (to_tsvector('english', COALESCE(file_urls::text, '')));
 
 -- Class.schedules - query session dates, attendance records
-CREATE INDEX idx_class_schedules ON "Class" USING GIN (schedules);
+CREATE INDEX idx_class_schedules ON "Class" USING GIN (to_tsvector('english', COALESCE(schedules::text, '')));
 
--- Module.prerequisite_module_ids - query prerequisites
+-- Module.prerequisite_module_ids - query prerequisites (UUID array)
 CREATE INDEX idx_module_prerequisites ON "Module" USING GIN (prerequisite_module_ids);
 
 -- Role.permissions - query role permissions
-CREATE INDEX idx_role_permissions ON "Role" USING GIN (permissions);
+CREATE INDEX idx_role_permissions ON "Role" USING GIN (to_tsvector('english', COALESCE(permissions::text, '')));
 
 -- ============================================
 -- SECTION 4: FULL-TEXT SEARCH INDEXES
@@ -167,18 +168,17 @@ CREATE INDEX idx_lecture_search ON "Lecture" USING GIN(
   to_tsvector('english', COALESCE(title, '') || ' ' || COALESCE(description, ''))
 );
 
--- Quiz search (title + description + instructions)
+-- Quiz search (title + description)
 CREATE INDEX idx_quiz_search ON "Quiz" USING GIN(
   to_tsvector('english',
     COALESCE(title, '') || ' ' ||
-    COALESCE(description, '') || ' ' ||
-    COALESCE(instructions, '')
+    COALESCE(description, '')
   )
 );
 
--- Question search (question_text)
+-- Question search (text column)
 CREATE INDEX idx_question_search ON "Question" USING GIN(
-  to_tsvector('english', COALESCE(question_text, ''))
+  to_tsvector('english', COALESCE(text, ''))
 );
 
 -- ============================================
@@ -218,11 +218,11 @@ CREATE INDEX idx_user_active ON "User"(email) WHERE account_status = 'ACTIVE';
 -- Published courses only
 CREATE INDEX idx_course_published ON "Course"(code, title) WHERE status = 'PUBLISHED';
 
--- Pending/graded attempts
-CREATE INDEX idx_attempt_pending ON "Attempt"(quiz_id, user_id) WHERE status = 'PENDING_GRADING';
+-- Submitted attempts (partial index)
+CREATE INDEX idx_attempt_submitted_partial ON "Attempt"(quiz_id, user_id) WHERE status = 'SUBMITTED';
 
--- Pending assignments
-CREATE INDEX idx_assignment_pending ON "AssignmentSubmission"(lecture_id, user_id) WHERE status = 'PENDING_GRADING';
+-- Graded assignments
+CREATE INDEX idx_assignment_graded ON "AssignmentSubmission"(lecture_id, user_id) WHERE status = 'GRADED';
 
 -- Ongoing classes
 CREATE INDEX idx_class_ongoing ON "Class"(course_id, instructor_id) WHERE status = 'ONGOING';
@@ -246,7 +246,7 @@ COMMENT ON INDEX idx_attempt_answers IS 'GIN index cho Attempt.answers JSON - qu
 COMMENT ON INDEX idx_lecture_assignment_config IS 'GIN index cho assignment configuration JSON';
 COMMENT ON INDEX idx_class_schedules IS 'GIN index cho Class.schedules JSON - query sessions và attendance';
 
-COMMENT ON INDEX idx_enrollment_user_course ON "Enrollment" IS 'Composite index cho lookup enrollment by user và course';
+COMMENT ON INDEX idx_enrollment_user_course IS 'Composite index cho lookup enrollment by user và course';
 COMMENT ON INDEX idx_progress_user_course_status IS 'Composite index cho track learning progress';
 
 COMMENT ON INDEX idx_user_active IS 'Partial index - chỉ index active users để tăng tốc login';

@@ -135,3 +135,8 @@ hãy dùng code python và next js để tạo 2 giao diện này:
 4. có tài liệu giải thích code dễ dàng
 
 hãy tạo docker compose để build web này, tự tạo image db bằng 98-B-learning-core
+
+hãy đọc 98-B-Learing-Core/req-2.md để hiểu context
+tôi có sửa lại các file sql của 98-B-Learing-Core , nhưng vẫn còn lỗi ở 4-seed-data.sql. File gốc của seed này nằm ở B-Learning-Demo/init/04-seed-data.sql, hãy giúp tôi sửa lại toàn bộ để tránh lỗi seed-data để Demo được thuận lợi
+
+cần sửa tất cả các file B-Learning-Demo/init/ để build được docker

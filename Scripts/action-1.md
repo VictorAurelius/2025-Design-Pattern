@@ -293,3 +293,71 @@ psql:../98-B-Learing-Core/sql/04-seed-data.sql:591: NOTICE:  - Progress tracking
 psql:../98-B-Learing-Core/sql/04-seed-data.sql:591: NOTICE:  - Certificate issuance
 psql:../98-B-Learing-Core/sql/04-seed-data.sql:591: NOTICE:  ========================================      
 DO
+
+Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools
+hot-reloader-client.js:187 [Fast Refresh] rebuilding
+hot-reloader-client.js:44 [Fast Refresh] done in 665ms
+submissions:1 Access to XMLHttpRequest at 'http://localhost:8000/api/submissions/f0000000-0000-0000-0000-000000000002' from origin 'http://localhost:3000' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource.Understand this error
+app-index.js:33 Network Error: Network Error
+window.console.error @ app-index.js:33Understand this error
+:8000/api/submissions/f0000000-0000-0000-0000-000000000002:1  Failed to load resource: net::ERR_FAILEDUnderstand this error
+submissions:1 Access to XMLHttpRequest at 'http://localhost:8000/api/submissions/f0000000-0000-0000-0000-000000000001' from origin 'http://localhost:3000' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource.Understand this error
+app-index.js:33 Network Error: Network Error
+window.console.error @ app-index.js:33Understand this error
+:8000/api/submissions/f0000000-0000-0000-0000-000000000001:1  Failed to load resource: net::ERR_FAILEDUnderstand this error
+hot-reloader-client.js:187 [Fast Refresh] rebuilding
+hot-reloader-client.js:44 
+
+INFO:     127.0.0.1:61219 - "GET /api/submissions/f0000000-0000-0000-0000-000000000001 HTTP/1.1" 500 Internal Server Error
+ERROR:    Exception in ASGI application
+Traceback (most recent call last):
+  File "E:\person\2025-Design-Pattern\B-Learning-Demo\backend\venv\Lib\site-packages\uvicorn\protocols\http\httptools_impl.py", line 409, in run_asgi
+    result = await app(  # type: ignore[func-returns-value]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\person\2025-Design-Pattern\B-Learning-Demo\backend\venv\Lib\site-packages\uvicorn\middleware\proxy_headers.py", line 60, in __call__
+    return await self.app(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\person\2025-Design-Pattern\B-Learning-Demo\backend\venv\Lib\site-packages\fastapi\applications.py", line 1054, in __call__
+    await super().__call__(scope, receive, send)
+  File "E:\person\2025-Design-Pattern\B-Learning-Demo\backend\venv\Lib\site-packages\starlette\applications.py", line 113, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "E:\person\2025-Design-Pattern\B-Learning-Demo\backend\venv\Lib\site-packages\starlette\middleware\errors.py", line 187, in __call__
+    raise exc
+  File "E:\person\2025-Design-Pattern\B-Learning-Demo\backend\venv\Lib\site-packages\starlette\middleware\errors.py", line 165, in __call__
+    await self.app(scope, receive, _send)
+  File "E:\person\2025-Design-Pattern\B-Learning-Demo\backend\venv\Lib\site-packages\starlette\middleware\cors.py", line 93, in __call__
+    await self.simple_response(scope, receive, send, request_headers=headers)
+  File "E:\person\2025-Design-Pattern\B-Learning-Demo\backend\venv\Lib\site-packages\starlette\middleware\cors.py", line 144, in simple_response
+    await self.app(scope, receive, send)
+  File "E:\person\2025-Design-Pattern\B-Learning-Demo\backend\venv\Lib\site-packages\starlette\middleware\exceptions.py", line 62, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "E:\person\2025-Design-Pattern\B-Learning-Demo\backend\venv\Lib\site-packages\starlette\_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "E:\person\2025-Design-Pattern\B-Learning-Demo\backend\venv\Lib\site-packages\starlette\_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "E:\person\2025-Design-Pattern\B-Learning-Demo\backend\venv\Lib\site-packages\starlette\routing.py", line 715, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "E:\person\2025-Design-Pattern\B-Learning-Demo\backend\venv\Lib\site-packages\starlette\routing.py", line 735, in app
+    await route.handle(scope, receive, send)
+  File "E:\person\2025-Design-Pattern\B-Learning-Demo\backend\venv\Lib\site-packages\starlette\routing.py", line 288, in handle
+    await self.app(scope, receive, send)
+  File "E:\person\2025-Design-Pattern\B-Learning-Demo\backend\venv\Lib\site-packages\starlette\routing.py", line 76, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "E:\person\2025-Design-Pattern\B-Learning-Demo\backend\venv\Lib\site-packages\starlette\_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "E:\person\2025-Design-Pattern\B-Learning-Demo\backend\venv\Lib\site-packages\starlette\_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "E:\person\2025-Design-Pattern\B-Learning-Demo\backend\venv\Lib\site-packages\starlette\routing.py", line 73, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "E:\person\2025-Design-Pattern\B-Learning-Demo\backend\venv\Lib\site-packages\fastapi\routing.py", line 327, in app
+    content = await serialize_response(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\person\2025-Design-Pattern\B-Learning-Demo\backend\venv\Lib\site-packages\fastapi\routing.py", line 176, in serialize_response
+    raise ResponseValidationError(
+fastapi.exceptions.ResponseValidationError: 5 validation errors:
+  {'type': 'missing', 'loc': ('response', 'assignment_submission_id'), 'msg': 'Field required', 'input': RealDictRow([('submission_id', 'f0000000-0000-0000-0000-000000000001'), ('lecture_id', '60000000-0000-0000-0000-000000000002'), ('user_id', '20000000-0000-0000-0000-000000000101'), ('enrollment_id', 'c0000000-0000-0000-0000-000000000001'), ('submission_number', 1), ('submitted_at', datetime.datetime(2025, 11, 19, 10, 52, 57, 783179)), ('content', None), ('file_urls', ['https://s3.amazonaws.com/blearning/submissions/minh-le-hello-world.zip']), ('code_submission', None), ('is_late', False), ('status', 'GRADED'), ('score', Decimal('85.00')), ('max_score', Decimal('100.00')), ('feedback', 'Code chay tot, logic dung. Can improve code documentation.'), ('graded_at', datetime.datetime(2025, 11, 20, 10, 52, 57, 783179)), ('graded_by', '20000000-0000-0000-0000-000000000002'), ('student_id', '20000000-0000-0000-0000-000000000101'), ('student_email', 'minh.le@student.blearning.edu.vn'), ('student_name', 'Minh Le Quang'), ('assignment_id', '60000000-0000-0000-0000-000000000002'), ('assignment_title', 'Bai Tap: Hello World'), ('assignment_description', 'Viet chuong trinh Java dau tien'), ('assignment_instructions', 'Viet chuong trinh Java dau tien'), ('assignment_type', 'ASSIGNMENT'), ('max_points', Decimal('100.00')), ('due_date', None), ('late_submission_allowed', True), ('late_penalty_percent', 0), ('course_id', '40000000-0000-0000-0000-000000000001'), ('course_code', 'JAVA101'), ('course_title', 'Lap Trinh Java Co Ban'), ('course_description', 'Khoa hoc gioi thieu ve lap trinh huong doi tuong voi Java. Hoc vien se nam vung cu phap Java, OOP principles, va Design Patterns co ban.'), ('graded_by_name', 'Kiet Nguyen Van')])}
+  {'type': 'missing', 'loc': ('response', 'days_late'), 'msg': 'Field required', 'input': RealDictRow([('submission_id', 'f0000000-0000-0000-0000-000000000001'), ('lecture_id', '60000000-0000-0000-0000-000000000002'), ('user_id', '20000000-0000-0000-0000-000000000101'), ('enrollment_id', 'c0000000-0000-0000-0000-000000000001'), ('submission_number', 1), ('submitted_at', datetime.datetime(2025, 11, 19, 10, 52, 57, 783179)), ('content', None), ('file_urls', ['https://s3.amazonaws.com/blearning/submissions/minh-le-hello-world.zip']), ('code_submission', None), ('is_late', False), ('status', 'GRADED'), ('score', Decimal('85.00')), ('max_score', Decimal('100.00')), ('feedback', 'Code chay tot, logic dung. Can improve code documentation.'), ('graded_at', datetime.datetime(2025, 11, 20, 10, 52, 57, 783179)), ('graded_by', '20000000-0000-0000-0000-000000000002'), ('student_id', '20000000-0000-0000-0000-000000000101'), ('student_email', 'minh.le@student.blearning.edu.vn'), ('student_name', 'Minh Le Quang'), ('assignment_id', '60000000-0000-0000-0000-000000000002'), ('assignment_title', 'Bai Tap: Hello World'), ('assignment_description', 'Viet chuong trinh Java dau tien'), ('assignment_instructions', 'Viet chuong trinh Java dau tien'), ('assignment_type', 'ASSIGNMENT'), ('max_points', Decimal('100.00')), ('due_date', None), ('late_submission_allowed', True), ('late_penalty_percent', 0), ('course_id', '40000000-0000-0000-0000-000000000001'), ('course_code', 'JAVA101'), ('course_title', 'Lap Trinh Java Co Ban'), ('course_description', 'Khoa hoc gioi thieu ve lap trinh huong doi tuong voi Java. Hoc vien se nam vung cu phap Java, OOP principles, va Design Patterns co ban.'), ('graded_by_name', 'Kiet Nguyen Van')])}
+  {'type': 'missing', 'loc': ('response', 'penalty_applied'), 'msg': 'Field required', 'input': RealDictRow([('submission_id', 'f0000000-0000-0000-0000-000000000001'), ('lecture_id', '60000000-0000-0000-0000-000000000002'), ('user_id', '20000000-0000-0000-0000-000000000101'), ('enrollment_id', 'c0000000-0000-0000-0000-000000000001'), ('submission_number', 1), ('submitted_at', datetime.datetime(2025, 11, 19, 10, 52, 57, 783179)), ('content', None), ('file_urls', ['https://s3.amazonaws.com/blearning/submissions/minh-le-hello-world.zip']), ('code_submission', None), ('is_late', False), ('status', 'GRADED'), ('score', Decimal('85.00')), ('max_score', Decimal('100.00')), ('feedback', 'Code chay tot, logic dung. Can improve code documentation.'), ('graded_at', datetime.datetime(2025, 11, 20, 10, 52, 57, 783179)), ('graded_by', '20000000-0000-0000-0000-000000000002'), ('student_id', '20000000-0000-0000-0000-000000000101'), ('student_email', 'minh.le@student.blearning.edu.vn'), ('student_name', 'Minh Le Quang'), ('assignment_id', '60000000-0000-0000-0000-000000000002'), ('assignment_title', 'Bai Tap: Hello World'), ('assignment_description', 'Viet chuong trinh Java dau tien'), ('assignment_instructions', 'Viet chuong trinh Java dau tien'), ('assignment_type', 'ASSIGNMENT'), ('max_points', Decimal('100.00')), ('due_date', None), ('late_submission_allowed', True), ('late_penalty_percent', 0), ('course_id', '40000000-0000-0000-0000-000000000001'), ('course_code', 'JAVA101'), ('course_title', 'Lap Trinh Java Co Ban'), ('course_description', 'Khoa hoc gioi thieu ve lap trinh huong doi tuong voi Java. Hoc vien se nam vung cu phap Java, OOP principles, va Design Patterns co ban.'), ('graded_by_name', 'Kiet Nguyen Van')])}
+  {'type': 'datetime_type', 'loc': ('response', 'due_date'), 'msg': 'Input should be a valid datetime', 'input': None}
+  {'type': 'dict_type', 'loc': ('response', 'file_urls'), 'msg': 'Input should be a valid dictionary', 'input': ['https://s3.amazonaws.com/blearning/submissions/minh-le-hello-world.zip']}

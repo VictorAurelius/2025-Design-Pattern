@@ -153,7 +153,9 @@ export default function SubmissionsPage() {
           <div className="bg-blue-50 rounded-lg shadow p-4">
             <p className="text-gray-600 text-sm">Điểm TB</p>
             <p className="text-2xl font-bold text-blue-600">
-              {stats.average_score?.toFixed(2) || '-'}
+              {stats.average_score !== null && stats.average_score !== undefined
+                ? Number(stats.average_score).toFixed(2)
+                : '-'}
             </p>
           </div>
         </div>
@@ -275,10 +277,10 @@ export default function SubmissionsPage() {
                         </span>
                       </td>
                       <td className="px-3 py-2 border text-center">
-                        {sub.final_score !== null ? (
+                        {sub.final_score !== null && sub.final_score !== undefined ? (
                           <div>
                             <div className="font-bold">
-                              {sub.final_score.toFixed(2)}
+                              {Number(sub.final_score).toFixed(2)}
                             </div>
                             <div className="text-xs text-gray-500">
                               / {sub.max_points}

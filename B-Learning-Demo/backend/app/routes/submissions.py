@@ -196,8 +196,25 @@ def get_submission_detail(submission_id: str):
 
     query = """
         SELECT
-            -- From AssignmentSubmission (all fields)
-            asub.*,
+            -- From AssignmentSubmission
+            asub.submission_id as assignment_submission_id,
+            asub.submission_number,
+            asub.submitted_at,
+            asub.content,
+            asub.file_urls,
+            asub.code_submission,
+            asub.is_late,
+            CASE
+                WHEN asub.is_late = true THEN 1
+                ELSE 0
+            END as days_late,
+            asub.status,
+            COALESCE(asub.score, 0) as auto_score,
+            COALESCE(asub.score, 0) as manual_score,
+            COALESCE(asub.score, 0) as final_score,
+            0 as penalty_applied,
+            asub.feedback,
+            asub.graded_at,
 
             -- From User (student)
             u.user_id as student_id,
@@ -210,8 +227,8 @@ def get_submission_detail(submission_id: str):
             l.description as assignment_description,
             l.description as assignment_instructions,
             'ASSIGNMENT' as assignment_type,
-            asub.max_score as max_points,
-            NULL as due_date,
+            COALESCE(asub.max_score, 100) as max_points,
+            CURRENT_TIMESTAMP + INTERVAL '7 days' as due_date,
             TRUE as late_submission_allowed,
             0 as late_penalty_percent,
 
@@ -281,7 +298,7 @@ def grade_submission(submission_id: str, grade_data: GradeSubmissionRequest):
             asub.status,
             0 as auto_score,
             0 as penalty_applied,
-            asub.max_score as max_points
+            COALESCE(asub.max_score, 100) as max_points
         FROM "AssignmentSubmission" asub
         INNER JOIN "Lecture" l ON asub.lecture_id = l.lecture_id
         WHERE asub.submission_id = %s AND l.type = 'ASSIGNMENT'
@@ -318,13 +335,15 @@ def grade_submission(submission_id: str, grade_data: GradeSubmissionRequest):
         final_score = Decimal('0')
 
     # Update submission
+    # Note: graded_by set to a default instructor for demo (should come from auth token in production)
     update_query = """
         UPDATE "AssignmentSubmission"
         SET
             score = %s,
             feedback = %s,
             status = 'GRADED',
-            graded_at = CURRENT_TIMESTAMP
+            graded_at = CURRENT_TIMESTAMP,
+            graded_by = '20000000-0000-0000-0000-000000000002'
         WHERE submission_id = %s
         RETURNING *
     """

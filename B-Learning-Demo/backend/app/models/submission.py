@@ -66,7 +66,7 @@ class SubmissionDetail(SubmissionListItem):
     Schema chi tiết submission (bao gồm thêm thông tin)
     """
     # Additional fields from AssignmentSubmission
-    file_urls: Optional[dict] = None
+    file_urls: Optional[list] = None  # Changed from dict to list (matches DB schema)
     code_submission: Optional[str] = None
     rubric_scores: Optional[dict] = None
 

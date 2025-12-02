@@ -7,116 +7,179 @@ KHOA: CÔNG NGHỆ THÔNG TIN
 
 - Tên Page: Course Management Page (Web Application)
 
-- Mục tiêu: Cung cấp giao diện cho Instructor/ADMIN để tạo, xem, chỉnh sửa, xuất bản và xóa khóa học (Course-level only).
+- Canvas chính (Chi tiết khóa học):
+  Chứa các trường nhập/chỉnh sửa thông tin Course và Module.
 
-- Bố cục chính:
-  • Canvas chính (Chi tiết khóa học): biểu mẫu hiển thị các trường thông tin khóa học và cho phép tạo/cập nhật.
-  • Action Bar: chứa các nút `Create`, `Save`, `Publish`, `Delete`, `Cancel`.
-  • Dialog/Modal: xác nhận hành động (ví dụ: xóa), hiển thị lỗi hoặc thành công.
+- Canvas phụ (Danh sách Module):
+  Hiển thị danh sách Module của khóa học, cho phép thêm/sửa/xóa Module.
 
-- Chi tiết thành phần (Course-level):
-  • ID Khóa học: `Text (Readonly)` → `course_id` (UUID, auto-generated).
-  • Mã khóa học: `Text Input` → `code` (VARCHAR(50), unique).
-  • Tên khóa học: `Text Input` → `title` (VARCHAR(200)).
-  • Mô tả: `Text Area (Rich Text Editor)` → `description` (TEXT, hỗ trợ HTML).
-  • Độ khó: `Dropdown` → `difficulty_level` (BEGINNER, INTERMEDIATE, ADVANCED).
-  • Hình đại diện: `File Upload` → `thumbnail_url` (URL lưu trữ trên S3/GCS).
-  • Trạng thái: `Dropdown` → `status` (DRAFT, PUBLISHED, ARCHIVED).
-  • Giảng viên (Created by): `Text (Readonly)` → hiển thị tên giảng viên (từ `User`).
-  • Thao tác: `Create` (POST), `Save`/`Update` (PUT), `Publish` (POST /publish), `Delete` (DELETE).
+- Dialog/Modal:
+  Pop-up thông báo lỗi/thành công khi lưu dữ liệu.
+
+Chi tiết thành phần:
+
+- ID Khóa học
+  • Loại điều khiển: Text (Readonly)
+  • Trường dữ liệu: course_id
+  • Bảng và kiểu dữ liệu: Course (UUID)
+  • Thao tác: Hiển thị mã khóa học (UUID), auto-generated.
+
+- Mã khóa học
+  • Loại điều khiển: Text Input
+  • Trường dữ liệu: code
+  • Bảng và kiểu dữ liệu: Course (VARCHAR(50))
+  • Thao tác: Nhập/Sửa mã khóa học (VD: CS101). Unique.
+
+- Tên khóa học
+  • Loại điều khiển: Text Input
+  • Trường dữ liệu: title
+  • Bảng và kiểu dữ liệu: Course (VARCHAR(200))
+  • Thao tác: Nhập/Sửa tên khóa học.
+
+- Mô tả
+  • Loại điều khiển: Text Area (Rich Text Editor)
+  • Trường dữ liệu: description
+  • Bảng và kiểu dữ liệu: Course (TEXT)
+  • Thao tác: Nhập/Sửa mô tả chi tiết. Hỗ trợ HTML formatting.
+
+- Độ khó
+  • Loại điều khiển: Dropdown/Select
+  • Trường dữ liệu: difficulty_level
+  • Bảng và kiểu dữ liệu: Course (VARCHAR(20))
+  • Thao tác: Chọn BEGINNER, INTERMEDIATE, hoặc ADVANCED.
+
+- Hình đại diện
+  • Loại điều khiển: File Upload
+  • Trường dữ liệu: thumbnail_url
+  • Bảng và kiểu dữ liệu: Course (VARCHAR(500))
+  • Thao tác: Upload file ảnh. Hệ thống upload lên S3/GCS và lưu URL.
+
+- Trạng thái
+  • Loại điều khiển: Dropdown/Select
+  • Trường dữ liệu: status
+  • Bảng và kiểu dữ liệu: Course (VARCHAR(20))
+  • Thao tác: Chọn DRAFT, PUBLISHED, hoặc ARCHIVED.
+
+- Giảng viên
+  • Loại điều khiển: Text (Readonly)
+  • Trường dữ liệu: created_by
+  • Bảng và kiểu dữ liệu: Course (UUID) → User
+  • Thao tác: Hiển thị tên giảng viên (lấy từ User.first_name + last_name).
+
+- Danh sách Module
+  • Loại điều khiển: Data Table/Grid
+  • Trường dữ liệu: N/A
+  • Bảng và kiểu dữ liệu: Module
+  • Thao tác: Hiển thị danh sách Module với các cột: title, order_num. Cho phép thêm/sửa/xóa Module. Drag-drop để sắp xếp order_num.
+
+- Nút Lưu
+  • Loại điều khiển: Button
+  • Thao tác: Gọi API PUT /api/courses/{course_id} để UPDATE Course.
+
+- Nút Xuất bản
+  • Loại điều khiển: Button
+  • Thao tác: Gọi API POST /api/courses/{course_id}/publish để thay đổi status thành PUBLISHED.
 
 --------------------------------------------------------------------------------
 
 1.2. Truy vấn dữ liệu
 
-- Hiển thị chi tiết Course
+- Hiển thị chính
   • Bảng: Course
-  • Trường: `course_id`, `code`, `title`, `description`, `difficulty_level`, `status`, `thumbnail_url`, `created_by`, `created_at`, `updated_at`.
-  • API: `GET /api/courses/{course_id}` — trả về thông tin đầy đủ của khóa học.
+  • Trường: course_id, code, title, description, difficulty_level, status, thumbnail_url, created_by
+  • Mục đích: Hiển thị dữ liệu hiện tại của khóa học để Instructor chỉnh sửa.
+  • API: GET /api/courses/{course_id}
 
-- Danh sách khóa học (Instructor/ADMIN)
-  • API: `GET /api/courses` — hỗ trợ lọc theo `created_by`, `status`, `search` (title/code), pagination.
+- Hiển thị Module
+  • Bảng: Module
+  • Trường: module_id, course_id, title, description, order_num, prerequisite_module_ids
+  • Mục đích: Hiển thị danh sách Module của khóa học.
+  • API: GET /api/courses/{course_id}/modules
 
 - Thông tin Instructor
-  • API: `GET /api/users/{user_id}` — hoặc trả kèm trong response `GET /api/courses/{course_id}` dưới dạng embedded author info.
+  • Bảng: User
+  • Trường: user_id, first_name, last_name
+  • Mục đích: Lấy tên giảng viên để hiển thị.
+  • API: GET /api/users/{user_id} (hoặc embedded trong Course response)
 
 --------------------------------------------------------------------------------
 
 1.3. Cập nhật dữ liệu
 
-- Tạo khóa học
-  • API: `POST /api/courses`
-  • Payload: `{ code, title, description, difficulty_level, thumbnail_url, created_by }`
-  • SQL tương đương:
-    INSERT INTO "Course" (course_id, code, title, description, difficulty_level, status, thumbnail_url, created_by, created_at, updated_at)
-    VALUES (gen_random_uuid(), :code, :title, :description, :difficulty_level, 'DRAFT', :thumbnail_url, :created_by, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
-  • Response: HTTP 201 Created + Course data.
-
-- Cập nhật khóa học
-  • API: `PUT /api/courses/{course_id}`
-  • Payload: `{ code, title, description, difficulty_level, thumbnail_url }`
+- Cập nhật Course
+  • Bảng: Course
+  • API: PUT /api/courses/{course_id}
+  • Payload: { code, title, description, difficulty_level, thumbnail_url }
   • SQL tương đương:
     UPDATE "Course"
     SET code = :code, title = :title, description = :description,
         difficulty_level = :difficulty_level, thumbnail_url = :thumbnail_url,
         updated_at = CURRENT_TIMESTAMP
-    WHERE course_id = :course_id AND created_by = :instructor_id;
-  • Response: HTTP 200 OK + updated Course data.
+    WHERE course_id = :course_id AND created_by = :instructor_id
 
-- Xuất bản khóa học
-  • API: `POST /api/courses/{course_id}/publish`
-  • Kiểm tra tiền điều kiện: hiện trạng `status = 'DRAFT'` và user có quyền (creator hoặc ADMIN).
+- Xuất bản Course
+  • Bảng: Course
+  • API: POST /api/courses/{course_id}/publish
   • SQL tương đương:
     UPDATE "Course"
     SET status = 'PUBLISHED', updated_at = CURRENT_TIMESTAMP
-    WHERE course_id = :course_id AND created_by = :instructor_id AND status = 'DRAFT';
-  • Response: HTTP 200 OK + Course data với `status = 'PUBLISHED'`.
+    WHERE course_id = :course_id AND created_by = :instructor_id AND status = 'DRAFT'
 
-- Xóa khóa học (recommend soft-delete)
-  • API: `DELETE /api/courses/{course_id}`
-  • Hai lựa chọn thiết kế:
-    1. Soft-delete (recommended):
-       UPDATE "Course" SET status = 'ARCHIVED', updated_at = CURRENT_TIMESTAMP WHERE course_id = :course_id AND (created_by = :instructor_id OR :is_admin = TRUE);
-       Response: HTTP 200 OK.
-    2. Physical delete (cần quyền cao và xác nhận):
-       DELETE FROM "Course" WHERE course_id = :course_id AND (created_by = :instructor_id OR :is_admin = TRUE);
-       Response: HTTP 204 No Content.
+- Thêm Module
+  • Bảng: Module
+  • API: POST /api/courses/{course_id}/modules
+  • Payload: { title, description, order_num, prerequisite_module_ids }
+  • SQL tương đương:
+    INSERT INTO "Module" (module_id, course_id, title, description, order_num, prerequisite_module_ids, created_at)
+    VALUES (gen_random_uuid(), :course_id, :title, :description, :order_num, :prerequisite_module_ids, CURRENT_TIMESTAMP)
 
-  • Lưu ý nghiệp vụ: trước khi xóa vật lý, kiểm tra điều kiện (ví dụ: không có enrollment active), hoặc bắt buộc archive nếu có liên kết quan trọng.
+- Cập nhật Module
+  • Bảng: Module
+  • API: PUT /api/modules/{module_id}
+  • SQL tương đương:
+    UPDATE "Module"
+    SET title = :title, description = :description, order_num = :order_num,
+        prerequisite_module_ids = :prerequisite_module_ids
+    WHERE module_id = :module_id
 
-  • Mô tả:
-    o Tạo khóa học: Nhập thông tin Course (code, title, description, difficulty_level). Trạng thái mặc định là DRAFT.
-    o Cập nhật khóa học: Chỉnh sửa thông tin Course, thay đổi trạng thái (DRAFT → PUBLISHED → ARCHIVED).
-    o Xuất bản khóa học: Thay đổi status thành PUBLISHED để sinh viên có thể đăng ký.
-    o Xóa khóa học: Xóa Course (CASCADE sẽ xóa tất cả Module, Lecture liên quan).
-    o Tạo Module: Tạo Module thuộc Course, thiết lập order_num và prerequisite_module_ids.
-    o Tạo Lecture: Tạo Lecture trong Module với type (VIDEO, PDF, SLIDE, AUDIO, TEXT, ASSIGNMENT).
-    o Upload tài liệu: Upload file Resource và lưu file_url, file_type, file_size_bytes.
-  • Kết quả: Nội dung khóa học được tổ chức rõ ràng theo cấu trúc Course → Module → Lecture.
+- Xóa Module
+  • Bảng: Module
+  • API: DELETE /api/modules/{module_id}
+  • SQL tương đương:
+    DELETE FROM "Module" WHERE module_id = :module_id
+    -- CASCADE sẽ xóa Lecture, Resource liên quan
 
-- Quản lý Đánh giá:
-  • Mục đích: Cho phép giảng viên tạo Quiz, Question và chấm điểm sinh viên.
-  • Ngữ cảnh: Sử dụng để đánh giá kết quả học tập của sinh viên.
-  • Điều kiện tiên quyết: Giảng viên đã tạo Course.
-  • Mô tả:
-    o Tạo Quiz: Tạo Quiz với questions (JSON array chứa question_id, points, order), thiết lập passing_score, duration_minutes, max_attempts.
-    o Tạo Question: Tạo Question với type (MCQ, TRUE_FALSE, ESSAY, SHORT_ANSWER), question_text, points.
-    o Tạo Option: Tạo Option cho Question với option_text, is_correct, order_num.
-    o Chấm điểm Assignment: Xem AssignmentSubmission, nhập score và feedback.
-    o Chấm điểm Quiz: Chấm điểm ESSAY/SHORT_ANSWER trong Attempt.answers (JSON).
-    o Xem báo cáo: Xem thống kê điểm số, tỷ lệ đạt, thời gian làm bài.
-  • Kết quả: Quiz và Question được tạo. Sinh viên được chấm điểm và nhận feedback.
+--------------------------------------------------------------------------------
 
-- Quản lý Lớp học & Sinh viên:
-  • Mục đích: Theo dõi sinh viên đã đăng ký, xem tiến độ và cấp chứng chỉ.
-  • Ngữ cảnh: Sử dụng để quản lý Enrollment và Progress của sinh viên.
-  • Điều kiện tiên quyết: Có sinh viên đã enroll vào khóa học.
-  • Mô tả:
-    o Tạo Class: Tạo Class với class_name, start_date, end_date, max_students, schedules (JSON).
-    o Xem danh sách Enrollment: Xem tất cả sinh viên đã đăng ký khóa học, lọc theo class_id.
-    o Theo dõi tiến độ: Xem Progress của từng sinh viên theo Module (status: NOT_STARTED, IN_PROGRESS, COMPLETED).
-    o Cấp Certificate: Khi sinh viên hoàn thành khóa học, hệ thống tạo Certificate với certificate_code, verification_code.
-  • Kết quả: Giảng viên nắm rõ tình hình học tập của từng sinh viên. Sinh viên nhận được Certificate khi hoàn thành.
+1.4. Tiền và hậu điều kiện
+
+- Tiền điều kiện:
+  • Người dùng phải đăng nhập với role INSTRUCTOR hoặc ADMIN.
+  • JWT token hợp lệ và chưa hết hạn.
+  • course_id của khóa học cần chỉnh sửa phải tồn tại trong bảng Course.
+  • Khóa học đó phải thuộc về giảng viên này (Course.created_by = User.user_id) hoặc user có role ADMIN.
+  • Khi xuất bản, Course.status phải là DRAFT (không thể xuất bản khóa học đã PUBLISHED hoặc ARCHIVED).
+  • code mới (nếu thay đổi) phải chưa tồn tại trong hệ thống (UNIQUE constraint).
+
+- Hậu điều kiện:
+  • Nếu thành công:
+    o Các trường dữ liệu trong bảng Course được cập nhật.
+    o Course.updated_at được cập nhật thành thời gian hiện tại.
+    o Nếu xuất bản, status = 'PUBLISHED'.
+    o Module được thêm/sửa/xóa theo yêu cầu.
+    o Response trả về HTTP 200 OK với Course data mới.
+    o Frontend hiển thị toast notification: "Khóa học đã được cập nhật thành công."
+  • Nếu thất bại:
+    o Course không thay đổi (transaction rollback).
+    o Response trả về HTTP 400/403/404/500 với error message.
+    o Frontend hiển thị error toast.
+
+- Ràng buộc nghiệp vụ:
+  • Không thể xóa Course nếu đã có Enrollment (cần soft delete hoặc archive).
+  • Khi xóa Module, tất cả Lecture, Resource thuộc Module đó cũng bị xóa (CASCADE).
+  • prerequisite_module_ids phải chứa các module_id hợp lệ thuộc cùng course_id.
+  • order_num của Module phải unique trong cùng Course.
+  • Chỉ Course có status = PUBLISHED mới cho phép sinh viên enroll.
 
 --------------------------------------------------------------------------------
 

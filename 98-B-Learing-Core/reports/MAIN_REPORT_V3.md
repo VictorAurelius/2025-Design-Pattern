@@ -3,151 +3,87 @@ KHOA: CÔNG NGHỆ THÔNG TIN
 
 [Logo trường]
 
-BÁO CÁO KẾT QUẢ BÀI TẬP LỚN HỌC PHẦN:
-ĐẶC TẢ PHẦN MỀM
+1.1. Giao diện Page và thành phần
 
-XÂY DỰNG HỆ THỐNG QUẢN LÝ HỌC TẬP TRỰC TUYẾN
-(B-LEARNING CORE v1.0)
+- Tên Page: Course Management Page (Web Application)
 
-Người lập: Nguyễn Văn Kiệt - CNTT1-K63
-Ngày lập: 02/12/2025
+- Mục tiêu: Cung cấp giao diện cho Instructor/ADMIN để tạo, xem, chỉnh sửa, xuất bản và xóa khóa học (Course-level only).
 
-Người xem xét:...........................................
-Ngày xem xét: ……/……./.……….
+- Bố cục chính:
+  • Canvas chính (Chi tiết khóa học): biểu mẫu hiển thị các trường thông tin khóa học và cho phép tạo/cập nhật.
+  • Action Bar: chứa các nút `Create`, `Save`, `Publish`, `Delete`, `Cancel`.
+  • Dialog/Modal: xác nhận hành động (ví dụ: xóa), hiển thị lỗi hoặc thành công.
 
-================================================================================
-
-LỜI NÓI ĐẦU
-
-Trong bối cảnh chuyển đổi số diễn ra mạnh mẽ, giáo dục trực tuyến đã trở thành xu hướng tất yếu của ngành giáo dục hiện đại. Đặc biệt sau đại dịch COVID-19, nhu cầu về các hệ thống quản lý học tập (Learning Management System - LMS) toàn diện, hiệu quả và dễ sử dụng ngày càng tăng cao. Các cơ sở giáo dục, từ trường phổ thông đến đại học và các tổ chức đào tạo doanh nghiệp, đều cần một nền tảng kỹ thuật số để tổ chức, phân phối và theo dõi các hoạt động dạy và học.
-
-Hệ thống B-Learning Core được xây dựng nhằm đáp ứng nhu cầu quản lý học tập trực tuyến với mô hình kết hợp (Blended Learning). Hệ thống tập trung vào hai nhóm người dùng chính: Instructor (Giảng viên) với chức năng Course Management - quản lý khóa học, tạo nội dung bài giảng, thiết lập bài tập và chấm điểm; và Student (Sinh viên) với chức năng Submission Management - đăng ký khóa học, học tập, nộp bài và theo dõi tiến độ.
-
-Báo cáo này trình bày chi tiết đặc tả yêu cầu phần mềm cho hệ thống B-Learning Core, bao gồm: phân tích chức năng thông qua sơ đồ phân rã chức năng (BFD), mô hình hóa dữ liệu với sơ đồ ER và Relational Model, đặc tả chi tiết cơ sở dữ liệu PostgreSQL 14+, và đặc tả yêu cầu chức năng cho hai module chính. Mục tiêu cuối cùng là xây dựng một sản phẩm phần mềm chất lượng, dễ sử dụng, đáp ứng đầy đủ các yêu cầu nghiệp vụ của một hệ thống LMS hiện đại.
-
-================================================================================
-
-MỤC LỤC
-
-CHƯƠNG 1: ĐẶC TẢ YÊU CẦU PHẦN MỀM............................................................ 4
-1. Giới thiệu chung ...................................................................................................... 4
-   1.1. Mục đích ............................................................................................................ 4
-   1.2. Phạm vi .............................................................................................................. 5
-2. Sơ đồ phân rã chức năng ........................................................................................ 7
-   2.1. Sơ đồ phân rã chức năng dưới góc nhìn của Instructor ..................................... 7
-   2.2. Sơ đồ phân rã chức năng dưới góc nhìn của Student ...................................... 10
-3. Mô hình hóa dữ liệu .............................................................................................. 13
-   3.1. Sơ đồ ER .......................................................................................................... 13
-   3.2. Sơ đồ RM......................................................................................................... 14
-   3.3. Đặc tả chi tiết cơ sở dữ liệu............................................................................ 15
-
-CHƯƠNG 2: ĐẶC TẢ YÊU CẦU CHỨC NĂNG ....................................................... 25
-1. Đặc tả chức năng: Quản lý khóa học (Course Management) .............................. 25
-   1.1. Giao diện Page và thành phần ........................................................................ 25
-   1.2. Truy vấn dữ liệu.............................................................................................. 26
-   1.3. Cập nhật dữ liệu.............................................................................................. 27
-   1.4. Tiền và hậu điều kiện ..................................................................................... 27
-2. Đặc tả chức năng: Nộp bài tập (Submission Management) ................................ 28
-   2.1. Giao diện Page và thành phần........................................................................ 28
-   2.2. Truy vấn dữ liệu.............................................................................................. 29
-   2.3. Cập nhật dữ liệu.............................................................................................. 29
-   2.4. Tiền và hậu điều kiện ..................................................................................... 30
-
-================================================================================
-
-CHƯƠNG 1: ĐẶC TẢ YÊU CẦU PHẦN MỀM
-
---------------------------------------------------------------------------------
-1. Giới thiệu chung
---------------------------------------------------------------------------------
-
-1.1. Mục đích
-
-Hệ thống B-Learning Core là một nền tảng quản lý học tập trực tuyến (Learning Management System - LMS) được thiết kế để hỗ trợ mô hình học tập kết hợp (Blended Learning). Mục đích chính của hệ thống là cung cấp một giải pháp toàn diện cho việc tổ chức, quản lý và theo dõi các hoạt động dạy và học trong môi trường giáo dục hiện đại.
-
-Hệ thống được xây dựng với các mục tiêu cụ thể sau:
-
-- Đối với Instructor (Giảng viên):
-  • Cung cấp công cụ tạo và quản lý khóa học với cấu trúc phân cấp: Course → Module → Lecture.
-  • Hỗ trợ tạo các loại nội dung đa dạng: video, PDF, slide, audio, text và assignment.
-  • Cho phép tạo Quiz với câu hỏi đa dạng: MCQ, True/False, Essay, Short Answer.
-  • Cung cấp chức năng chấm điểm Assignment và Quiz, gửi feedback cho sinh viên.
-  • Theo dõi tiến độ học tập của từng sinh viên trong khóa học.
-
-- Đối với Student (Sinh viên):
-  • Đăng ký và truy cập các khóa học đã xuất bản.
-  • Học tập theo cấu trúc Module, xem video và tài liệu bài giảng.
-  • Nộp bài Assignment qua upload file hoặc nhập text.
-  • Làm Quiz trực tuyến và nhận kết quả tự động (cho MCQ/True-False).
-  • Theo dõi tiến độ học tập và nhận Certificate khi hoàn thành khóa học.
-
-- Yêu cầu phi chức năng:
-  • Bảo mật: Mã hóa password với bcrypt, xác thực qua token, phân quyền theo role.
-  • Hiệu năng: Tối ưu truy vấn với indexes, hỗ trợ GIN index cho JSON queries.
-  • Độ tin cậy: Backup dữ liệu định kỳ, transaction support với PostgreSQL.
-  • Khả năng mở rộng: Sử dụng UUID làm primary key, JSON fields linh hoạt.
-
-- Công nghệ sử dụng:
-  • Database: PostgreSQL 14+ với hỗ trợ JSONB, UUID, Full-text search.
-  • Backend: RESTful API (Python/FastAPI hoặc Node.js/Express).
-  • Frontend: Web-based platform (React/Next.js).
-  • Storage: S3/GCS cho file upload.
+- Chi tiết thành phần (Course-level):
+  • ID Khóa học: `Text (Readonly)` → `course_id` (UUID, auto-generated).
+  • Mã khóa học: `Text Input` → `code` (VARCHAR(50), unique).
+  • Tên khóa học: `Text Input` → `title` (VARCHAR(200)).
+  • Mô tả: `Text Area (Rich Text Editor)` → `description` (TEXT, hỗ trợ HTML).
+  • Độ khó: `Dropdown` → `difficulty_level` (BEGINNER, INTERMEDIATE, ADVANCED).
+  • Hình đại diện: `File Upload` → `thumbnail_url` (URL lưu trữ trên S3/GCS).
+  • Trạng thái: `Dropdown` → `status` (DRAFT, PUBLISHED, ARCHIVED).
+  • Giảng viên (Created by): `Text (Readonly)` → hiển thị tên giảng viên (từ `User`).
+  • Thao tác: `Create` (POST), `Save`/`Update` (PUT), `Publish` (POST /publish), `Delete` (DELETE).
 
 --------------------------------------------------------------------------------
 
-1.2. Phạm vi
+1.2. Truy vấn dữ liệu
 
-Phần mềm này là một hệ thống quản lý học tập trực tuyến (LMS), bao gồm ứng dụng web cho sinh viên và nền tảng web quản trị cho giảng viên. Hệ thống được thiết kế với kiến trúc 5 domain, 16 bảng dữ liệu, hỗ trợ cả mô hình học tự điều khiển (self-paced) và học theo lớp (blended learning).
+- Hiển thị chi tiết Course
+  • Bảng: Course
+  • Trường: `course_id`, `code`, `title`, `description`, `difficulty_level`, `status`, `thumbnail_url`, `created_by`, `created_at`, `updated_at`.
+  • API: `GET /api/courses/{course_id}` — trả về thông tin đầy đủ của khóa học.
 
-Phạm vi của ứng dụng tập trung vào hai bên liên quan chính:
+- Danh sách khóa học (Instructor/ADMIN)
+  • API: `GET /api/courses` — hỗ trợ lọc theo `created_by`, `status`, `search` (title/code), pagination.
 
-- Instructor (Giảng viên):
-  • Quản lý tài khoản: Đăng nhập, cập nhật thông tin cá nhân, đăng xuất.
-  • Quản lý nội dung khóa học: Tạo/cập nhật/xuất bản Course, Module, Lecture, Resource.
-  • Quản lý đánh giá: Tạo Quiz, Question, chấm điểm AssignmentSubmission và Attempt.
-  • Quản lý lớp học: Tạo Class, xem Enrollment, theo dõi Progress, cấp Certificate.
-
-- Student (Sinh viên):
-  • Quản lý tài khoản: Đăng ký, đăng nhập, cập nhật thông tin, đăng xuất.
-  • Đăng ký và học tập: Enrollment khóa học, xem Lecture, học Module.
-  • Làm bài tập và kiểm tra: Nộp AssignmentSubmission, làm Quiz (Attempt).
-  • Theo dõi tiến độ: Xem Progress, điểm số, tải Certificate.
-
-- Cấu trúc cơ sở dữ liệu (16 tables):
-  • Domain 1 - User Management (3 bảng): User, Role, UserRole
-  • Domain 2 - Course Content (4 bảng): Course, Module, Lecture, Resource
-  • Domain 3 - Assessment (5 bảng): Quiz, Question, Option, Attempt, AssignmentSubmission
-  • Domain 4 - Enrollment & Progress (2 bảng): Enrollment, Progress
-  • Domain 5 - Class & Certificate (2 bảng): Class, Certificate
-
-================================================================================
+- Thông tin Instructor
+  • API: `GET /api/users/{user_id}` — hoặc trả kèm trong response `GET /api/courses/{course_id}` dưới dạng embedded author info.
 
 --------------------------------------------------------------------------------
-2. Sơ đồ phân rã chức năng
---------------------------------------------------------------------------------
 
-2.1. Sơ đồ phân rã chức năng dưới góc nhìn của Instructor (Course Management)
+1.3. Cập nhật dữ liệu
 
-2.1.1. Sơ đồ phân rã chức năng
+- Tạo khóa học
+  • API: `POST /api/courses`
+  • Payload: `{ code, title, description, difficulty_level, thumbnail_url, created_by }`
+  • SQL tương đương:
+    INSERT INTO "Course" (course_id, code, title, description, difficulty_level, status, thumbnail_url, created_by, created_at, updated_at)
+    VALUES (gen_random_uuid(), :code, :title, :description, :difficulty_level, 'DRAFT', :thumbnail_url, :created_by, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+  • Response: HTTP 201 Created + Course data.
 
-[Hình 1: Sơ đồ phân rã chức năng - Instructor]
+- Cập nhật khóa học
+  • API: `PUT /api/courses/{course_id}`
+  • Payload: `{ code, title, description, difficulty_level, thumbnail_url }`
+  • SQL tương đương:
+    UPDATE "Course"
+    SET code = :code, title = :title, description = :description,
+        difficulty_level = :difficulty_level, thumbnail_url = :thumbnail_url,
+        updated_at = CURRENT_TIMESTAMP
+    WHERE course_id = :course_id AND created_by = :instructor_id;
+  • Response: HTTP 200 OK + updated Course data.
 
-Đặc tả chức năng:
+- Xuất bản khóa học
+  • API: `POST /api/courses/{course_id}/publish`
+  • Kiểm tra tiền điều kiện: hiện trạng `status = 'DRAFT'` và user có quyền (creator hoặc ADMIN).
+  • SQL tương đương:
+    UPDATE "Course"
+    SET status = 'PUBLISHED', updated_at = CURRENT_TIMESTAMP
+    WHERE course_id = :course_id AND created_by = :instructor_id AND status = 'DRAFT';
+  • Response: HTTP 200 OK + Course data với `status = 'PUBLISHED'`.
 
-- Quản lý Tài khoản:
-  • Mục đích: Cho phép giảng viên đăng nhập và quản lý thông tin cá nhân.
-  • Ngữ cảnh: Được sử dụng bởi giảng viên trên nền tảng web.
-  • Điều kiện tiên quyết: Thiết bị đã kết nối Internet, có tài khoản với role Instructor.
-  • Mô tả:
-    o Đăng nhập: Giảng viên nhập email và password để truy cập hệ thống. Hệ thống xác thực và trả về JWT token.
-    o Cập nhật thông tin: Cập nhật User.first_name, last_name, preferences (JSON).
-    o Đăng xuất: Invalidate token và thoát khỏi hệ thống.
-  • Kết quả: Giảng viên có thể truy cập các chức năng của hệ thống. Thông tin cá nhân được cập nhật chính xác.
+- Xóa khóa học (recommend soft-delete)
+  • API: `DELETE /api/courses/{course_id}`
+  • Hai lựa chọn thiết kế:
+    1. Soft-delete (recommended):
+       UPDATE "Course" SET status = 'ARCHIVED', updated_at = CURRENT_TIMESTAMP WHERE course_id = :course_id AND (created_by = :instructor_id OR :is_admin = TRUE);
+       Response: HTTP 200 OK.
+    2. Physical delete (cần quyền cao và xác nhận):
+       DELETE FROM "Course" WHERE course_id = :course_id AND (created_by = :instructor_id OR :is_admin = TRUE);
+       Response: HTTP 204 No Content.
 
-- Quản lý Nội dung Khóa học:
-  • Mục đích: Giúp giảng viên tạo, cập nhật, và tổ chức nội dung khóa học.
-  • Ngữ cảnh: Giảng viên sử dụng trên nền tảng web để quản lý Course, Module, Lecture.
-  • Điều kiện tiên quyết: Giảng viên đã đăng nhập thành công vào hệ thống.
+  • Lưu ý nghiệp vụ: trước khi xóa vật lý, kiểm tra điều kiện (ví dụ: không có enrollment active), hoặc bắt buộc archive nếu có liên kết quan trọng.
+
   • Mô tả:
     o Tạo khóa học: Nhập thông tin Course (code, title, description, difficulty_level). Trạng thái mặc định là DRAFT.
     o Cập nhật khóa học: Chỉnh sửa thông tin Course, thay đổi trạng thái (DRAFT → PUBLISHED → ARCHIVED).
@@ -793,232 +729,129 @@ Chi tiết thành phần:
 1.4. Tiền và hậu điều kiện
 
 - Tiền điều kiện:
-  • Người dùng phải đăng nhập với role INSTRUCTOR hoặc ADMIN.
+  • Người dùng phải đăng nhập với role `INSTRUCTOR` hoặc `ADMIN`.
   • JWT token hợp lệ và chưa hết hạn.
-  • course_id của khóa học cần chỉnh sửa phải tồn tại trong bảng Course.
-  • Khóa học đó phải thuộc về giảng viên này (Course.created_by = User.user_id) hoặc user có role ADMIN.
-  • Khi xuất bản, Course.status phải là DRAFT (không thể xuất bản khóa học đã PUBLISHED hoặc ARCHIVED).
-  • code mới (nếu thay đổi) phải chưa tồn tại trong hệ thống (UNIQUE constraint).
+  • Với thao tác **cập nhật / xuất bản / xóa**: `course_id` phải tồn tại và khóa học phải thuộc về giảng viên đang thực hiện thao tác (hoặc người dùng có role `ADMIN`).
+  • Với thao tác **xuất bản**: trạng thái hiện tại của khóa học phải là `DRAFT` (không cho xuất bản từ `PUBLISHED` hoặc `ARCHIVED`).
+  • Với thao tác **tạo mới**: trường `code` phải hợp lệ và chưa được sử dụng (tuân thủ ràng buộc UNIQUE).
+  • Với thao tác **xóa**: kiểm tra điều kiện nghiệp vụ (ví dụ: không còn học viên đang active/enrolled hoặc phải thực hiện archive thay vì xóa thực sự) — chính sách xóa phải tuân theo quy định tổ chức.
 
 - Hậu điều kiện:
-  • Nếu thành công:
-    o Các trường dữ liệu trong bảng Course được cập nhật.
-    o Course.updated_at được cập nhật thành thời gian hiện tại.
-    o Nếu xuất bản, status = 'PUBLISHED'.
-    o Module được thêm/sửa/xóa theo yêu cầu.
-    o Response trả về HTTP 200 OK với Course data mới.
-    o Frontend hiển thị toast notification: "Khóa học đã được cập nhật thành công."
-  • Nếu thất bại:
-    o Course không thay đổi (transaction rollback).
-    o Response trả về HTTP 400/403/404/500 với error message.
-    o Frontend hiển thị error toast.
+  • Nếu tạo khóa học thành công:
+    o Khóa học được tạo với `status = 'DRAFT'`, `course_id` được sinh tự động và `created_at`/`updated_at` được thiết lập.
+    o API trả về HTTP 201 Created cùng dữ liệu khóa học mới.
+  • Nếu cập nhật khóa học thành công:
+    o Các trường dữ liệu (ví dụ: `code`, `title`, `description`, `difficulty_level`, `thumbnail_url`) được lưu thay đổi.
+    o `updated_at` được cập nhật về thời điểm hiện tại.
+    o API trả về HTTP 200 OK cùng dữ liệu khóa học đã cập nhật.
+  • Nếu xuất bản thành công:
+    o `status` chuyển thành `PUBLISHED` và `updated_at` được cập nhật.
+    o API trả về HTTP 200 OK; frontend hiển thị thông báo: "Khóa học đã được xuất bản.".
+  • Nếu xóa thành công:
+    o Khóa học bị xóa vật lý hoặc được chuyển sang trạng thái `ARCHIVED` tùy theo chính sách (soft-delete recommended).
+    o API trả về HTTP 200 OK hoặc 204 No Content theo thiết kế.
+  • Nếu xảy ra lỗi nghiệp vụ hoặc xác thực (ví dụ: quyền hạn, ràng buộc UNIQUE, course không tồn tại):
+    o Không có thay đổi được ghi vào hệ thống (transaction rollback).
+    o API trả về mã lỗi thích hợp (400/403/404/409/500) kèm thông điệp rõ ràng.
 
-- Ràng buộc nghiệp vụ:
-  • Không thể xóa Course nếu đã có Enrollment (cần soft delete hoặc archive).
-  • Khi xóa Module, tất cả Lecture, Resource thuộc Module đó cũng bị xóa (CASCADE).
-  • prerequisite_module_ids phải chứa các module_id hợp lệ thuộc cùng course_id.
-  • order_num của Module phải unique trong cùng Course.
-  • Chỉ Course có status = PUBLISHED mới cho phép sinh viên enroll.
+- Ràng buộc nghiệp vụ & validation (áp dụng cho thao tác tạo/cập nhật/xuất bản/xóa):
+  1. `code` phải tuân theo định dạng quy định và **unique** trong hệ thống.
+  2. Chỉ `INSTRUCTOR` là người tạo/cập nhật khóa học của mình; `ADMIN` có quyền trên toàn hệ thống.
+  3. Không cho phép xuất bản khi thông tin bắt buộc (title, description, difficulty_level) thiếu hoặc không hợp lệ.
+  4. Khi xuất bản, hệ thống có thể kiểm tra các điều kiện bổ sung theo chính sách (ví dụ: tối thiểu một nội dung giới thiệu, thumbnail hợp lệ).
+  5. Xóa khóa học phải tuân thủ chính sách bảo toàn dữ liệu: nếu có học viên đã đăng ký thì ưu tiên `ARCHIVE` thay vì xóa thực sự; nếu cho phép xóa vật lý thì cần có xác nhận cấp cao hơn (quyền ADMIN + xác nhận bổ sung).
+  6. Chỉ khóa học có `status = 'PUBLISHED'` mới mở cho sinh viên đăng ký (enroll).
+
+    Ghi chú: Các kiểm tra chi tiết (ví dụ: có học viên đang đăng ký hay không) xử lý ở tầng dịch vụ/ứng dụng; ở tài liệu này chỉ nêu rõ quy tắc nghiệp vụ, không mô tả cấu trúc bảng cụ thể.
 
 ================================================================================
 
 --------------------------------------------------------------------------------
-2. Đặc tả chức năng: Nộp bài tập (Submission Management)
+2. Đặc tả chức năng: Submission Management (Chi tiết & Chấm điểm)
 --------------------------------------------------------------------------------
 
-2.1. Giao diện Page và thành phần
+2.1. Giao diện Page và thành phần (Submission Detail & Grade)
 
-- Tên Page: Assignment Submission Page (Web Application)
+- Mục tiêu: Cung cấp giao diện để:
+  • Sinh viên xem chi tiết submission của chính họ (Submission Detail).
+  • Giảng viên/ADMIN xem submission của sinh viên và thực hiện chấm điểm (Grade Submission).
 
-- Canvas 1 (Chi tiết bài tập):
-  Hiển thị thông tin Assignment (title, instructions, due_date, max_points).
+- Page: Submission Detail (student view)
+  • Canvas chính: hiển thị thông tin submission (submission_id, lecture_id, user_id, submission_number, text_content, file_urls (liệt kê đường dẫn), submitted_at, status (ON_TIME/LATE)).
+  • Actions: `View` (download files), `Print`, `Request Regrade` (tùy chọn business rule).
 
-- Canvas 2 (Nộp bài):
-  Cho phép sinh viên nhập text_content và upload file.
-
-- Canvas 3 (Kết quả):
-  Hiển thị score và feedback sau khi được chấm.
+- Page: Grade Submission (instructor view)
+  • Canvas chính: hiển thị submission content cùng metadata (student, enrolled course/class, submitted_at).
+  • Grade Panel: trường nhập `score` (decimal), `feedback` (rich text), và `private_note` (nội bộ, optional).
+  • Buttons: `Save Draft` (lưu tạm), `Submit Grade` (chấm chính thức), `Override` (khi cần cập nhật điểm đã chấm; yêu cầu quyền nâng cao).
+  • Audit: hiển thị `graded_by`, `graded_at`, và lịch sử chấm (nếu có).
 
 - Dialog/Modal:
-  Pop-up xác nhận nộp bài, lỗi upload file.
-
-Chi tiết thành phần:
-
-- Tên bài tập
-  • Loại điều khiển: Text (Readonly)
-  • Trường dữ liệu: title
-  • Bảng và kiểu dữ liệu: Lecture (VARCHAR(200))
-  • Thao tác: Hiển thị tên bài tập.
-
-- Hướng dẫn
-  • Loại điều khiển: HTML Content (Readonly)
-  • Trường dữ liệu: assignment_config.instructions
-  • Bảng và kiểu dữ liệu: Lecture.assignment_config (JSONB)
-  • Thao tác: Hiển thị hướng dẫn làm bài (rich text).
-
-- Hạn nộp
-  • Loại điều khiển: Text (Readonly)
-  • Trường dữ liệu: assignment_config.due_date
-  • Bảng và kiểu dữ liệu: Lecture.assignment_config (JSONB)
-  • Thao tác: Hiển thị deadline (format: DD/MM/YYYY HH:MM). Highlight màu đỏ nếu đã quá hạn.
-
-- Điểm tối đa
-  • Loại điều khiển: Text (Readonly)
-  • Trường dữ liệu: assignment_config.max_points
-  • Bảng và kiểu dữ liệu: Lecture.assignment_config (JSONB)
-  • Thao tác: Hiển thị điểm tối đa.
-
-- Loại file cho phép
-  • Loại điều khiển: Text (Readonly)
-  • Trường dữ liệu: assignment_config.allowed_file_types
-  • Bảng và kiểu dữ liệu: Lecture.assignment_config (JSONB)
-  • Thao tác: Hiển thị các định dạng file được phép (VD: .java, .py, .pdf).
-
-- Nội dung bài làm
-  • Loại điều khiển: Text Area (Rich Text Editor)
-  • Trường dữ liệu: text_content
-  • Bảng và kiểu dữ liệu: AssignmentSubmission (TEXT)
-  • Thao tác: Nhập nội dung bài làm dạng text (tùy chọn, có thể để trống nếu chỉ upload file).
-
-- File đính kèm
-  • Loại điều khiển: File Upload (Multiple)
-  • Trường dữ liệu: file_urls
-  • Bảng và kiểu dữ liệu: AssignmentSubmission (JSONB - array of URLs)
-  • Thao tác: Chọn và upload file. Validate file type và size theo assignment_config. Upload lên S3/GCS.
-
-- Trạng thái nộp
-  • Loại điều khiển: Badge/Label (Readonly)
-  • Trường dữ liệu: derived from submitted_at vs due_date
-  • Thao tác: Hiển thị "On Time" (xanh) hoặc "Late" (đỏ).
-
-- Điểm số
-  • Loại điều khiển: Text (Readonly)
-  • Trường dữ liệu: score
-  • Bảng và kiểu dữ liệu: AssignmentSubmission (DECIMAL(5,2))
-  • Thao tác: Hiển thị điểm (nếu đã chấm) hoặc "Chưa chấm".
-
-- Phản hồi
-  • Loại điều khiển: HTML Content (Readonly)
-  • Trường dữ liệu: feedback
-  • Bảng và kiểu dữ liệu: AssignmentSubmission (TEXT)
-  • Thao tác: Hiển thị feedback của giảng viên (nếu có).
-
-- Nút Nộp bài
-  • Loại điều khiển: Button
-  • Thao tác: Gọi API POST /api/assignments/{lecture_id}/submissions để tạo submission.
-
-- Nút Nộp lại
-  • Loại điều khiển: Button
-  • Thao tác: Gọi API PUT /api/submissions/{submission_id} để cập nhật submission. Chỉ hiển thị nếu chưa được chấm điểm.
+  • Confirm Submit Grade: xác nhận hành động chấm điểm chính thức.
+  • Confirm Override: xác nhận khi ghi đè điểm đã chấm.
 
 --------------------------------------------------------------------------------
 
-2.2. Truy vấn dữ liệu
+2.2. Truy vấn dữ liệu (Submission-centric)
 
-- Thông tin Assignment
-  • Bảng: Lecture
-  • Trường: lecture_id, title, type, assignment_config
-  • Điều kiện: type = 'ASSIGNMENT'
-  • Mục đích: Lấy thông tin bài tập để hiển thị.
-  • API: GET /api/lectures/{lecture_id}
+- Lấy chi tiết submission
+  • API: `GET /api/submissions/{submission_id}`
+  • Response: `{ submission_id, lecture_id, user_id, enrollment_id, submission_number, text_content, file_urls, submitted_at, score, feedback, graded_by, graded_at, status }`
 
-- Kiểm tra Enrollment
-  • Bảng: Enrollment
-  • Trường: enrollment_id, user_id, course_id, status
-  • Mục đích: Xác nhận sinh viên đã enroll khóa học chứa Assignment này.
-  • API: Thực hiện nội bộ (authorization middleware)
-  • SQL tương đương:
-    SELECT e.* FROM "Enrollment" e
-    JOIN "Module" m ON m.course_id = e.course_id
-    JOIN "Lecture" l ON l.module_id = m.module_id
-    WHERE l.lecture_id = :lecture_id
-      AND e.user_id = :user_id
-      AND e.status = 'ACTIVE'
+- Lấy submission hiện của sinh viên cho lecture
+  • API: `GET /api/lectures/{lecture_id}/submissions/me` — trả về submission(s) của current user cho lecture đó.
 
-- Submission hiện tại
-  • Bảng: AssignmentSubmission
-  • Trường: submission_id, text_content, file_urls, submitted_at, score, feedback, graded_at
-  • Mục đích: Kiểm tra xem sinh viên đã nộp bài chưa. Nếu có, hiển thị thông tin submission.
-  • API: GET /api/assignments/{lecture_id}/submissions/me
+- Lấy danh sách submission cho giảng viên (để chấm)
+  • API: `GET /api/lectures/{lecture_id}/submissions?status=SUBMITTED&sort=submitted_at` — hỗ trợ phân trang, lọc theo status (SUBMITTED, PENDING_REVIEW), tìm kiếm theo student.
 
 --------------------------------------------------------------------------------
 
-2.3. Cập nhật dữ liệu
+2.3. Cập nhật dữ liệu (Grade Submission)
 
-- Nộp bài lần đầu
-  • Bảng: AssignmentSubmission
-  • API: POST /api/assignments/{lecture_id}/submissions
-  • Payload: { text_content, files (multipart) }
-  • SQL tương đương:
-    INSERT INTO "AssignmentSubmission"
-    (submission_id, lecture_id, user_id, enrollment_id, submission_number, text_content, file_urls, submitted_at)
-    VALUES (gen_random_uuid(), :lecture_id, :user_id, :enrollment_id, 1, :text_content, :file_urls, CURRENT_TIMESTAMP)
-
-- Nộp lại (Re-submit)
-  • Bảng: AssignmentSubmission
-  • API: PUT /api/submissions/{submission_id}
-  • Điều kiện: score IS NULL (chưa được chấm)
+- Chấm điểm (lần đầu)
+  • API: `POST /api/submissions/{submission_id}/grade`
+  • Payload: `{ score, feedback }`
   • SQL tương đương:
     UPDATE "AssignmentSubmission"
-    SET text_content = :text_content,
-        file_urls = :file_urls,
-        submitted_at = CURRENT_TIMESTAMP,
-        submission_number = submission_number + 1
+    SET score = :score, feedback = :feedback, graded_by = :grader_id, graded_at = CURRENT_TIMESTAMP
     WHERE submission_id = :submission_id
-      AND user_id = :user_id
-      AND score IS NULL
+      AND (score IS NULL OR :force_override = TRUE);
+  • Response: HTTP 200 OK + updated submission data (including graded_by, graded_at).
 
-- Upload File
-  • Service: S3/GCS Upload Service
-  • Process:
-    1. Validate file type theo assignment_config.allowed_file_types
-    2. Validate file size theo assignment_config.max_file_size_mb
-    3. Upload file lên S3/GCS
-    4. Trả về URL để lưu vào file_urls JSONB array
+- Lưu nháp chấm điểm
+  • API: `PUT /api/submissions/{submission_id}/grade-draft`
+  • Payload: `{ score, feedback }` (lưu nhưng không khóa việc nộp lại hoặc finalize)
+  • Response: HTTP 200 OK.
+
+- Override / Regrade
+  • API: `POST /api/submissions/{submission_id}/regrade`
+  • Payload: `{ score, feedback, reason }` (chỉ giảng viên có quyền hoặc ADMIN, cần audit)
+  • SQL tương đương: như trên nhưng lưu audit trail trong bảng `SubmissionGradeHistory` (recommended).
 
 --------------------------------------------------------------------------------
 
-2.4. Tiền và hậu điều kiện
+2.4. Tiền và hậu điều kiện (Submission & Grading)
 
 - Tiền điều kiện:
-  • Người dùng phải đăng nhập với role STUDENT.
-  • JWT token hợp lệ và chưa hết hạn.
-  • lecture_id phải tồn tại trong bảng Lecture với type = 'ASSIGNMENT'.
-  • Sinh viên phải đã enroll khóa học chứa Assignment này:
-    o Enrollment.user_id = current_user_id
-    o Enrollment.course_id = Course của Lecture
-    o Enrollment.status = 'ACTIVE'
-  • Nếu đã nộp bài trước đó, chỉ cho phép nộp lại nếu chưa được chấm (AssignmentSubmission.score IS NULL).
-  • File upload (nếu có) phải đúng định dạng cho phép (assignment_config.allowed_file_types).
-  • File upload không được vượt quá kích thước tối đa (assignment_config.max_file_size_mb).
+  • Authentication: JWT token hợp lệ.
+  • View submission (student): user phải là chủ sở hữu của submission (user_id match) hoặc có quyền (INSTRUCTOR/ADMIN).
+  • Grade submission (instructor): user phải có role `INSTRUCTOR` hoặc `ADMIN` và có quyền chấm cho khóa học/lecture này (creator hoặc assigned grader).
+  • Submission phải tồn tại và có trạng thái phù hợp (ví dụ `SUBMITTED` hoặc `PENDING_REVIEW`) để chấm.
 
 - Hậu điều kiện:
-  • Nếu thành công:
-    o Bảng AssignmentSubmission được INSERT (lần đầu) hoặc UPDATE (nộp lại).
-    o File được upload lên S3/GCS và URL được lưu vào file_urls.
-    o Response trả về HTTP 201 Created (lần đầu) hoặc 200 OK (nộp lại).
-    o Frontend hiển thị toast: "Bài tập đã được nộp thành công."
-    o Nếu nộp trễ (submitted_at > due_date), hiển thị warning: "Bạn đã nộp trễ."
-  • Nếu thất bại:
-    o Không có dữ liệu nào được INSERT/UPDATE (transaction rollback).
-    o File không được lưu lên S3/GCS.
-    o Response trả về HTTP 400/403/404/500 với error message.
-    o Frontend hiển thị error toast tương ứng.
+  • Khi chấm xong (Submit Grade): `AssignmentSubmission.score`, `feedback`, `graded_by`, `graded_at` được cập nhật; nếu chấm chính thức thì submission được khóa khỏi việc submit lại (business rule).
+  • Khi lưu nháp: các trường grade được lưu nhưng không thay đổi trạng thái khóa nộp.
+  • Khi override/regrade: lưu entry audit (grader_id, previous_score, new_score, reason, timestamp) và cập nhật `graded_by`/`graded_at`.
+  • API trả về mã phù hợp: 200 OK (thành công), 400/403/404/409/500 (lỗi hoặc vi phạm quyền/validation).
 
-- Ràng buộc nghiệp vụ:
-  • Một sinh viên có thể có nhiều submission cho mỗi Assignment (submission_number tăng dần).
-  • Không thể xóa AssignmentSubmission sau khi đã nộp (chỉ giảng viên/admin có quyền xóa).
-  • Khi giảng viên chấm điểm (UPDATE score, feedback), graded_at = CURRENT_TIMESTAMP và graded_by = instructor_id.
-  • Sau khi được chấm điểm, sinh viên không thể nộp lại (score IS NOT NULL).
+- Ràng buộc nghiệp vụ & validation:
+  1. `score` phải nằm trong khoảng hợp lệ (0 .. lecture.assignment_config.max_points) hoặc theo quy ước course-level.
+  2. Chỉ grader hợp lệ mới được submit grade; override phải được ghi nhận với lý do và audit.
+  3. Sau khi grade finalized, sinh viên không được nộp lại (nếu policy cấm); nếu cho phép re-submit thì ghi chú rõ điều kiện.
+  4. Nếu grader muốn chỉnh sửa grade đã finalize, cần flag `force_override` và audit reason.
+  5. Tất cả thao tác chấm điểm cần được ghi log/audit để phục vụ khiếu nại và lịch sử điểm.
 
-- Validation (Application Layer):
-  1. Check enrollment: Sinh viên phải đã enroll và status = ACTIVE.
-  2. Check assignment exists: Lecture phải tồn tại với type = ASSIGNMENT.
-  3. Check if already graded: Nếu đã có submission với score IS NOT NULL thì không cho nộp lại.
-  4. Validate file type: Kiểm tra extension của file phải nằm trong allowed_file_types.
-  5. Validate file size: Kiểm tra size <= max_file_size_mb * 1024 * 1024.
-  6. Check deadline: Nếu quá hạn, vẫn cho nộp nhưng đánh dấu warning.
-
+    Ghi chú: Tài liệu này tập trung vào chi tiết submission và chấm điểm — các chi tiết upload file, kiểm tra file, và luồng nộp bài đã được loại bỏ theo yêu cầu.
 ================================================================================
 
 KẾT THÚC BÁO CÁO

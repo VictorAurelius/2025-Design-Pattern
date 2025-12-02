@@ -7105,13 +7105,13 @@
 									},
 									"font": "Arial;16;0",
 									"parentStyle": false,
-									"left": 1047,
-									"top": 358,
+									"left": 1480,
+									"top": 199,
 									"width": 45.029296875,
 									"height": 16,
 									"autoResize": true,
-									"alpha": -4.139587915786071,
-									"distance": 1149.4716177444313,
+									"alpha": -4.545078931692819,
+									"distance": 1140.931636865242,
 									"hostEdge": {
 										"$ref": "AAAAAAGa1TdM1M2GoaY="
 									}

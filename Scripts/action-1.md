@@ -408,3 +408,11 @@ tôi không hài lòng với main_report, hãy tạo req-5.md để tạo lại 
 mục tiêu: tạo ra báo cáo mới có thể copy luôn vào word và vẽ lại BFD dễ dàng để paste vào word
 
 do 98-B-Learning-Core/req-5.md
+
+tôi vẫn chưa hài lòng:
+1. dạng trả ra là dạng text có thể copy tốt vào word => không có markdown, copy dễ dàng
+2. mỗi actor (student, instructor) chỉ có 1 BFD thôi => vẽ lại BFD và đặc tả lại
+3. dạng bảng khiến khó copy vào word => cần trình bày dễ hơn
+4. CHƯƠNG 2: ĐẶC TẢ YÊU CẦU CHỨC NĂNG, của B-learning là web còn của Tham_khao.pdf là winform nên cần trình bày đúng platform
+
+hãy tạo lại main_report, v3

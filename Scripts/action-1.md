@@ -399,3 +399,12 @@ hãy tạo 98-B-Learning-Core/req-4.md là plan task cho claude để tạo báo
 Lưu ý: đây là plan task
 
 claude code đang làm dở 98-B-Learning-Core/req-4.md, hãy làm tiếp phần FAQ (đang xong main_report)
+tôi không hài lòng với main_report, hãy tạo req-5.md để tạo lại main-report:
+1. cần hướng dẫn vẽ BFD và đặc tả BFD đúng theo format của Scripts/Tham_khao.pdf
+2. cần đặc tả chi tiết cơ sở dữ liệu đúng theo format của Scripts/Tham_khao.pdf
+3. CHƯƠNG 2: ĐẶC TẢ YÊU CẦU CHỨC NĂNG cần tập trung chính vào 2 pages chính là Course Management và Submission Management
+4. dạng trả ra là dạng text có thể copy tốt vào word, trình bày đủ ý, rõ ràng
+
+mục tiêu: tạo ra báo cáo mới có thể copy luôn vào word và vẽ lại BFD dễ dàng để paste vào word
+
+do 98-B-Learning-Core/req-5.md

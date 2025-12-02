@@ -3754,4 +3754,4879 @@ WHERE status = 'IN_PROGRESS'
 
 ---
 
-I'll continue generating the FAQ content. Would you like me to proceed with the remaining sections (Q4.3 onwards), or would you like to review what we have so far first?
+### Q4.3: AssignmentSubmission vs Attempt - khác nhau thế nào?
+
+**Trả lời:**
+
+**AssignmentSubmission** và **Attempt** là 2 bảng khác nhau cho 2 types of assessment:
+
+| Aspect | AssignmentSubmission | Attempt |
+|--------|---------------------|---------|
+| **Purpose** | Student submissions cho assignments | Student quiz attempts |
+| **Parent** | Lecture (type='ASSIGNMENT') | Quiz |
+| **Content** | Files + text submission | Selected answers (JSONB) |
+| **Grading** | Manual (instructor reviews) | Auto-graded (+ manual for short answer) |
+| **Multiple Submissions** | Yes (submission_number) | Yes (attempt_number) |
+| **Time Limit** | Deadline (due_date) | Time limit (e.g., 60 minutes) |
+
+**AssignmentSubmission Schema:**
+
+```sql
+CREATE TABLE "AssignmentSubmission" (
+  submission_id UUID PRIMARY KEY,
+  lecture_id UUID REFERENCES "Lecture",  -- Assignment lecture
+  user_id UUID REFERENCES "User",
+  submission_number INT DEFAULT 1,  -- 1st, 2nd, 3rd submission
+  submitted_content TEXT,  -- Text submission
+  file_urls TEXT[],  -- Array of uploaded file URLs
+  submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  score DECIMAL(5,2),
+  feedback TEXT,  -- Instructor feedback
+  graded_at TIMESTAMP,
+  graded_by UUID REFERENCES "User",
+  status VARCHAR(20) DEFAULT 'SUBMITTED'  -- SUBMITTED, GRADED, LATE
+);
+```
+
+**Attempt Schema:**
+
+```sql
+CREATE TABLE "Attempt" (
+  attempt_id UUID PRIMARY KEY,
+  quiz_id UUID REFERENCES "Quiz",
+  user_id UUID REFERENCES "User",
+  attempt_number INT DEFAULT 1,  -- 1st, 2nd, 3rd attempt
+  started_at TIMESTAMP,
+  submitted_at TIMESTAMP,
+  time_limit_minutes INT,
+  answers JSONB,  -- Student answers
+  score DECIMAL(5,2),
+  status VARCHAR(20)  -- IN_PROGRESS, SUBMITTED, GRADED
+);
+```
+
+**Use Cases:**
+
+**Assignment Example:**
+```
+Lecture: "Java Project - Create a Calculator"
+Type: ASSIGNMENT
+assignment_config: {
+  "due_date": "2025-12-15T23:59:59Z",
+  "max_score": 100,
+  "submission_types": ["FILE"],
+  "allowed_file_types": [".zip", ".java"],
+  "max_attempts": 3
+}
+
+Student Submission:
+- submission_number: 1
+- file_urls: ["https://s3.../calculator.zip"]
+- submitted_content: "Here is my calculator project..."
+- submitted_at: 2025-12-10 20:30:00
+
+Instructor Grading:
+- score: 85
+- feedback: "Good work! Consider adding error handling for division by zero."
+- graded_at: 2025-12-12 10:00:00
+```
+
+**Quiz Example:**
+```
+Quiz: "Java OOP Concepts Quiz"
+questions: [10 MULTIPLE_CHOICE questions]
+time_limit_minutes: 45
+pass_percentage: 70
+
+Student Attempt:
+- attempt_number: 1
+- started_at: 2025-12-10 14:00:00
+- submitted_at: 2025-12-10 14:35:00
+- answers: [{"question_id": "q1", "selected_option_id": "opt1", "is_correct": true, ...}, ...]
+- score: 85 (auto-graded)
+- status: GRADED
+```
+
+**Multiple Submissions/Attempts:**
+
+**Assignment:**
+```sql
+-- Student can resubmit (if max_attempts allows)
+INSERT INTO "AssignmentSubmission" (lecture_id, user_id, submission_number, ...)
+VALUES (:lecture_id, :user_id, 2, ...);  -- 2nd submission
+
+-- Get latest submission
+SELECT *
+FROM "AssignmentSubmission"
+WHERE lecture_id = :lecture_id
+  AND user_id = :user_id
+ORDER BY submission_number DESC
+LIMIT 1;
+
+-- Get best submission
+SELECT *
+FROM "AssignmentSubmission"
+WHERE lecture_id = :lecture_id
+  AND user_id = :user_id
+ORDER BY score DESC
+LIMIT 1;
+```
+
+**Quiz:**
+```sql
+-- Student can retake quiz (if max_attempts allows)
+INSERT INTO "Attempt" (quiz_id, user_id, attempt_number, ...)
+VALUES (:quiz_id, :user_id, 2, ...);  -- 2nd attempt
+
+-- Get best attempt
+SELECT *
+FROM "Attempt"
+WHERE quiz_id = :quiz_id
+  AND user_id = :user_id
+  AND status = 'GRADED'
+ORDER BY score DESC
+LIMIT 1;
+```
+
+**Kết luận:**
+- AssignmentSubmission = manual grading, file uploads
+- Attempt = auto-grading, selected answers
+- Both support multiple submissions/attempts
+- Different workflows, different tables
+
+---
+
+### Q4.4: Làm sao để enforce max_attempts cho assignments và quizzes?
+
+**Trả lời:**
+
+Max attempts được enforce tại **application level** (không enforce ở database level).
+
+**Assignment max_attempts:**
+
+Stored in `Lecture.assignment_config` JSON:
+
+```json
+{
+  "max_attempts": 3
+}
+```
+
+**Application Logic:**
+
+```python
+@app.post("/api/assignments/{lecture_id}/submit")
+def submit_assignment(lecture_id: UUID, submission_data: dict, user_id: UUID):
+    # Get assignment config
+    lecture = db.query("SELECT assignment_config FROM Lecture WHERE lecture_id = %s", lecture_id)
+    config = json.loads(lecture['assignment_config'])
+    max_attempts = config.get('max_attempts', 999)  # Default unlimited
+
+    # Count existing submissions
+    submission_count = db.query("""
+        SELECT COUNT(*) as count
+        FROM "AssignmentSubmission"
+        WHERE lecture_id = %s AND user_id = %s
+    """, lecture_id, user_id)[0]['count']
+
+    # Check if exceeded
+    if submission_count >= max_attempts:
+        raise HTTPException(403, f"Maximum {max_attempts} submissions allowed")
+
+    # Create submission
+    next_number = submission_count + 1
+    db.insert("AssignmentSubmission", {
+        'lecture_id': lecture_id,
+        'user_id': user_id,
+        'submission_number': next_number,
+        'submitted_content': submission_data['content'],
+        'file_urls': submission_data['file_urls'],
+        'status': 'SUBMITTED'
+    })
+
+    return {'submission_number': next_number, 'remaining_attempts': max_attempts - next_number}
+```
+
+**Quiz max_attempts:**
+
+Stored in `Quiz.max_attempts`:
+
+```sql
+CREATE TABLE "Quiz" (
+  quiz_id UUID PRIMARY KEY,
+  title VARCHAR(200),
+  max_attempts INT DEFAULT 3,
+  ...
+);
+```
+
+**Application Logic:**
+
+```python
+@app.post("/api/quizzes/{quiz_id}/attempts")
+def start_quiz_attempt(quiz_id: UUID, user_id: UUID):
+    # Get quiz
+    quiz = db.query("SELECT max_attempts FROM Quiz WHERE quiz_id = %s", quiz_id)
+    max_attempts = quiz['max_attempts']
+
+    # Count existing attempts
+    attempt_count = db.query("""
+        SELECT COUNT(*) as count
+        FROM "Attempt"
+        WHERE quiz_id = %s AND user_id = %s
+    """, quiz_id, user_id)[0]['count']
+
+    # Check if exceeded
+    if attempt_count >= max_attempts:
+        raise HTTPException(403, f"Maximum {max_attempts} attempts allowed")
+
+    # Create new attempt
+    attempt_id = db.insert("Attempt", {
+        'quiz_id': quiz_id,
+        'user_id': user_id,
+        'attempt_number': attempt_count + 1,
+        'started_at': 'CURRENT_TIMESTAMP',
+        'status': 'IN_PROGRESS'
+    })
+
+    return {'attempt_id': attempt_id, 'attempt_number': attempt_count + 1, 'remaining_attempts': max_attempts - attempt_count - 1}
+```
+
+**Database Constraint (Optional - strict enforcement):**
+
+```sql
+-- Could add CHECK constraint (but less flexible)
+ALTER TABLE "AssignmentSubmission"
+ADD CONSTRAINT chk_max_submissions
+CHECK (
+  submission_number <= (
+    SELECT (assignment_config->>'max_attempts')::INT
+    FROM "Lecture"
+    WHERE lecture_id = "AssignmentSubmission".lecture_id
+  )
+);
+
+-- Problem: Less flexible (requires SQL function or trigger)
+-- Better: Handle at application level
+```
+
+**UI Display:**
+
+```
+Assignment: Java Calculator Project
+Submission Status: 2/3 attempts used
+[Submit Assignment] button
+Remaining attempts: 1
+```
+
+**Kết luận:**
+- max_attempts enforced at application level
+- Count existing submissions/attempts
+- Reject if exceeded
+- More flexible than database constraint
+
+---
+
+## 5. DOMAIN 4: ENROLLMENT & PROGRESS
+
+### Q5.1: Enrollment.class_id nullable - ý nghĩa gì?
+
+**Trả lời:**
+
+**Enrollment.class_id** nullable để support **2 learning modes**:
+
+**1. Self-paced learning (class_id = NULL):**
+
+Student enrolls in course, học theo tốc độ riêng, không có schedule/class
+
+```sql
+INSERT INTO "Enrollment" (user_id, course_id, class_id, status)
+VALUES (
+  :user_id,
+  :course_id,
+  NULL,  -- Self-paced (no class)
+  'ACTIVE'
+);
+```
+
+**Use case:**
+- MOOCs (Massive Open Online Courses)
+- Self-study courses
+- On-demand training
+
+**Characteristics:**
+- No schedule (học bất kỳ lúc nào)
+- No instructor-led sessions
+- No attendance tracking
+- Individual progress
+
+**2. Class-based learning (class_id = UUID):**
+
+Student enrolls in specific class với schedule, instructor, in-person/online sessions
+
+```sql
+INSERT INTO "Enrollment" (user_id, course_id, class_id, status)
+VALUES (
+  :user_id,
+  :course_id,
+  'class-uuid',  -- Specific class
+  'ACTIVE'
+);
+```
+
+**Use case:**
+- University courses (CS101 - Spring 2025)
+- Corporate training (Java Bootcamp - Jan cohort)
+- Blended learning (online + in-person)
+
+**Characteristics:**
+- Fixed schedule (Mon/Wed/Fri 2pm-4pm)
+- Instructor-led
+- Attendance tracking
+- Cohort-based (học cùng classmates)
+
+**Schema:**
+
+```sql
+CREATE TABLE "Enrollment" (
+  enrollment_id UUID PRIMARY KEY,
+  user_id UUID REFERENCES "User",
+  course_id UUID REFERENCES "Course",
+  class_id UUID REFERENCES "Class",  -- NULLABLE!
+  enrolled_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  status VARCHAR(20) DEFAULT 'ACTIVE',
+  ...
+);
+
+CREATE TABLE "Class" (
+  class_id UUID PRIMARY KEY,
+  course_id UUID REFERENCES "Course",
+  class_name VARCHAR(100),  -- "CS101 - Spring 2025"
+  instructor_id UUID REFERENCES "User",
+  start_date DATE,
+  end_date DATE,
+  schedules JSONB,  -- Weekly schedule
+  max_students INT,
+  status VARCHAR(20)
+);
+```
+
+**Comparison:**
+
+| Aspect | Self-paced (class_id=NULL) | Class-based (class_id=UUID) |
+|--------|----------------------------|----------------------------|
+| **Schedule** | Flexible | Fixed (e.g., Mon/Wed 2pm) |
+| **Instructor** | N/A | Assigned instructor |
+| **Start/End** | Anytime | Specific dates |
+| **Attendance** | N/A | Tracked |
+| **Interaction** | Forums only | Live sessions + forums |
+| **Pacing** | Individual | Cohort (everyone together) |
+
+**Query Examples:**
+
+```sql
+-- 1. Get all enrollments for user
+SELECT
+  e.enrollment_id,
+  c.title AS course_title,
+  cl.class_name,
+  CASE
+    WHEN e.class_id IS NULL THEN 'Self-paced'
+    ELSE 'Class-based'
+  END AS learning_mode
+FROM "Enrollment" e
+JOIN "Course" c ON e.course_id = c.course_id
+LEFT JOIN "Class" cl ON e.class_id = cl.class_id
+WHERE e.user_id = :user_id;
+
+-- 2. Get all self-paced enrollments
+SELECT e.*, c.title
+FROM "Enrollment" e
+JOIN "Course" c ON e.course_id = c.course_id
+WHERE e.class_id IS NULL;
+
+-- 3. Get all enrollments in a specific class
+SELECT e.*, u.email, u.first_name, u.last_name
+FROM "Enrollment" e
+JOIN "User" u ON e.user_id = u.user_id
+WHERE e.class_id = :class_id;
+
+-- 4. Count enrollments by mode
+SELECT
+  COUNT(*) FILTER (WHERE class_id IS NULL) AS self_paced_count,
+  COUNT(*) FILTER (WHERE class_id IS NOT NULL) AS class_based_count
+FROM "Enrollment"
+WHERE course_id = :course_id;
+```
+
+**Business Rules:**
+
+```python
+def enroll_student(user_id: UUID, course_id: UUID, class_id: UUID | None = None):
+    # If class_id provided, check if class is open and has capacity
+    if class_id:
+        cls = db.query("SELECT * FROM Class WHERE class_id = %s", class_id)
+
+        # Check status
+        if cls['status'] != 'OPEN':
+            raise HTTPException(400, "Class is not open for enrollment")
+
+        # Check capacity
+        enrolled_count = db.query("""
+            SELECT COUNT(*) as count
+            FROM "Enrollment"
+            WHERE class_id = %s
+        """, class_id)[0]['count']
+
+        if enrolled_count >= cls['max_students']:
+            raise HTTPException(400, "Class is full")
+
+    # Create enrollment
+    db.insert("Enrollment", {
+        'user_id': user_id,
+        'course_id': course_id,
+        'class_id': class_id,  # Can be NULL
+        'status': 'ACTIVE'
+    })
+
+    return {'success': True}
+```
+
+**UI Flow:**
+
+**Self-paced:**
+```
+Course: "Introduction to Java"
+Enrollment Type: Self-paced
+[Enroll Now] → Immediate access
+```
+
+**Class-based:**
+```
+Course: "Introduction to Java"
+
+Available Classes:
+  ✅ CS101 - Spring 2025 (Mon/Wed 2-4pm) - 15/30 students
+  ✅ CS101 - Evening (Tue/Thu 6-8pm) - 8/25 students
+  🔒 CS101 - Summer 2025 (Enrollment opens Mar 1)
+
+[Select Class] → [Enroll]
+```
+
+**Kết luận:**
+- class_id nullable = flexible enrollment
+- NULL = self-paced learning
+- UUID = class-based learning with schedule
+- Same course, different modes
+
+---
+
+### Q5.2: Progress table track gì? Tại sao không track quiz/assignment progress?
+
+**Trả lời:**
+
+**Progress** table tracks **lecture completion** (module-level progress).
+
+**Schema:**
+
+```sql
+CREATE TABLE "Progress" (
+  progress_id UUID PRIMARY KEY,
+  user_id UUID REFERENCES "User",
+  enrollment_id UUID REFERENCES "Enrollment",
+  module_id UUID REFERENCES "Module",
+  completed_lectures INT DEFAULT 0,  -- Số lectures đã complete
+  total_lectures INT,  -- Tổng số lectures trong module
+  percentage DECIMAL(5,2),  -- % complete (calculated)
+  last_accessed_at TIMESTAMP,
+  completed_at TIMESTAMP,  -- When module completed
+  status VARCHAR(20) DEFAULT 'IN_PROGRESS'  -- IN_PROGRESS, COMPLETED
+);
+```
+
+**What Progress tracks:**
+
+✅ **Lectures watched/completed:**
+- Video lectures watched
+- Reading materials read
+- Content consumed
+
+❌ **What Progress does NOT track:**
+- Quiz attempts (tracked in Attempt table)
+- Assignment submissions (tracked in AssignmentSubmission table)
+
+**Why separate tracking?**
+
+**1. Different semantics:**
+
+| Type | Progress Meaning | Completion Criteria |
+|------|------------------|---------------------|
+| **Lecture** | Watched/read | Viewed content (passive) |
+| **Quiz** | Taken + passed | Score ≥ pass_percentage (active) |
+| **Assignment** | Submitted + graded | Score ≥ pass_score (active) |
+
+**2. Different tables:**
+
+```
+Progress table:
+- Tracks: Lectures (VIDEO, READING)
+- Granularity: Module-level
+- Purpose: Course completion percentage
+
+Attempt table:
+- Tracks: Quizzes
+- Granularity: Quiz-level (individual attempts)
+- Purpose: Assessment scores
+
+AssignmentSubmission table:
+- Tracks: Assignments
+- Granularity: Assignment-level (individual submissions)
+- Purpose: Graded work
+```
+
+**3. Aggregation for overall progress:**
+
+```sql
+-- Calculate overall course progress (all types)
+WITH lecture_progress AS (
+  -- Lectures completed
+  SELECT
+    e.enrollment_id,
+    COUNT(DISTINCT l.lecture_id) FILTER (WHERE l.type IN ('VIDEO', 'READING')) AS total_lectures,
+    COUNT(DISTINCT p.module_id) AS completed_modules  -- Simplified
+  FROM "Enrollment" e
+  JOIN "Course" c ON e.course_id = c.course_id
+  JOIN "Module" m ON c.course_id = m.course_id
+  JOIN "Lecture" l ON m.module_id = l.module_id
+  LEFT JOIN "Progress" p ON m.module_id = p.module_id AND p.user_id = e.user_id
+  WHERE e.enrollment_id = :enrollment_id
+  GROUP BY e.enrollment_id
+),
+quiz_progress AS (
+  -- Quizzes passed
+  SELECT
+    e.enrollment_id,
+    COUNT(DISTINCT q.quiz_id) AS total_quizzes,
+    COUNT(DISTINCT a.quiz_id) FILTER (WHERE a.status = 'GRADED' AND a.score >= q.pass_percentage) AS passed_quizzes
+  FROM "Enrollment" e
+  JOIN "Course" c ON e.course_id = c.course_id
+  JOIN "Module" m ON c.course_id = m.course_id
+  JOIN "Lecture" l ON m.module_id = l.module_id
+  JOIN "Quiz" q ON l.quiz_id = q.quiz_id
+  LEFT JOIN "Attempt" a ON q.quiz_id = a.quiz_id AND a.user_id = e.user_id
+  WHERE e.enrollment_id = :enrollment_id
+  GROUP BY e.enrollment_id
+),
+assignment_progress AS (
+  -- Assignments graded
+  SELECT
+    e.enrollment_id,
+    COUNT(DISTINCT l.lecture_id) FILTER (WHERE l.type = 'ASSIGNMENT') AS total_assignments,
+    COUNT(DISTINCT s.lecture_id) FILTER (WHERE s.status = 'GRADED') AS graded_assignments
+  FROM "Enrollment" e
+  JOIN "Course" c ON e.course_id = c.course_id
+  JOIN "Module" m ON c.course_id = m.course_id
+  JOIN "Lecture" l ON m.module_id = l.module_id
+  LEFT JOIN "AssignmentSubmission" s ON l.lecture_id = s.lecture_id AND s.user_id = e.user_id
+  WHERE e.enrollment_id = :enrollment_id
+  GROUP BY e.enrollment_id
+)
+SELECT
+  lp.total_lectures,
+  lp.completed_modules,
+  qp.passed_quizzes || '/' || qp.total_quizzes AS quiz_progress,
+  ap.graded_assignments || '/' || ap.total_assignments AS assignment_progress,
+  ROUND(
+    (
+      (lp.completed_modules::DECIMAL / NULLIF(lp.total_lectures, 0) * 40) +
+      (qp.passed_quizzes::DECIMAL / NULLIF(qp.total_quizzes, 0) * 30) +
+      (ap.graded_assignments::DECIMAL / NULLIF(ap.total_assignments, 0) * 30)
+    ),
+    2
+  ) AS overall_progress_percentage
+FROM lecture_progress lp, quiz_progress qp, assignment_progress ap;
+```
+
+**Simplified Progress Calculation (Core v1.0):**
+
+```sql
+-- Module progress
+UPDATE "Progress"
+SET completed_lectures = (
+      SELECT COUNT(*)
+      FROM "Lecture" l
+      WHERE l.module_id = :module_id
+        AND l.type IN ('VIDEO', 'READING')
+        -- Assume completed if user accessed (simplified)
+    ),
+    percentage = (completed_lectures::DECIMAL / total_lectures * 100)
+WHERE progress_id = :progress_id;
+
+-- Enrollment overall progress
+UPDATE "Enrollment"
+SET completion_percentage = (
+  SELECT AVG(p.percentage)
+  FROM "Progress" p
+  WHERE p.enrollment_id = :enrollment_id
+)
+WHERE enrollment_id = :enrollment_id;
+```
+
+**UI Display:**
+
+```
+Course Progress Dashboard:
+
+📚 Lectures: 15/20 completed (75%)
+  ✅ Module 1: Introduction (100%)
+  ✅ Module 2: Basics (100%)
+  🔄 Module 3: Advanced (50%)
+  ⬜ Module 4: Final Project (0%)
+
+📝 Quizzes: 2/3 passed (67%)
+  ✅ Quiz 1: Basics (Score: 85%)
+  ✅ Quiz 2: OOP (Score: 90%)
+  ❌ Quiz 3: Advanced (Score: 55% - Retake required)
+
+📄 Assignments: 2/3 graded (67%)
+  ✅ Assignment 1: Calculator (Score: 85/100)
+  ✅ Assignment 2: OOP Project (Score: 90/100)
+  ⏳ Assignment 3: Final Project (Submitted, pending grading)
+
+Overall Progress: 70%
+Certificate: Not yet eligible (need 80%)
+```
+
+**Kết luận:**
+- Progress = lecture completion tracking
+- Quiz/Assignment tracked separately (Attempt, AssignmentSubmission)
+- Overall progress = aggregate of all types
+- Module-level granularity (simpler than lecture-level)
+
+---
+
+### Q5.3: Enrollment.completion_percentage vs Progress.percentage - khác nhau thế nào?
+
+**Trả lời:**
+
+**Two different levels of completion tracking:**
+
+**1. Progress.percentage (Module-level):**
+
+Tracks completion percentage **within a module**
+
+```sql
+CREATE TABLE "Progress" (
+  progress_id UUID PRIMARY KEY,
+  module_id UUID REFERENCES "Module",  -- Specific module
+  user_id UUID REFERENCES "User",
+  completed_lectures INT,
+  total_lectures INT,
+  percentage DECIMAL(5,2),  -- % complete for THIS MODULE
+  ...
+);
+
+-- Example: Module 2 progress
+module_id = "module-2-uuid"
+completed_lectures = 3
+total_lectures = 5
+percentage = 60.00  -- 3/5 * 100
+```
+
+**2. Enrollment.completion_percentage (Course-level):**
+
+Tracks completion percentage **for entire course** (aggregate of all modules)
+
+```sql
+CREATE TABLE "Enrollment" (
+  enrollment_id UUID PRIMARY KEY,
+  course_id UUID REFERENCES "Course",  -- Entire course
+  user_id UUID REFERENCES "User",
+  completion_percentage DECIMAL(5,2),  -- % complete for ENTIRE COURSE
+  ...
+);
+
+-- Example: Course progress
+completion_percentage = 45.00  -- Average/weighted average of all modules
+```
+
+**Hierarchy:**
+
+```
+Course (Enrollment.completion_percentage = 45%)
+  ├── Module 1 (Progress.percentage = 100%)
+  ├── Module 2 (Progress.percentage = 60%)
+  ├── Module 3 (Progress.percentage = 20%)
+  └── Module 4 (Progress.percentage = 0%)
+
+Course completion = Average(100, 60, 20, 0) = 45%
+```
+
+**Calculation:**
+
+**Option 1: Simple Average**
+
+```sql
+-- Calculate course completion as average of module progress
+UPDATE "Enrollment"
+SET completion_percentage = (
+  SELECT AVG(p.percentage)
+  FROM "Progress" p
+  WHERE p.enrollment_id = :enrollment_id
+)
+WHERE enrollment_id = :enrollment_id;
+```
+
+**Option 2: Weighted Average (based on module size)**
+
+```sql
+-- Weighted by number of lectures in each module
+UPDATE "Enrollment"
+SET completion_percentage = (
+  SELECT
+    SUM(p.percentage * p.total_lectures) / SUM(p.total_lectures)
+  FROM "Progress" p
+  WHERE p.enrollment_id = :enrollment_id
+)
+WHERE enrollment_id = :enrollment_id;
+
+-- Example:
+-- Module 1: 100% * 3 lectures = 300
+-- Module 2:  60% * 5 lectures = 300
+-- Module 3:  20% * 2 lectures =  40
+-- Module 4:   0% * 10 lectures = 0
+-- Total: 640 / 20 lectures = 32%
+```
+
+**When to update:**
+
+**Progress.percentage updated:**
+- When student completes a lecture
+- Real-time (every lecture completion)
+
+**Enrollment.completion_percentage updated:**
+- After Progress.percentage changes
+- Can be calculated on-demand (not stored) or cached
+
+**Query Examples:**
+
+```sql
+-- 1. Get course progress with module breakdown
+SELECT
+  e.enrollment_id,
+  e.completion_percentage AS course_progress,
+  json_agg(json_build_object(
+    'module_id', m.module_id,
+    'module_title', m.title,
+    'progress_percentage', COALESCE(p.percentage, 0),
+    'completed_lectures', COALESCE(p.completed_lectures, 0),
+    'total_lectures', COALESCE(p.total_lectures, 0)
+  ) ORDER BY m.order_num) AS module_progress
+FROM "Enrollment" e
+JOIN "Course" c ON e.course_id = c.course_id
+JOIN "Module" m ON c.course_id = m.course_id
+LEFT JOIN "Progress" p ON m.module_id = p.module_id AND p.enrollment_id = e.enrollment_id
+WHERE e.enrollment_id = :enrollment_id
+GROUP BY e.enrollment_id, e.completion_percentage;
+
+-- 2. Find students who completed >80% of course
+SELECT u.email, e.completion_percentage
+FROM "Enrollment" e
+JOIN "User" u ON e.user_id = u.user_id
+WHERE e.course_id = :course_id
+  AND e.completion_percentage >= 80
+ORDER BY e.completion_percentage DESC;
+
+-- 3. Module with lowest average completion
+SELECT
+  m.title AS module_title,
+  AVG(p.percentage) AS avg_completion
+FROM "Module" m
+JOIN "Progress" p ON m.module_id = p.module_id
+WHERE m.course_id = :course_id
+GROUP BY m.module_id, m.title
+ORDER BY avg_completion ASC
+LIMIT 1;
+
+-- Result: "Module 3: Advanced Concepts" has 35% avg completion
+-- → Students struggling with this module
+```
+
+**Application Logic:**
+
+```python
+def update_course_progress(enrollment_id: UUID):
+    # Recalculate course completion
+    result = db.query("""
+        UPDATE "Enrollment"
+        SET completion_percentage = (
+          SELECT COALESCE(AVG(p.percentage), 0)
+          FROM "Progress" p
+          WHERE p.enrollment_id = %s
+        )
+        WHERE enrollment_id = %s
+        RETURNING completion_percentage
+    """, enrollment_id, enrollment_id)
+
+    new_percentage = result[0]['completion_percentage']
+
+    # Check if eligible for certificate (e.g., 80% threshold)
+    if new_percentage >= 80:
+        check_certificate_eligibility(enrollment_id)
+
+    return new_percentage
+
+def mark_lecture_completed(user_id: UUID, lecture_id: UUID):
+    # Get enrollment and module
+    lecture = db.query("SELECT module_id FROM Lecture WHERE lecture_id = %s", lecture_id)
+    module_id = lecture['module_id']
+
+    enrollment = db.query("""
+        SELECT e.enrollment_id
+        FROM "Enrollment" e
+        JOIN "Course" c ON e.course_id = c.course_id
+        JOIN "Module" m ON c.course_id = m.course_id
+        WHERE m.module_id = %s AND e.user_id = %s
+    """, module_id, user_id)
+
+    # Update progress
+    db.execute("""
+        INSERT INTO "Progress" (enrollment_id, module_id, user_id, completed_lectures, total_lectures)
+        VALUES (%s, %s, %s,
+          (SELECT COUNT(*) FROM Lecture WHERE module_id = %s AND type IN ('VIDEO', 'READING')),  -- Assume all completed
+          (SELECT COUNT(*) FROM Lecture WHERE module_id = %s AND type IN ('VIDEO', 'READING'))
+        )
+        ON CONFLICT (enrollment_id, module_id)
+        DO UPDATE SET
+          completed_lectures = EXCLUDED.completed_lectures,
+          percentage = (EXCLUDED.completed_lectures::DECIMAL / EXCLUDED.total_lectures * 100),
+          last_accessed_at = CURRENT_TIMESTAMP
+    """, enrollment['enrollment_id'], module_id, user_id, module_id, module_id)
+
+    # Recalculate course progress
+    update_course_progress(enrollment['enrollment_id'])
+```
+
+**Kết luận:**
+- Progress.percentage = module-level (per module)
+- Enrollment.completion_percentage = course-level (aggregate)
+- Course completion = average/weighted average of modules
+- Update course progress when module progress changes
+
+---
+
+## 6. DOMAIN 5: CLASS & CERTIFICATE
+
+### Q6.1: Class.schedules JSONB - cấu trúc như thế nào?
+
+**Trả lời:**
+
+**Class.schedules** lưu trữ weekly schedule cho blended learning classes.
+
+**Schema:**
+
+```sql
+CREATE TABLE "Class" (
+  class_id UUID PRIMARY KEY,
+  course_id UUID REFERENCES "Course",
+  class_name VARCHAR(100),  -- "CS101 - Spring 2025"
+  instructor_id UUID REFERENCES "User",
+  start_date DATE,
+  end_date DATE,
+  schedules JSONB,  -- Weekly schedule
+  max_students INT,
+  status VARCHAR(20) DEFAULT 'DRAFT'
+);
+```
+
+**schedules JSONB Structure:**
+
+```json
+[
+  {
+    "day": "MONDAY",
+    "start_time": "14:00",
+    "end_time": "16:00",
+    "location": "Room 301",
+    "session_type": "LECTURE",
+    "online_meeting_url": null
+  },
+  {
+    "day": "WEDNESDAY",
+    "start_time": "14:00",
+    "end_time": "16:00",
+    "location": "Room 301",
+    "session_type": "LECTURE",
+    "online_meeting_url": null
+  },
+  {
+    "day": "FRIDAY",
+    "start_time": "15:00",
+    "end_time": "17:00",
+    "location": "Lab 205",
+    "session_type": "LAB",
+    "online_meeting_url": null
+  }
+]
+```
+
+**For online/hybrid classes:**
+
+```json
+[
+  {
+    "day": "TUESDAY",
+    "start_time": "18:00",
+    "end_time": "20:00",
+    "location": "Online",
+    "session_type": "LECTURE",
+    "online_meeting_url": "https://zoom.us/j/123456789"
+  },
+  {
+    "day": "THURSDAY",
+    "start_time": "18:00",
+    "end_time": "20:00",
+    "location": "Room 401",
+    "session_type": "WORKSHOP",
+    "online_meeting_url": null
+  }
+]
+```
+
+**Fields:**
+
+- **day:** MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUNDAY
+- **start_time:** HH:MM (24-hour format)
+- **end_time:** HH:MM
+- **location:** Physical location or "Online"
+- **session_type:** LECTURE, LAB, WORKSHOP, DISCUSSION, EXAM
+- **online_meeting_url:** Zoom/Teams/Meet link (nullable)
+
+**Why JSONB instead of separate Schedule table?**
+
+**Option 1: Separate Schedule table (❌ Rejected)**
+
+```sql
+CREATE TABLE "ClassSchedule" (
+  schedule_id UUID PRIMARY KEY,
+  class_id UUID REFERENCES "Class",
+  day VARCHAR(10),
+  start_time TIME,
+  end_time TIME,
+  location VARCHAR(200),
+  session_type VARCHAR(20)
+);
+
+-- Need JOIN to get schedules
+SELECT * FROM "ClassSchedule" WHERE class_id = '...';
+```
+
+**Option 2: JSONB schedules (✅ Current design)**
+
+```sql
+-- Single query, no JOIN
+SELECT schedules FROM "Class" WHERE class_id = '...';
+```
+
+**Benefits:**
+- ✅ Simple: 1 table, 1 query
+- ✅ Atomic: All schedules loaded together
+- ✅ Flexible: Easy to add fields (recording_url, notes)
+
+**Query Examples:**
+
+```sql
+-- 1. Get class schedule
+SELECT
+  class_name,
+  schedules
+FROM "Class"
+WHERE class_id = :class_id;
+
+-- 2. Find classes on Monday
+SELECT class_id, class_name
+FROM "Class"
+WHERE schedules @> '[{"day": "MONDAY"}]';
+
+-- 3. Find online classes
+SELECT class_id, class_name
+FROM "Class"
+WHERE schedules::text ILIKE '%"location": "Online"%';
+
+-- 4. Expand schedule for display
+SELECT
+  c.class_name,
+  s->>'day' AS day,
+  s->>'start_time' AS start_time,
+  s->>'end_time' AS end_time,
+  s->>'location' AS location,
+  s->>'session_type' AS session_type
+FROM "Class" c,
+     jsonb_array_elements(c.schedules) s
+WHERE c.class_id = :class_id
+ORDER BY
+  CASE s->>'day'
+    WHEN 'MONDAY' THEN 1
+    WHEN 'TUESDAY' THEN 2
+    WHEN 'WEDNESDAY' THEN 3
+    WHEN 'THURSDAY' THEN 4
+    WHEN 'FRIDAY' THEN 5
+    WHEN 'SATURDAY' THEN 6
+    WHEN 'SUNDAY' THEN 7
+  END,
+  s->>'start_time';
+```
+
+**UI Display:**
+
+```
+Class: CS101 - Spring 2025
+Instructor: Dr. Jane Smith
+Duration: Jan 15, 2025 - May 15, 2025
+Enrolled: 25/30 students
+
+Weekly Schedule:
+  📅 Monday 2:00 PM - 4:00 PM
+     📍 Room 301
+     🎓 Lecture
+
+  📅 Wednesday 2:00 PM - 4:00 PM
+     📍 Room 301
+     🎓 Lecture
+
+  📅 Friday 3:00 PM - 5:00 PM
+     📍 Lab 205
+     🔬 Lab Session
+
+[Enroll in Class]
+```
+
+**Attendance Tracking (optional - future):**
+
+Could add `attendance` JSONB field:
+
+```json
+{
+  "2025-01-15": {
+    "session_type": "LECTURE",
+    "attendees": ["user-uuid-1", "user-uuid-2", ...],
+    "absences": ["user-uuid-5"]
+  },
+  "2025-01-17": {
+    "session_type": "LECTURE",
+    "attendees": [...],
+    "absences": [...]
+  }
+}
+```
+
+**Kết luận:**
+- schedules JSONB = weekly class schedule
+- Flexible, simple (no separate table)
+- Supports in-person, online, hybrid modes
+- Easy to query and display
+
+---
+
+### Q6.2: Certificate có trigger tự động tạo không?
+
+**Trả lời:**
+
+Certificate **KHÔNG** tự động tạo bởi database trigger. Tạo bởi **application logic** khi student meets requirements.
+
+**Why not trigger?**
+
+**❌ Database trigger approach:**
+
+```sql
+-- BAD: Trigger on Enrollment update
+CREATE TRIGGER auto_issue_certificate
+AFTER UPDATE ON "Enrollment"
+FOR EACH ROW
+WHEN (NEW.completion_percentage >= 80 AND NEW.status = 'COMPLETED')
+EXECUTE FUNCTION issue_certificate_func();
+
+CREATE FUNCTION issue_certificate_func()
+RETURNS TRIGGER AS $$
+BEGIN
+  INSERT INTO "Certificate" (user_id, course_id, enrollment_id, ...)
+  VALUES (NEW.user_id, NEW.course_id, NEW.enrollment_id, ...);
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+```
+
+**Problems:**
+- ❌ Business logic in database (hard to test, maintain)
+- ❌ Can't send email notification from trigger
+- ❌ Can't generate PDF certificate file
+- ❌ Can't check additional requirements (payment, etc.)
+- ❌ Harder to debug
+
+**✅ Application logic approach (Current):**
+
+```python
+@app.post("/api/enrollments/{enrollment_id}/complete")
+def complete_course(enrollment_id: UUID, user_id: UUID):
+    # Get enrollment
+    enrollment = db.query("SELECT * FROM Enrollment WHERE enrollment_id = %s", enrollment_id)
+
+    # Check completion requirements
+    if enrollment['completion_percentage'] < 80:
+        raise HTTPException(400, "Must complete at least 80% of course")
+
+    # Additional checks (optional)
+    # - All quizzes passed?
+    # - All assignments graded?
+    # - Payment completed? (if paid course)
+    # - No violations/plagiarism?
+
+    # Update enrollment status
+    db.update("Enrollment", enrollment_id, {
+        'status': 'COMPLETED',
+        'completed_at': 'CURRENT_TIMESTAMP'
+    })
+
+    # Issue certificate
+    certificate_id = issue_certificate(enrollment)
+
+    # Send notification email
+    send_certificate_email(user_id, certificate_id)
+
+    return {'certificate_id': certificate_id}
+
+def issue_certificate(enrollment):
+    # Generate certificate number (unique)
+    cert_number = generate_certificate_number()
+
+    # Create certificate record
+    cert_id = db.insert("Certificate", {
+        'user_id': enrollment['user_id'],
+        'course_id': enrollment['course_id'],
+        'enrollment_id': enrollment['enrollment_id'],
+        'certificate_number': cert_number,
+        'issued_at': 'CURRENT_TIMESTAMP',
+        'valid': True
+    })
+
+    # Generate PDF certificate file (async job)
+    generate_certificate_pdf.delay(cert_id)
+
+    return cert_id
+```
+
+**Certificate Schema:**
+
+```sql
+CREATE TABLE "Certificate" (
+  certificate_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES "User"(user_id),
+  course_id UUID NOT NULL REFERENCES "Course"(course_id),
+  enrollment_id UUID NOT NULL REFERENCES "Enrollment"(enrollment_id),
+  certificate_number VARCHAR(50) NOT NULL UNIQUE,  -- "CERT-2025-001234"
+  issued_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  certificate_url VARCHAR(500),  -- PDF file URL
+  valid BOOLEAN DEFAULT TRUE,  -- Can be revoked
+  revoked_at TIMESTAMP,
+  revoked_reason TEXT
+);
+```
+
+**Certificate Number Generation:**
+
+```python
+def generate_certificate_number():
+    # Format: CERT-YYYY-NNNNNN
+    year = datetime.now().year
+    # Get last certificate number for this year
+    last_cert = db.query("""
+        SELECT certificate_number
+        FROM "Certificate"
+        WHERE certificate_number LIKE %s
+        ORDER BY issued_at DESC
+        LIMIT 1
+    """, f"CERT-{year}-%")
+
+    if last_cert:
+        # Extract number: CERT-2025-001234 → 1234
+        last_num = int(last_cert['certificate_number'].split('-')[-1])
+        next_num = last_num + 1
+    else:
+        next_num = 1
+
+    # Format: CERT-2025-000001
+    return f"CERT-{year}-{next_num:06d}"
+```
+
+**Certificate Verification:**
+
+```python
+@app.get("/api/certificates/verify/{certificate_number}")
+def verify_certificate(certificate_number: str):
+    cert = db.query("""
+        SELECT
+          c.certificate_id,
+          c.certificate_number,
+          c.issued_at,
+          c.valid,
+          u.first_name,
+          u.last_name,
+          u.email,
+          co.title AS course_title
+        FROM "Certificate" c
+        JOIN "User" u ON c.user_id = u.user_id
+        JOIN "Course" co ON c.course_id = co.course_id
+        WHERE c.certificate_number = %s
+    """, certificate_number)
+
+    if not cert:
+        raise HTTPException(404, "Certificate not found")
+
+    if not cert['valid']:
+        return {
+            'valid': False,
+            'message': 'Certificate has been revoked',
+            'revoked_at': cert.get('revoked_at')
+        }
+
+    return {
+        'valid': True,
+        'certificate_number': cert['certificate_number'],
+        'issued_to': f"{cert['first_name']} {cert['last_name']}",
+        'email': cert['email'],
+        'course': cert['course_title'],
+        'issued_at': cert['issued_at']
+    }
+```
+
+**Certificate Revocation:**
+
+```python
+@app.post("/api/certificates/{certificate_id}/revoke")
+def revoke_certificate(certificate_id: UUID, reason: str, admin_user_id: UUID):
+    # Check permission (only admin)
+    if not has_permission(admin_user_id, 'revoke_certificate'):
+        raise HTTPException(403)
+
+    # Revoke
+    db.update("Certificate", certificate_id, {
+        'valid': False,
+        'revoked_at': 'CURRENT_TIMESTAMP',
+        'revoked_reason': reason
+    })
+
+    # Send notification to user
+    send_revocation_email(certificate_id, reason)
+
+    return {'success': True}
+```
+
+**Auto-check for certificate eligibility:**
+
+```python
+# Background job (runs daily)
+def check_certificate_eligibility():
+    # Find completed enrollments without certificates
+    enrollments = db.query("""
+        SELECT e.*
+        FROM "Enrollment" e
+        LEFT JOIN "Certificate" c ON e.enrollment_id = c.enrollment_id
+        WHERE e.status = 'COMPLETED'
+          AND e.completion_percentage >= 80
+          AND c.certificate_id IS NULL  -- No certificate yet
+    """)
+
+    for enrollment in enrollments:
+        # Issue certificate
+        cert_id = issue_certificate(enrollment)
+        print(f"Issued certificate {cert_id} for enrollment {enrollment['enrollment_id']}")
+```
+
+**Kết luận:**
+- Certificates issued by application logic (NOT database trigger)
+- Allows complex business rules, email notifications, PDF generation
+- Can be revoked (valid=false)
+- Verified via public API (certificate_number)
+
+---
+
+## 7. RELATIONSHIPS & CONSTRAINTS
+
+### Q7.1: Foreign keys có ON DELETE CASCADE hay SET NULL? Quyết định như thế nào?
+
+**Trả lời:**
+
+ON DELETE behavior phụ thuộc vào **relationship semantics**:
+
+**1. CASCADE (Cascade delete):**
+
+**When:** Child records không có ý nghĩa without parent
+
+**Examples:**
+
+```sql
+-- Module → Lecture
+CREATE TABLE "Lecture" (
+  lecture_id UUID PRIMARY KEY,
+  module_id UUID REFERENCES "Module"(module_id) ON DELETE CASCADE
+);
+-- Delete module → Delete all lectures (lectures meaningless without module)
+
+-- Lecture → Resource
+CREATE TABLE "Resource" (
+  resource_id UUID PRIMARY KEY,
+  lecture_id UUID REFERENCES "Lecture"(lecture_id) ON DELETE CASCADE
+);
+-- Delete lecture → Delete all resources
+
+-- Quiz → Attempt
+CREATE TABLE "Attempt" (
+  attempt_id UUID PRIMARY KEY,
+  quiz_id UUID REFERENCES "Quiz"(quiz_id) ON DELETE CASCADE
+);
+-- Delete quiz → Delete all attempts (attempts meaningless without quiz)
+
+-- User → UserRole
+CREATE TABLE "UserRole" (
+  user_role_id UUID PRIMARY KEY,
+  user_id UUID REFERENCES "User"(user_id) ON DELETE CASCADE
+);
+-- Delete user → Delete all role assignments
+```
+
+**2. SET NULL (Nullify FK):**
+
+**When:** Child records có ý nghĩa, nhưng reference optional
+
+**Examples:**
+
+```sql
+-- User → Course (created_by)
+CREATE TABLE "Course" (
+  course_id UUID PRIMARY KEY,
+  created_by UUID REFERENCES "User"(user_id) ON DELETE SET NULL
+);
+-- Delete user → Course remains, created_by = NULL (course still exists)
+
+-- User → AssignmentSubmission (graded_by)
+CREATE TABLE "AssignmentSubmission" (
+  submission_id UUID PRIMARY KEY,
+  graded_by UUID REFERENCES "User"(user_id) ON DELETE SET NULL
+);
+-- Delete instructor → Submissions remain, graded_by = NULL (history preserved)
+```
+
+**3. RESTRICT (Prevent delete):**
+
+**When:** Parent cannot be deleted if children exist
+
+**Examples:**
+
+```sql
+-- Course → Enrollment
+CREATE TABLE "Enrollment" (
+  enrollment_id UUID PRIMARY KEY,
+  course_id UUID REFERENCES "Course"(course_id) ON DELETE RESTRICT
+);
+-- Cannot delete course if enrollments exist (protect student data)
+
+-- User → Enrollment
+CREATE TABLE "Enrollment" (
+  enrollment_id UUID PRIMARY KEY,
+  user_id UUID REFERENCES "User"(user_id) ON DELETE RESTRICT
+);
+-- Cannot delete user if enrollments exist (protect learning history)
+```
+
+**Decision Matrix:**
+
+| Parent → Child | Relationship | ON DELETE | Reasoning |
+|----------------|--------------|-----------|-----------|
+| Course → Module | Composition | **CASCADE** | Modules belong to course |
+| Module → Lecture | Composition | **CASCADE** | Lectures belong to module |
+| Lecture → Resource | Composition | **CASCADE** | Resources belong to lecture |
+| Quiz → Attempt | Composition | **CASCADE** | Attempts belong to quiz |
+| User → UserRole | Association | **CASCADE** | Roles assigned to user |
+| User → Course (creator) | Attribution | **SET NULL** | Course survives creator deletion |
+| User → Submission (grader) | Attribution | **SET NULL** | Submission survives grader deletion |
+| Course → Enrollment | Historical | **RESTRICT** | Protect student enrollment history |
+| User → Enrollment | Historical | **RESTRICT** | Protect user learning history |
+
+**In B-Learning Core:**
+
+```sql
+-- CASCADE: Parent-child composition
+CREATE TABLE "Module" (
+  course_id UUID REFERENCES "Course"(course_id) ON DELETE CASCADE
+);
+
+CREATE TABLE "Lecture" (
+  module_id UUID REFERENCES "Module"(module_id) ON DELETE CASCADE
+);
+
+CREATE TABLE "Resource" (
+  lecture_id UUID REFERENCES "Lecture"(lecture_id) ON DELETE CASCADE
+);
+
+-- SET NULL: Optional attribution
+CREATE TABLE "Course" (
+  created_by UUID REFERENCES "User"(user_id) ON DELETE SET NULL
+);
+
+CREATE TABLE "AssignmentSubmission" (
+  graded_by UUID REFERENCES "User"(user_id) ON DELETE SET NULL
+);
+
+-- No explicit RESTRICT in Core v1.0 (application handles)
+-- But conceptually: Course/User should not be deleted if enrollments exist
+```
+
+**Application-level protection:**
+
+```python
+def delete_course(course_id: UUID, user_id: UUID):
+    # Check permission
+    if not has_permission(user_id, 'delete_course'):
+        raise HTTPException(403)
+
+    # Check if enrollments exist
+    enrollment_count = db.query("""
+        SELECT COUNT(*) as count
+        FROM "Enrollment"
+        WHERE course_id = %s
+    """, course_id)[0]['count']
+
+    if enrollment_count > 0:
+        raise HTTPException(400, f"Cannot delete course with {enrollment_count} enrollments")
+
+    # Safe to delete (will CASCADE to modules, lectures, resources)
+    db.delete("Course", course_id)
+
+    return {'success': True}
+```
+
+**Kết luận:**
+- CASCADE: Composition (child meaningless without parent)
+- SET NULL: Attribution (child survives, reference optional)
+- RESTRICT: Historical data protection (application-enforced)
+- Choose based on relationship semantics
+
+---
+
+### Q7.2: Tại sao dùng UUID thay vì composite primary key cho junction tables?
+
+**Trả lời:**
+
+Junction tables (many-to-many) trong B-Learning Core dùng **UUID primary key** thay vì composite key.
+
+**Example: UserRole (User ↔ Role)**
+
+**Option 1: Composite PK (❌ Not used)**
+
+```sql
+CREATE TABLE "UserRole" (
+  user_id UUID REFERENCES "User",
+  role_id UUID REFERENCES "Role",
+  granted_at TIMESTAMP,
+
+  PRIMARY KEY (user_id, role_id)  -- Composite PK
+);
+```
+
+**Option 2: UUID PK + Unique constraint (✅ Current design)**
+
+```sql
+CREATE TABLE "UserRole" (
+  user_role_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),  -- Surrogate PK
+  user_id UUID REFERENCES "User",
+  role_id UUID REFERENCES "Role",
+  granted_at TIMESTAMP,
+  granted_by UUID,
+  expires_at TIMESTAMP,
+
+  CONSTRAINT uq_user_role UNIQUE(user_id, role_id)  -- Natural key as unique constraint
+);
+```
+
+**Why UUID PK?**
+
+**1. Consistency:**
+
+All tables have same PK structure (single UUID column)
+
+```sql
+-- Consistent pattern across all tables
+User: user_id UUID PRIMARY KEY
+Role: role_id UUID PRIMARY KEY
+UserRole: user_role_id UUID PRIMARY KEY  -- Consistent!
+Course: course_id UUID PRIMARY KEY
+Enrollment: enrollment_id UUID PRIMARY KEY  -- Consistent!
+```
+
+vs
+
+```sql
+-- Inconsistent
+User: user_id UUID PRIMARY KEY
+Role: role_id UUID PRIMARY KEY
+UserRole: PRIMARY KEY (user_id, role_id)  -- Different!
+```
+
+**2. Easier to reference:**
+
+If other tables need to reference UserRole:
+
+```sql
+-- With UUID PK: Easy
+CREATE TABLE "UserRoleAudit" (
+  audit_id UUID PRIMARY KEY,
+  user_role_id UUID REFERENCES "UserRole",  -- Simple FK
+  action VARCHAR(20),
+  changed_at TIMESTAMP
+);
+
+-- With composite PK: Complex
+CREATE TABLE "UserRoleAudit" (
+  audit_id UUID PRIMARY KEY,
+  user_id UUID,
+  role_id UUID,
+  action VARCHAR(20),
+  changed_at TIMESTAMP,
+
+  FOREIGN KEY (user_id, role_id) REFERENCES "UserRole"(user_id, role_id)  -- Complex FK
+);
+```
+
+**3. Additional metadata:**
+
+Junction table có thể có metadata riêng (granted_at, granted_by, expires_at)
+
+```sql
+CREATE TABLE "UserRole" (
+  user_role_id UUID PRIMARY KEY,  -- Identity for this assignment
+  user_id UUID,
+  role_id UUID,
+  granted_at TIMESTAMP,    -- When role granted
+  granted_by UUID,         -- Who granted (admin)
+  expires_at TIMESTAMP,    -- Role expiration
+  notes TEXT               -- Optional notes
+
+  CONSTRAINT uq_user_role UNIQUE(user_id, role_id)
+);
+
+-- Queries on specific assignment
+SELECT * FROM "UserRole" WHERE user_role_id = '...';
+UPDATE "UserRole" SET expires_at = '2026-01-01' WHERE user_role_id = '...';
+DELETE FROM "UserRole" WHERE user_role_id = '...';
+```
+
+**4. ORM-friendly:**
+
+Most ORMs prefer single-column PK:
+
+```python
+# SQLAlchemy (Python ORM)
+class UserRole(Base):
+    __tablename__ = 'UserRole'
+
+    user_role_id = Column(UUID, primary_key=True)  # Simple PK
+    user_id = Column(UUID, ForeignKey('User.user_id'))
+    role_id = Column(UUID, ForeignKey('Role.role_id'))
+    granted_at = Column(DateTime)
+
+    __table_args__ = (
+        UniqueConstraint('user_id', 'role_id', name='uq_user_role'),
+    )
+
+# vs composite PK (more complex)
+class UserRole(Base):
+    __tablename__ = 'UserRole'
+
+    user_id = Column(UUID, ForeignKey('User.user_id'), primary_key=True)
+    role_id = Column(UUID, ForeignKey('Role.role_id'), primary_key=True)
+    granted_at = Column(DateTime)
+```
+
+**5. API simplicity:**
+
+```python
+# With UUID PK: Simple REST API
+DELETE /api/user-roles/{user_role_id}
+
+# With composite PK: Complex
+DELETE /api/user-roles?user_id=xxx&role_id=yyy
+# or
+DELETE /api/users/{user_id}/roles/{role_id}
+```
+
+**Trade-offs:**
+
+**Cons of UUID PK:**
+- ❌ Extra 16 bytes per row (storage overhead)
+- ❌ Need UNIQUE constraint on (user_id, role_id) to prevent duplicates
+
+**Pros outweigh cons:**
+- ✅ Consistency across schema
+- ✅ Easier to reference
+- ✅ Supports rich metadata
+- ✅ ORM-friendly
+- ✅ Simple APIs
+
+**When to use composite PK:**
+
+✅ Use composite PK if:
+- Pure junction table (no metadata)
+- Never referenced by other tables
+- Want to save storage
+
+Example:
+```sql
+-- Simple tag assignment (no metadata needed)
+CREATE TABLE "CourseTag" (
+  course_id UUID REFERENCES "Course",
+  tag_id UUID REFERENCES "Tag",
+  PRIMARY KEY (course_id, tag_id)  -- Composite PK OK here
+);
+```
+
+**In B-Learning Core:**
+
+Most junction tables use **UUID PK** for consistency:
+
+```sql
+-- UserRole: UUID PK
+user_role_id UUID PRIMARY KEY
+
+-- Could add in future:
+-- EnrollmentProgress: UUID PK (if needed)
+-- CourseInstructor: UUID PK (if multiple instructors per course)
+```
+
+**Kết luận:**
+- UUID PK + UNIQUE constraint = best practice for junction tables with metadata
+- Composite PK = acceptable for pure junction tables without metadata
+- B-Learning Core uses UUID PK for consistency and flexibility
+
+---
+
+## 8. PERFORMANCE & OPTIMIZATION
+
+### Q8.1: Database có bao nhiêu indexes? Tại sao cần nhiều indexes?
+
+**Trả lời:**
+
+B-Learning Core có **96+ indexes** across 16 tables:
+
+**Index Categories:**
+
+**1. Primary Key Indexes (16 indexes)**
+- Automatically created for PRIMARY KEY constraints
+- 1 per table × 16 tables = 16 indexes
+
+**2. Foreign Key Indexes (23 indexes)**
+- Created for foreign key columns to speed up JOINs
+- Examples:
+  ```sql
+  CREATE INDEX idx_enrollment_user ON "Enrollment"(user_id);
+  CREATE INDEX idx_enrollment_course ON "Enrollment"(course_id);
+  CREATE INDEX idx_module_course ON "Module"(course_id);
+  ```
+
+**3. Unique Indexes (10+ indexes)**
+- Created for UNIQUE constraints
+- Examples:
+  ```sql
+  CREATE UNIQUE INDEX uq_user_email ON "User"(email);
+  CREATE UNIQUE INDEX uq_course_code ON "Course"(code);
+  CREATE UNIQUE INDEX uq_user_role ON "UserRole"(user_id, role_id);
+  ```
+
+**4. Performance Indexes (30+ indexes)**
+- Created for common queries
+- Examples:
+  ```sql
+  CREATE INDEX idx_user_status ON "User"(account_status);
+  CREATE INDEX idx_course_status ON "Course"(status);
+  CREATE INDEX idx_enrollment_status ON "Enrollment"(status);
+  CREATE INDEX idx_attempt_user_quiz ON "Attempt"(user_id, quiz_id);
+  ```
+
+**5. GIN Indexes for JSON (10+ indexes)**
+- For fast JSON queries
+- Examples:
+  ```sql
+  CREATE INDEX idx_quiz_questions ON "Quiz" USING GIN (questions);
+  CREATE INDEX idx_attempt_answers ON "Attempt" USING GIN (answers);
+  CREATE INDEX idx_user_preferences ON "User" USING GIN (preferences);
+  ```
+
+**6. GIN Indexes for Arrays (5+ indexes)**
+- For array containment queries
+- Examples:
+  ```sql
+  CREATE INDEX idx_module_prerequisites ON "Module" USING GIN (prerequisite_module_ids);
+  CREATE INDEX idx_submission_files ON "AssignmentSubmission" USING GIN (file_urls);
+  ```
+
+**7. Composite Indexes (12+ indexes)**
+- For multi-column queries
+- Examples:
+  ```sql
+  CREATE INDEX idx_progress_enrollment_module ON "Progress"(enrollment_id, module_id);
+  CREATE INDEX idx_attempt_quiz_user_status ON "Attempt"(quiz_id, user_id, status);
+  ```
+
+**Total: 96+ indexes**
+
+**Tại sao cần nhiều indexes?**
+
+**1. Speed up JOINs:**
+
+```sql
+-- Without index on Enrollment.course_id: Slow (sequential scan)
+SELECT e.*, c.title
+FROM "Enrollment" e
+JOIN "Course" c ON e.course_id = c.course_id
+WHERE e.user_id = '...';
+
+-- With index: Fast (index scan)
+CREATE INDEX idx_enrollment_course ON "Enrollment"(course_id);
+```
+
+**2. Speed up WHERE clauses:**
+
+```sql
+-- Without index on User.account_status: Slow
+SELECT * FROM "User" WHERE account_status = 'ACTIVE';
+
+-- With index: Fast
+CREATE INDEX idx_user_status ON "User"(account_status);
+```
+
+**3. Speed up ORDER BY:**
+
+```sql
+-- Without index on Course.created_at: Slow (sort needed)
+SELECT * FROM "Course"
+ORDER BY created_at DESC
+LIMIT 10;
+
+-- With index: Fast (index already sorted)
+CREATE INDEX idx_course_created ON "Course"(created_at DESC);
+```
+
+**4. Unique constraints:**
+
+```sql
+-- Prevent duplicate emails
+CREATE UNIQUE INDEX uq_user_email ON "User"(email);
+
+-- Try to insert duplicate → Error
+INSERT INTO "User" (email, ...) VALUES ('existing@example.com', ...);
+-- ERROR: duplicate key value violates unique constraint "uq_user_email"
+```
+
+**5. JSON queries:**
+
+```sql
+-- Without GIN index: Slow (full table scan)
+SELECT * FROM "Quiz"
+WHERE questions @> '[{"question_type": "MULTIPLE_CHOICE"}]';
+
+-- With GIN index: Fast
+CREATE INDEX idx_quiz_questions ON "Quiz" USING GIN (questions);
+```
+
+**Index Size vs Performance:**
+
+**Trade-offs:**
+- ✅ Faster SELECT queries
+- ❌ Slower INSERT/UPDATE/DELETE (indexes must be updated)
+- ❌ More disk space (indexes ~30-50% of table size)
+- ❌ More RAM (indexes cached in memory)
+
+**Example:**
+
+```
+Table: Enrollment (10,000 rows)
+- Data size: 2 MB
+- Indexes:
+  - PK index (enrollment_id): 0.5 MB
+  - FK index (user_id): 0.3 MB
+  - FK index (course_id): 0.3 MB
+  - FK index (class_id): 0.3 MB
+  - Status index: 0.2 MB
+  Total indexes: 1.6 MB (80% of data size)
+
+Total: 3.6 MB (data + indexes)
+```
+
+**For 16 tables × average 6 indexes per table = 96 indexes**
+
+**When to add index:**
+
+✅ **Add index if:**
+- Column used in WHERE clause frequently
+- Column used in JOIN frequently
+- Column used in ORDER BY frequently
+- Unique constraint needed
+- Query slow (EXPLAIN shows sequential scan)
+
+❌ **Don't add index if:**
+- Column rarely queried
+- Table very small (<1000 rows)
+- Column has low cardinality (few distinct values, e.g., boolean)
+- Too many indexes (INSERT performance suffers)
+
+**Monitoring indexes:**
+
+```sql
+-- Find unused indexes
+SELECT
+  schemaname,
+  tablename,
+  indexname,
+  idx_scan,
+  idx_tup_read,
+  idx_tup_fetch
+FROM pg_stat_user_indexes
+WHERE idx_scan = 0  -- Never used
+ORDER BY tablename, indexname;
+
+-- Index size
+SELECT
+  tablename,
+  indexname,
+  pg_size_pretty(pg_relation_size(indexrelid)) AS index_size
+FROM pg_stat_user_indexes
+ORDER BY pg_relation_size(indexrelid) DESC;
+```
+
+**Kết luận:**
+- 96+ indexes across 16 tables
+- Speed up queries (JOINs, WHERE, ORDER BY)
+- Essential for performance at scale
+- Trade-off: Storage + slower writes
+- Monitor and remove unused indexes
+
+---
+
+### Q8.2: GIN index hoạt động như thế nào? Khi nào dùng GIN?
+
+**Trả lời:**
+
+**GIN (Generalized Inverted Index)** là index type trong PostgreSQL cho **multi-value data** (arrays, JSON, full-text search).
+
+**How GIN works:**
+
+**Normal B-tree index:**
+```
+user_id (UUID) → row location
+550e8400-... → row 1
+660e8400-... → row 2
+```
+
+**GIN index (for arrays):**
+```
+Array element → rows containing this element
+module-1-uuid → rows [5, 12, 23]  (modules with prerequisite module-1)
+module-2-uuid → rows [12, 23, 45]
+module-3-uuid → rows [23]
+```
+
+**Example: Module prerequisites**
+
+```sql
+-- Table
+CREATE TABLE "Module" (
+  module_id UUID PRIMARY KEY,
+  title VARCHAR(200),
+  prerequisite_module_ids UUID[]  -- Array
+);
+
+-- Sample data
+INSERT INTO "Module" (module_id, title, prerequisite_module_ids) VALUES
+  ('mod-1', 'Intro', NULL),
+  ('mod-2', 'Basics', ARRAY['mod-1']),
+  ('mod-3', 'Advanced', ARRAY['mod-1', 'mod-2']),
+  ('mod-4', 'Expert', ARRAY['mod-2', 'mod-3']);
+
+-- GIN index
+CREATE INDEX idx_module_prerequisites ON "Module"
+USING GIN (prerequisite_module_ids);
+```
+
+**GIN inverted index:**
+```
+mod-1 → [mod-2, mod-3]  (mod-2 and mod-3 require mod-1)
+mod-2 → [mod-3, mod-4]  (mod-3 and mod-4 require mod-2)
+mod-3 → [mod-4]         (mod-4 requires mod-3)
+```
+
+**Query using GIN:**
+
+```sql
+-- Find all modules that require mod-1
+SELECT module_id, title
+FROM "Module"
+WHERE 'mod-1'::UUID = ANY(prerequisite_module_ids);
+
+-- Without GIN: Sequential scan (slow)
+-- With GIN: Index scan (fast)
+-- Look up 'mod-1' in inverted index → [mod-2, mod-3]
+```
+
+**JSONB GIN index:**
+
+```sql
+-- Table
+CREATE TABLE "Quiz" (
+  quiz_id UUID PRIMARY KEY,
+  questions JSONB
+);
+
+-- GIN index
+CREATE INDEX idx_quiz_questions ON "Quiz" USING GIN (questions);
+
+-- Query: Find quizzes with MULTIPLE_CHOICE questions
+SELECT quiz_id, title
+FROM "Quiz"
+WHERE questions @> '[{"question_type": "MULTIPLE_CHOICE"}]';
+
+-- GIN index builds inverted index on JSON paths:
+-- questions[*].question_type → quiz_ids
+-- "MULTIPLE_CHOICE" → [quiz-1, quiz-5, quiz-9]
+-- "TRUE_FALSE" → [quiz-2, quiz-3]
+-- "SHORT_ANSWER" → [quiz-4, quiz-6]
+```
+
+**When to use GIN:**
+
+✅ **Use GIN for:**
+
+**1. Array contains queries:**
+```sql
+-- Check if array contains element
+WHERE 'element'::UUID = ANY(array_column)
+
+-- Check if array contains all elements
+WHERE array_column @> ARRAY['elem1', 'elem2']
+
+-- Check if arrays overlap
+WHERE array_column && ARRAY['elem1', 'elem2']
+```
+
+**2. JSONB queries:**
+```sql
+-- Contains
+WHERE jsonb_column @> '{"key": "value"}'
+
+-- Key exists
+WHERE jsonb_column ? 'key'
+
+-- Path exists
+WHERE jsonb_column @> '{"nested": {"key": "value"}}'
+```
+
+**3. Full-text search:**
+```sql
+-- tsvector for full-text search
+CREATE INDEX idx_course_search ON "Course"
+USING GIN (to_tsvector('english', title || ' ' || description));
+
+-- Search
+SELECT * FROM "Course"
+WHERE to_tsvector('english', title || ' ' || description) @@ to_tsquery('java & programming');
+```
+
+❌ **Don't use GIN for:**
+
+**1. Exact equality:**
+```sql
+-- Use B-tree, not GIN
+WHERE user_id = '...'
+```
+
+**2. Range queries:**
+```sql
+-- Use B-tree, not GIN
+WHERE created_at BETWEEN '2025-01-01' AND '2025-12-31'
+```
+
+**3. Small tables:**
+- GIN overhead not worth it for <1000 rows
+
+**GIN vs B-tree:**
+
+| Feature | GIN | B-tree |
+|---------|-----|--------|
+| **Use case** | Arrays, JSON, full-text | Scalars (int, UUID, text) |
+| **Operators** | @>, &&, @@ | =, <, >, BETWEEN |
+| **Size** | Larger (2-3x) | Smaller |
+| **Build time** | Slower | Faster |
+| **Query speed** | Fast for containment | Fast for equality/range |
+| **Update speed** | Slower | Faster |
+
+**GIN index maintenance:**
+
+```sql
+-- GIN indexes can get bloated over time
+-- Rebuild index
+REINDEX INDEX idx_quiz_questions;
+
+-- Or recreate
+DROP INDEX idx_quiz_questions;
+CREATE INDEX idx_quiz_questions ON "Quiz" USING GIN (questions);
+```
+
+**Examples in B-Learning Core:**
+
+```sql
+-- 1. Module prerequisites (array)
+CREATE INDEX idx_module_prerequisites ON "Module"
+USING GIN (prerequisite_module_ids);
+
+SELECT * FROM "Module"
+WHERE 'prereq-uuid'::UUID = ANY(prerequisite_module_ids);
+
+-- 2. Quiz questions (JSONB)
+CREATE INDEX idx_quiz_questions ON "Quiz"
+USING GIN (questions);
+
+SELECT * FROM "Quiz"
+WHERE questions @> '[{"question_type": "MULTIPLE_CHOICE"}]';
+
+-- 3. Attempt answers (JSONB)
+CREATE INDEX idx_attempt_answers ON "Attempt"
+USING GIN (answers);
+
+SELECT * FROM "Attempt"
+WHERE answers @> '[{"is_correct": true}]';
+
+-- 4. User preferences (JSON)
+CREATE INDEX idx_user_preferences ON "User"
+USING GIN (preferences);
+
+SELECT * FROM "User"
+WHERE preferences @> '{"locale": "vi"}';
+
+-- 5. Assignment file URLs (array)
+CREATE INDEX idx_submission_files ON "AssignmentSubmission"
+USING GIN (file_urls);
+
+SELECT * FROM "AssignmentSubmission"
+WHERE file_urls && ARRAY['https://s3.../file.pdf'];
+```
+
+**Performance:**
+
+```sql
+-- EXPLAIN ANALYZE to verify GIN index used
+EXPLAIN ANALYZE
+SELECT * FROM "Quiz"
+WHERE questions @> '[{"question_type": "MULTIPLE_CHOICE"}]';
+
+-- Result (with GIN index):
+-- Bitmap Index Scan on idx_quiz_questions  (cost=0.00..12.00 rows=10 width=500)
+--   Index Cond: (questions @> '[{"question_type": "MULTIPLE_CHOICE"}]'::jsonb)
+
+-- Result (without GIN index):
+-- Seq Scan on "Quiz"  (cost=0.00..5000.00 rows=10 width=500)
+--   Filter: (questions @> '[{"question_type": "MULTIPLE_CHOICE"}]'::jsonb)
+-- → Much slower for large tables
+```
+
+**Kết luận:**
+- GIN = inverted index for multi-value data
+- Use for arrays, JSONB, full-text search
+- Essential for fast containment queries (@>, &&)
+- Larger and slower to maintain than B-tree
+- Worth it for complex queries on JSON/arrays
+
+---
+
+### Q8.3: Database có cache không? Làm sao để optimize query performance?
+
+**Trả lời:**
+
+PostgreSQL có **built-in caching**, và có nhiều strategies để optimize performance.
+
+**1. PostgreSQL Built-in Cache:**
+
+**Shared Buffers:**
+- PostgreSQL caches frequently accessed data in RAM
+- Default: 128 MB (too small for production)
+- Recommended: 25% of total RAM
+
+```sql
+-- Check current setting
+SHOW shared_buffers;
+
+-- Set in postgresql.conf
+shared_buffers = 2GB  -- For 8GB RAM server
+```
+
+**Page Cache (OS-level):**
+- OS caches disk reads in RAM
+- Automatic (no configuration needed)
+- Helps all queries
+
+**2. Query Optimization Strategies:**
+
+**A. Use EXPLAIN ANALYZE:**
+
+```sql
+-- Analyze query performance
+EXPLAIN ANALYZE
+SELECT e.*, c.title
+FROM "Enrollment" e
+JOIN "Course" c ON e.course_id = c.course_id
+WHERE e.user_id = '...';
+
+-- Result shows:
+-- 1. Execution time
+-- 2. Index usage (Index Scan vs Seq Scan)
+-- 3. Number of rows processed
+-- 4. Cost estimation
+```
+
+**B. Add indexes for slow queries:**
+
+```sql
+-- Slow query (Seq Scan)
+EXPLAIN ANALYZE
+SELECT * FROM "User" WHERE account_status = 'ACTIVE';
+-- → Seq Scan on "User" (cost=0..1000 rows=5000)
+
+-- Add index
+CREATE INDEX idx_user_status ON "User"(account_status);
+
+-- Fast query (Index Scan)
+EXPLAIN ANALYZE
+SELECT * FROM "User" WHERE account_status = 'ACTIVE';
+-- → Index Scan using idx_user_status (cost=0..50 rows=5000)
+```
+
+**C. Use composite indexes for multi-column queries:**
+
+```sql
+-- Slow: Two separate indexes
+CREATE INDEX idx_attempt_quiz ON "Attempt"(quiz_id);
+CREATE INDEX idx_attempt_user ON "Attempt"(user_id);
+
+SELECT * FROM "Attempt"
+WHERE quiz_id = '...' AND user_id = '...';
+-- → Uses one index, then filters
+
+-- Fast: Composite index
+CREATE INDEX idx_attempt_quiz_user ON "Attempt"(quiz_id, user_id);
+
+SELECT * FROM "Attempt"
+WHERE quiz_id = '...' AND user_id = '...';
+-- → Uses composite index (faster)
+```
+
+**D. Avoid SELECT *:**
+
+```sql
+-- Slow: Load all columns
+SELECT * FROM "User";
+
+-- Fast: Load only needed columns
+SELECT user_id, email, first_name, last_name FROM "User";
+```
+
+**E. Use LIMIT for pagination:**
+
+```sql
+-- Don't load all rows
+SELECT * FROM "Course" WHERE status = 'PUBLISHED'
+ORDER BY created_at DESC
+LIMIT 20 OFFSET 0;  -- Page 1
+
+LIMIT 20 OFFSET 20;  -- Page 2
+```
+
+**F. Use JOINs instead of multiple queries:**
+
+```sql
+-- Slow: N+1 queries
+enrollments = db.query("SELECT * FROM Enrollment WHERE user_id = %s", user_id)
+for e in enrollments:
+    course = db.query("SELECT * FROM Course WHERE course_id = %s", e['course_id'])
+
+-- Fast: 1 query with JOIN
+SELECT e.*, c.title, c.description
+FROM "Enrollment" e
+JOIN "Course" c ON e.course_id = c.course_id
+WHERE e.user_id = %s
+```
+
+**3. Application-Level Caching:**
+
+**A. Redis cache:**
+
+```python
+import redis
+r = redis.Redis()
+
+def get_user(user_id):
+    # Check cache first
+    cached = r.get(f"user:{user_id}")
+    if cached:
+        return json.loads(cached)
+
+    # Cache miss → Query database
+    user = db.query("SELECT * FROM User WHERE user_id = %s", user_id)
+
+    # Store in cache (expire after 1 hour)
+    r.setex(f"user:{user_id}", 3600, json.dumps(user))
+
+    return user
+```
+
+**B. Memoization (in-memory cache):**
+
+```python
+from functools import lru_cache
+
+@lru_cache(maxsize=1000)
+def get_course(course_id):
+    return db.query("SELECT * FROM Course WHERE course_id = %s", course_id)
+
+# First call: Query database
+course = get_course('course-uuid')
+
+# Second call: Return cached result (no database query)
+course = get_course('course-uuid')
+```
+
+**4. Database Connection Pooling:**
+
+```python
+# Don't create new connection for every query (slow)
+import psycopg2
+conn = psycopg2.connect(...)  # New connection
+cursor = conn.cursor()
+cursor.execute("SELECT ...")
+conn.close()
+
+# Use connection pool (fast)
+from psycopg2 import pool
+connection_pool = pool.SimpleConnectionPool(5, 20, ...)  # 5 min, 20 max
+
+conn = connection_pool.getconn()
+cursor = conn.cursor()
+cursor.execute("SELECT ...")
+connection_pool.putconn(conn)  # Return to pool
+```
+
+**5. Materialized Views for complex queries:**
+
+```sql
+-- Expensive query (JOINs, aggregations)
+SELECT
+  c.course_id,
+  c.title,
+  COUNT(DISTINCT e.enrollment_id) AS enrollment_count,
+  AVG(e.completion_percentage) AS avg_completion
+FROM "Course" c
+LEFT JOIN "Enrollment" e ON c.course_id = e.course_id
+GROUP BY c.course_id, c.title;
+
+-- Create materialized view (precomputed)
+CREATE MATERIALIZED VIEW course_stats AS
+SELECT
+  c.course_id,
+  c.title,
+  COUNT(DISTINCT e.enrollment_id) AS enrollment_count,
+  AVG(e.completion_percentage) AS avg_completion
+FROM "Course" c
+LEFT JOIN "Enrollment" e ON c.course_id = e.course_id
+GROUP BY c.course_id, c.title;
+
+-- Query materialized view (fast)
+SELECT * FROM course_stats;
+
+-- Refresh periodically (daily cron job)
+REFRESH MATERIALIZED VIEW course_stats;
+```
+
+**6. Vacuum and Analyze:**
+
+```sql
+-- Remove dead rows (UPDATE/DELETE leaves dead rows)
+VACUUM "User";
+
+-- Update statistics for query planner
+ANALYZE "User";
+
+-- Or both
+VACUUM ANALYZE "User";
+
+-- Auto-vacuum (enabled by default)
+-- Runs automatically when needed
+```
+
+**7. Partitioning for large tables:**
+
+```sql
+-- If Attempt table grows to millions of rows
+-- Partition by month
+CREATE TABLE "Attempt_2025_01" PARTITION OF "Attempt"
+FOR VALUES FROM ('2025-01-01') TO ('2025-02-01');
+
+CREATE TABLE "Attempt_2025_02" PARTITION OF "Attempt"
+FOR VALUES FROM ('2025-02-01') TO ('2025-03-01');
+
+-- Queries automatically use correct partition
+SELECT * FROM "Attempt"
+WHERE started_at BETWEEN '2025-01-01' AND '2025-01-31';
+-- → Only scans Attempt_2025_01 partition (fast)
+```
+
+**8. Monitor slow queries:**
+
+```sql
+-- Enable slow query log
+ALTER DATABASE b_learning_core SET log_min_duration_statement = 1000;  -- Log queries >1s
+
+-- Check pg_stat_statements
+SELECT
+  query,
+  calls,
+  total_time,
+  mean_time,
+  max_time
+FROM pg_stat_statements
+ORDER BY mean_time DESC
+LIMIT 10;
+
+-- Find slow queries and optimize
+```
+
+**Kết luận:**
+- PostgreSQL has built-in caching (shared_buffers)
+- Optimize queries: indexes, EXPLAIN ANALYZE, avoid SELECT *
+- Application-level cache: Redis, memoization
+- Connection pooling: Reuse connections
+- Materialized views: Precompute complex queries
+- Monitor and optimize slow queries
+
+---
+
+## 9. JSON FIELDS & DESIGN PATTERNS
+
+### Q9.1: Khi nào nên dùng JSON field, khi nào nên dùng separate table?
+
+**Trả lời:**
+
+**Decision matrix for JSON vs Separate Table:**
+
+✅ **Use JSON when:**
+
+**1. Schema is flexible/evolving:**
+```sql
+-- User preferences: Different users have different settings
+CREATE TABLE "User" (
+  preferences JSON  -- Can have any structure
+);
+
+-- User A:
+{"theme": "dark", "locale": "vi"}
+
+-- User B:
+{"theme": "light", "locale": "en", "dashboard": {"show_progress": true}}
+```
+
+**2. Data always loaded/saved together (atomic):**
+```sql
+-- Quiz questions: Always load all questions when loading quiz
+CREATE TABLE "Quiz" (
+  questions JSONB  -- All questions in 1 field
+);
+
+-- vs separate table:
+CREATE TABLE "Question" (...);  -- Need JOIN to load
+```
+
+**3. No complex queries on nested data:**
+```sql
+-- Rarely query individual questions
+-- Usually: Load quiz → Display all questions → Student answers
+
+-- If needed deep query:
+SELECT * FROM "Quiz"
+WHERE questions @> '[{"question_type": "MULTIPLE_CHOICE"}]';
+-- → Works, but slow
+```
+
+**4. Versioning important:**
+```sql
+-- Easy to snapshot quiz (archive)
+INSERT INTO "Quiz_Archive" SELECT * FROM "Quiz" WHERE quiz_id = '...';
+-- → Entire quiz with all questions saved
+```
+
+**5. Small to medium data (<100 nested items):**
+```sql
+-- Quiz with 20 questions: OK
+-- Quiz with 1000 questions: Use separate table
+```
+
+---
+
+❌ **Use Separate Table when:**
+
+**1. Schema is stable/well-defined:**
+```sql
+-- Module structure is stable
+CREATE TABLE "Module" (
+  module_id UUID PRIMARY KEY,
+  title VARCHAR(200),
+  order_num INT,
+  ...
+);
+
+-- NOT:
+CREATE TABLE "Course" (
+  modules JSON  -- BAD!
+);
+```
+
+**2. Need complex queries on individual items:**
+```sql
+-- Need to query individual modules
+SELECT * FROM "Module"
+WHERE title LIKE '%Introduction%';
+
+-- vs JSON:
+SELECT * FROM "Course"
+WHERE modules::text LIKE '%Introduction%';  -- Slow, ugly
+```
+
+**3. Need foreign key constraints:**
+```sql
+-- Lecture references Module
+CREATE TABLE "Lecture" (
+  module_id UUID REFERENCES "Module"(module_id)
+);
+
+-- vs JSON: Can't have FK to JSON element
+```
+
+**4. Data updated individually (not atomic):**
+```sql
+-- Update single module title
+UPDATE "Module" SET title = '...' WHERE module_id = '...';
+
+-- vs JSON: Must update entire array
+UPDATE "Course" SET modules = '[...]'::JSONB WHERE course_id = '...';
+```
+
+**5. Large number of items (>100):**
+```sql
+-- Course with 100+ modules: Use separate table
+-- Performance: Query specific module without loading all
+```
+
+**6. Need to reference from other tables:**
+```sql
+-- Progress references Module
+CREATE TABLE "Progress" (
+  module_id UUID REFERENCES "Module"
+);
+
+-- vs JSON: Can't reference JSON element
+```
+
+---
+
+**Examples from B-Learning Core:**
+
+✅ **JSON used correctly:**
+
+**1. Quiz.questions:**
+- Schema flexible (different question types)
+- Always loaded together
+- No complex queries (just load quiz)
+- Small-medium size (10-50 questions)
+
+**2. Attempt.answers:**
+- Snapshot of student attempt
+- Never update individual answer
+- Atomic data
+
+**3. User.preferences:**
+- Schema evolves (new settings added)
+- Always loaded with user
+- No complex queries
+
+**4. Class.schedules:**
+- Flexible (different schedule patterns)
+- Always loaded with class
+- Small size (1-10 sessions per week)
+
+**5. Lecture.assignment_config:**
+- Different assignment types have different configs
+- Loaded with lecture
+- No complex queries
+
+❌ **Separate tables used correctly:**
+
+**1. Module (not in Course.modules JSON):**
+- Stable schema
+- Need to query individual modules
+- Referenced by Lecture, Progress
+- Large number per course
+
+**2. User (not in some aggregate JSON):**
+- Stable schema
+- Complex queries (filter by status, email)
+- Referenced by many tables
+- Large table
+
+**3. Enrollment (not in User.enrollments JSON):**
+- Stable schema
+- Query enrollments independently
+- Referenced by Progress, Certificate
+- Large number of enrollments
+
+---
+
+**Migration path:**
+
+**Start with JSON (MVP):**
+```sql
+-- MVP: Simple, fast to develop
+CREATE TABLE "Quiz" (
+  quiz_id UUID PRIMARY KEY,
+  questions JSONB
+);
+```
+
+**Migrate to separate table (scale):**
+```sql
+-- When queries become complex/slow
+CREATE TABLE "Question" (
+  question_id UUID PRIMARY KEY,
+  quiz_id UUID REFERENCES "Quiz",
+  question_text TEXT,
+  question_type VARCHAR(20),
+  ...
+);
+
+-- Migrate data
+INSERT INTO "Question" (quiz_id, question_text, ...)
+SELECT
+  q.quiz_id,
+  question->>'question_text',
+  ...
+FROM "Quiz" q,
+     jsonb_array_elements(q.questions) question;
+
+-- Drop JSON column
+ALTER TABLE "Quiz" DROP COLUMN questions;
+```
+
+**Kết luận:**
+- JSON: Flexible, simple, atomic data
+- Separate table: Structured, queryable, constrained
+- Choose based on: schema stability, query patterns, data size
+- Can migrate JSON → table later if needed
+
+---
+
+### Q9.2: Tại sao Class.schedules dùng JSONB array thay vì bảng ClassSchedule riêng?
+
+**Trả lời:**
+
+**Quyết định thiết kế:**
+
+Class.schedules lưu lịch học dưới dạng JSONB array vì:
+
+**1. Tính chất của dữ liệu:**
+```json
+{
+  "schedules": [
+    {
+      "day_of_week": "Monday",
+      "start_time": "09:00",
+      "end_time": "11:00",
+      "room": "A101"
+    },
+    {
+      "day_of_week": "Wednesday",
+      "start_time": "14:00",
+      "end_time": "16:00",
+      "room": "B205"
+    }
+  ]
+}
+```
+
+**Lý do chọn JSON:**
+- Schedule luôn được truy vấn **toàn bộ cùng Class** (không query riêng lẻ từng schedule)
+- Không cần search/filter theo day_of_week hay start_time riêng biệt
+- Số lượng schedules nhỏ (thường 1-3 buổi/tuần)
+- Schema đơn giản, ít thay đổi
+
+**2. So sánh với bảng riêng:**
+
+| Tiêu chí | JSONB Array | Separate Table |
+|----------|-------------|----------------|
+| Queries | Simple: `SELECT schedules FROM "Class"` | Complex: JOIN required |
+| Inserts | Single INSERT | Multiple INSERTs + transaction |
+| Updates | Atomic update entire schedule | Update multiple rows |
+| Storage | Compact (single row) | 3-4 rows per class |
+| Flexibility | Easy to add fields | Need ALTER TABLE |
+
+**3. Truy vấn ví dụ:**
+
+**Với JSONB (hiện tại):**
+```sql
+-- Lấy lịch học của class
+SELECT
+  class_id,
+  class_name,
+  schedules
+FROM "Class"
+WHERE class_id = 'xxx';
+
+-- Tìm classes có lịch học Monday
+SELECT class_id, class_name
+FROM "Class"
+WHERE schedules @> '[{"day_of_week": "Monday"}]';
+
+-- Đếm số buổi học/tuần
+SELECT
+  class_id,
+  class_name,
+  jsonb_array_length(schedules) as sessions_per_week
+FROM "Class";
+```
+
+**Với bảng riêng (nếu dùng):**
+```sql
+-- Cần JOIN phức tạp
+SELECT
+  c.class_id,
+  c.class_name,
+  json_agg(
+    json_build_object(
+      'day_of_week', cs.day_of_week,
+      'start_time', cs.start_time,
+      'end_time', cs.end_time,
+      'room', cs.room
+    )
+  ) as schedules
+FROM "Class" c
+LEFT JOIN "ClassSchedule" cs ON c.class_id = cs.class_id
+WHERE c.class_id = 'xxx'
+GROUP BY c.class_id, c.class_name;
+```
+
+**4. Business logic trong application:**
+
+```python
+# Flask/FastAPI example
+@app.get("/classes/{class_id}")
+def get_class_detail(class_id: str):
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    cur.execute("""
+        SELECT class_id, class_name, start_date, end_date, schedules
+        FROM "Class"
+        WHERE class_id = %s
+    """, (class_id,))
+
+    class_data = cur.fetchone()
+
+    return {
+        "class_id": class_data[0],
+        "class_name": class_data[1],
+        "start_date": class_data[2],
+        "end_date": class_data[3],
+        "schedules": class_data[4]  # Already JSON, no processing needed
+    }
+
+# Update schedules
+@app.put("/classes/{class_id}/schedules")
+def update_schedules(class_id: str, schedules: List[dict]):
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    # Validate schedule format
+    for schedule in schedules:
+        if not all(k in schedule for k in ['day_of_week', 'start_time', 'end_time']):
+            return {"error": "Invalid schedule format"}, 400
+
+    # Single atomic update
+    cur.execute("""
+        UPDATE "Class"
+        SET schedules = %s::jsonb,
+            updated_at = CURRENT_TIMESTAMP
+        WHERE class_id = %s
+    """, (json.dumps(schedules), class_id))
+
+    conn.commit()
+    return {"message": "Schedules updated successfully"}
+```
+
+**5. Index support:**
+
+```sql
+-- GIN index cho JSON queries
+CREATE INDEX idx_class_schedules_gin ON "Class" USING gin(schedules);
+
+-- Query nhanh cho day_of_week
+SELECT * FROM "Class"
+WHERE schedules @> '[{"day_of_week": "Monday"}]';
+-- Uses idx_class_schedules_gin
+```
+
+**6. Khi nào cần bảng riêng?**
+
+Nên tách ClassSchedule table nếu:
+- Cần query phức tạp theo time ranges (find all classes between 9-11am)
+- Cần foreign keys từ schedule đến Room table (room management system)
+- Cần track schedule changes history
+- Schedule có nhiều fields phức tạp (instructor, resources, capacity)
+
+**Ví dụ thiết kế nâng cao:**
+```sql
+CREATE TABLE "ClassSchedule" (
+  schedule_id UUID PRIMARY KEY,
+  class_id UUID REFERENCES "Class"(class_id) ON DELETE CASCADE,
+  day_of_week VARCHAR(10),
+  start_time TIME,
+  end_time TIME,
+  room_id UUID REFERENCES "Room"(room_id),  -- FK to Room
+  instructor_id UUID REFERENCES "User"(user_id),  -- FK to Instructor
+  created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Find all classes using room A101
+SELECT DISTINCT c.*
+FROM "Class" c
+JOIN "ClassSchedule" cs ON c.class_id = cs.class_id
+JOIN "Room" r ON cs.room_id = r.room_id
+WHERE r.room_code = 'A101';
+```
+
+**Kết luận:**
+- **Core v1.0 dùng JSONB** vì đơn giản, đủ cho use case hiện tại
+- Schedules luôn được xem toàn bộ, không cần query riêng lẻ
+- Atomic updates, compact storage
+- Có thể migrate sang separate table nếu cần trong tương lai
+
+---
+
+### Q9.3: Quiz.questions và Attempt.answers có cấu trúc JSONB như thế nào?
+
+**Trả lời:**
+
+**1. Quiz.questions structure:**
+
+```json
+{
+  "questions": [
+    {
+      "id": "q1",
+      "type": "multiple_choice",
+      "question_text": "What is the capital of France?",
+      "points": 10,
+      "options": [
+        {"id": "a", "text": "London"},
+        {"id": "b", "text": "Paris"},
+        {"id": "c", "text": "Berlin"},
+        {"id": "d", "text": "Madrid"}
+      ],
+      "correct_answer": "b",
+      "explanation": "Paris is the capital and largest city of France."
+    },
+    {
+      "id": "q2",
+      "type": "true_false",
+      "question_text": "PostgreSQL supports JSONB data type.",
+      "points": 5,
+      "correct_answer": true,
+      "explanation": "JSONB is a native PostgreSQL data type for efficient JSON storage."
+    },
+    {
+      "id": "q3",
+      "type": "short_answer",
+      "question_text": "Name three JavaScript frameworks.",
+      "points": 15,
+      "sample_answers": ["React", "Vue", "Angular"],
+      "grading": "manual"
+    }
+  ]
+}
+```
+
+**Field explanations:**
+- `id`: Unique identifier trong quiz (q1, q2, q3...)
+- `type`: Loại câu hỏi (multiple_choice, true_false, short_answer, essay)
+- `question_text`: Nội dung câu hỏi
+- `points`: Điểm số cho câu hỏi này
+- `options`: Các lựa chọn (chỉ có với multiple_choice)
+- `correct_answer`: Đáp án đúng (string cho MC, boolean cho T/F)
+- `explanation`: Giải thích đáp án (hiển thị sau khi submit)
+- `sample_answers`: Đáp án mẫu (cho short answer)
+- `grading`: auto hoặc manual
+
+**2. Attempt.answers structure:**
+
+```json
+{
+  "answers": [
+    {
+      "question_id": "q1",
+      "answer": "b",
+      "is_correct": true,
+      "points_earned": 10,
+      "time_spent_seconds": 15
+    },
+    {
+      "question_id": "q2",
+      "answer": true,
+      "is_correct": true,
+      "points_earned": 5,
+      "time_spent_seconds": 8
+    },
+    {
+      "question_id": "q3",
+      "answer": "React, Vue, Angular",
+      "is_correct": null,  // Chưa chấm
+      "points_earned": null,
+      "time_spent_seconds": 120,
+      "requires_grading": true
+    }
+  ]
+}
+```
+
+**Field explanations:**
+- `question_id`: Map với Quiz.questions[].id
+- `answer`: Câu trả lời của student (type tùy loại câu hỏi)
+- `is_correct`: true/false/null (null = chưa chấm)
+- `points_earned`: Điểm thực tế nhận được
+- `time_spent_seconds`: Thời gian làm câu này
+- `requires_grading`: true nếu cần instructor chấm tay
+
+**3. Auto-grading logic (Python example):**
+
+```python
+import json
+from typing import Dict, List
+
+def auto_grade_quiz(quiz_questions: List[Dict], student_answers: List[Dict]) -> Dict:
+    """
+    Auto-grade quiz based on questions and student answers.
+    Returns updated answers with scores.
+    """
+    results = {
+        "answers": [],
+        "total_score": 0,
+        "max_score": 0,
+        "auto_graded_count": 0,
+        "manual_grading_required": 0
+    }
+
+    # Create question lookup
+    questions_map = {q['id']: q for q in quiz_questions}
+
+    for student_answer in student_answers:
+        qid = student_answer['question_id']
+        question = questions_map.get(qid)
+
+        if not question:
+            continue
+
+        result = {
+            "question_id": qid,
+            "answer": student_answer['answer'],
+            "time_spent_seconds": student_answer.get('time_spent_seconds', 0)
+        }
+
+        # Auto-grading logic
+        if question['type'] == 'multiple_choice':
+            is_correct = student_answer['answer'] == question['correct_answer']
+            result['is_correct'] = is_correct
+            result['points_earned'] = question['points'] if is_correct else 0
+            results['auto_graded_count'] += 1
+
+        elif question['type'] == 'true_false':
+            is_correct = student_answer['answer'] == question['correct_answer']
+            result['is_correct'] = is_correct
+            result['points_earned'] = question['points'] if is_correct else 0
+            results['auto_graded_count'] += 1
+
+        elif question['type'] in ['short_answer', 'essay']:
+            # Requires manual grading
+            result['is_correct'] = None
+            result['points_earned'] = None
+            result['requires_grading'] = True
+            results['manual_grading_required'] += 1
+
+        results['answers'].append(result)
+        results['max_score'] += question['points']
+        if result.get('points_earned') is not None:
+            results['total_score'] += result['points_earned']
+
+    return results
+
+# Usage example
+quiz_data = conn.execute("""
+    SELECT questions FROM "Quiz" WHERE quiz_id = %s
+""", (quiz_id,)).fetchone()[0]
+
+student_answers_data = request.json['answers']  # From frontend
+
+grading_results = auto_grade_quiz(
+    quiz_data['questions'],
+    student_answers_data
+)
+
+# Save to Attempt table
+conn.execute("""
+    INSERT INTO "Attempt" (
+        attempt_id, enrollment_id, quiz_id,
+        answers, score, status
+    ) VALUES (%s, %s, %s, %s, %s, %s)
+""", (
+    uuid.uuid4(),
+    enrollment_id,
+    quiz_id,
+    json.dumps(grading_results['answers']),
+    grading_results['total_score'],
+    'requires_grading' if grading_results['manual_grading_required'] > 0 else 'graded'
+))
+```
+
+**4. Manual grading workflow:**
+
+```python
+@app.post("/attempts/{attempt_id}/grade")
+def manual_grade_attempt(attempt_id: str, grading_data: dict):
+    """
+    Instructor manually grades short answer/essay questions.
+    """
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    # Get current attempt
+    cur.execute("""
+        SELECT answers, quiz_id FROM "Attempt"
+        WHERE attempt_id = %s
+    """, (attempt_id,))
+
+    attempt = cur.fetchone()
+    answers = attempt[0]
+    quiz_id = attempt[1]
+
+    # Get quiz questions for max points
+    cur.execute("""
+        SELECT questions FROM "Quiz" WHERE quiz_id = %s
+    """, (quiz_id,))
+    questions = cur.fetchone()[0]['questions']
+    questions_map = {q['id']: q for q in questions}
+
+    # Update answers with manual grades
+    total_score = 0
+    for answer in answers['answers']:
+        qid = answer['question_id']
+
+        # If this question was manually graded
+        if qid in grading_data:
+            answer['points_earned'] = grading_data[qid]['points']
+            answer['is_correct'] = grading_data[qid]['points'] > 0
+            answer['instructor_feedback'] = grading_data[qid].get('feedback', '')
+            answer['requires_grading'] = False
+
+        # Sum up total score
+        if answer.get('points_earned') is not None:
+            total_score += answer['points_earned']
+
+    # Update Attempt
+    cur.execute("""
+        UPDATE "Attempt"
+        SET answers = %s::jsonb,
+            score = %s,
+            status = 'graded',
+            graded_at = CURRENT_TIMESTAMP
+        WHERE attempt_id = %s
+    """, (json.dumps(answers), total_score, attempt_id))
+
+    conn.commit()
+
+    return {
+        "message": "Grading completed",
+        "total_score": total_score,
+        "max_score": sum(q['points'] for q in questions)
+    }
+```
+
+**5. Truy vấn JSON trong SQL:**
+
+```sql
+-- Tìm attempts có câu q1 trả lời đúng
+SELECT
+  attempt_id,
+  enrollment_id,
+  score
+FROM "Attempt"
+WHERE answers @> '{"answers": [{"question_id": "q1", "is_correct": true}]}'::jsonb;
+
+-- Đếm số câu đúng/sai của một attempt
+SELECT
+  attempt_id,
+  jsonb_array_length(answers->'answers') as total_questions,
+  (
+    SELECT COUNT(*)
+    FROM jsonb_array_elements(answers->'answers') AS ans
+    WHERE (ans->>'is_correct')::boolean = true
+  ) as correct_count
+FROM "Attempt"
+WHERE attempt_id = 'xxx';
+
+-- Lấy điểm từng câu của attempt
+SELECT
+  attempt_id,
+  ans->>'question_id' as question_id,
+  ans->>'answer' as student_answer,
+  (ans->>'is_correct')::boolean as is_correct,
+  (ans->>'points_earned')::int as points
+FROM "Attempt",
+     jsonb_array_elements(answers->'answers') AS ans
+WHERE attempt_id = 'xxx';
+
+-- Tìm các attempts cần chấm tay
+SELECT
+  a.attempt_id,
+  u.full_name as student_name,
+  q.title as quiz_title
+FROM "Attempt" a
+JOIN "Enrollment" e ON a.enrollment_id = e.enrollment_id
+JOIN "User" u ON e.user_id = u.user_id
+JOIN "Quiz" q ON a.quiz_id = q.quiz_id
+WHERE EXISTS (
+  SELECT 1
+  FROM jsonb_array_elements(a.answers->'answers') AS ans
+  WHERE (ans->>'requires_grading')::boolean = true
+);
+```
+
+**6. Schema validation với JSON Schema:**
+
+```python
+from jsonschema import validate
+
+# Quiz questions schema
+quiz_schema = {
+    "type": "object",
+    "properties": {
+        "questions": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "id": {"type": "string"},
+                    "type": {"type": "string", "enum": ["multiple_choice", "true_false", "short_answer", "essay"]},
+                    "question_text": {"type": "string"},
+                    "points": {"type": "number", "minimum": 0}
+                },
+                "required": ["id", "type", "question_text", "points"]
+            }
+        }
+    },
+    "required": ["questions"]
+}
+
+# Validate before insert
+try:
+    validate(instance=quiz_data, schema=quiz_schema)
+    # Insert into database
+except Exception as e:
+    return {"error": f"Invalid quiz format: {str(e)}"}, 400
+```
+
+**Kết luận:**
+- Quiz.questions: Structured JSON array chứa câu hỏi, đáp án, điểm số
+- Attempt.answers: Student answers map với questions, chứa kết quả chấm
+- Auto-grading: MC và T/F tự động, short answer/essay cần manual
+- JSON queries: Dùng `@>`, `jsonb_array_elements()` để search/analyze
+- Validation: Dùng JSON Schema để đảm bảo data integrity
+
+---
+
+## Section 10: Normalization & Data Integrity
+
+### Q10.1: Database có tuân thủ Third Normal Form (3NF) không? Các trường hợp denormalization?
+
+**Trả lời:**
+
+**1. Third Normal Form (3NF) requirements:**
+
+Một table ở 3NF khi:
+1. **1NF**: Atomic values (không có repeating groups)
+2. **2NF**: Không có partial dependencies (non-key attributes fully depend on primary key)
+3. **3NF**: Không có transitive dependencies (non-key attributes don't depend on other non-key attributes)
+
+**2. Kiểm tra từng table:**
+
+**✅ Domain 1: User Management**
+
+```sql
+-- ✅ User table: 3NF compliant
+CREATE TABLE "User" (
+  user_id UUID PRIMARY KEY,           -- PK
+  email VARCHAR(255) UNIQUE NOT NULL, -- Depends on user_id, không depend lẫn nhau
+  password_hash VARCHAR(255),         -- Depends on user_id
+  full_name VARCHAR(200),             -- Depends on user_id
+  role VARCHAR(20),                   -- Depends on user_id
+  ...
+);
+-- Không có transitive dependencies: role không depend on full_name, etc.
+
+-- ✅ UserProfile: 3NF compliant
+CREATE TABLE "UserProfile" (
+  profile_id UUID PRIMARY KEY,
+  user_id UUID REFERENCES "User",
+  bio TEXT,
+  preferences JSONB,
+  ...
+);
+-- Tách riêng khỏi User để tránh NULL values nhiều
+-- Profile data depends only on user_id
+
+-- ✅ Notification: 3NF compliant
+CREATE TABLE "Notification" (
+  notification_id UUID PRIMARY KEY,
+  user_id UUID REFERENCES "User",
+  message TEXT,
+  is_read BOOLEAN,
+  ...
+);
+```
+
+**✅ Domain 2: Course Content**
+
+```sql
+-- ✅ Course: 3NF compliant
+CREATE TABLE "Course" (
+  course_id UUID PRIMARY KEY,
+  instructor_id UUID REFERENCES "User",
+  title VARCHAR(200),
+  description TEXT,
+  status VARCHAR(20),
+  ...
+);
+
+-- ✅ Module: 3NF compliant
+CREATE TABLE "Module" (
+  module_id UUID PRIMARY KEY,
+  course_id UUID REFERENCES "Course",
+  title VARCHAR(200),
+  order_num INT,
+  prerequisite_module_ids UUID[],  -- Array, still atomic (no repeating groups in same column)
+  ...
+);
+
+-- ✅ Lecture: 3NF compliant
+CREATE TABLE "Lecture" (
+  lecture_id UUID PRIMARY KEY,
+  module_id UUID REFERENCES "Module",
+  title VARCHAR(200),
+  content TEXT,
+  ...
+);
+
+-- ✅ Assignment: 3NF compliant
+CREATE TABLE "Assignment" (
+  assignment_id UUID PRIMARY KEY,
+  module_id UUID REFERENCES "Module",
+  title VARCHAR(200),
+  config JSONB,  -- JSONB is atomic (single value)
+  ...
+);
+```
+
+**⚠️ Strategic Denormalization Cases:**
+
+**Case 1: Enrollment.completion_percentage**
+
+```sql
+-- Enrollment table có denormalization
+CREATE TABLE "Enrollment" (
+  enrollment_id UUID PRIMARY KEY,
+  user_id UUID REFERENCES "User",
+  course_id UUID REFERENCES "Course",
+  completion_percentage DECIMAL(5,2),  -- ⚠️ DENORMALIZED
+  ...
+);
+```
+
+**Tại sao denormalize?**
+- `completion_percentage` có thể tính từ Progress table
+- **Transitive dependency**: completion_percentage → Progress records → enrollment_id
+- Nhưng được giữ lại vì:
+  - **Performance**: Tránh phải COUNT Progress records mỗi lần query
+  - **Frequent access**: Hiển thị trên dashboard, course lists
+  - **Read-heavy**: Đọc nhiều hơn update
+
+**Trade-off:**
+```sql
+-- ✅ Normalized version (chậm)
+SELECT
+  e.enrollment_id,
+  e.user_id,
+  COUNT(p.progress_id) * 100.0 / (
+    SELECT COUNT(*) FROM "Lecture" l
+    JOIN "Module" m ON l.module_id = m.module_id
+    WHERE m.course_id = e.course_id
+  ) as completion_percentage
+FROM "Enrollment" e
+LEFT JOIN "Progress" p ON e.enrollment_id = p.enrollment_id
+WHERE e.user_id = 'xxx'
+GROUP BY e.enrollment_id;
+-- Slow: JOIN + subquery + COUNT
+
+-- ⚠️ Denormalized version (nhanh)
+SELECT enrollment_id, user_id, completion_percentage
+FROM "Enrollment"
+WHERE user_id = 'xxx';
+-- Fast: Direct read, no joins
+```
+
+**Maintain consistency:**
+```python
+# Update completion_percentage khi Progress changes
+def mark_lecture_complete(enrollment_id, lecture_id):
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    # Insert Progress record
+    cur.execute("""
+        INSERT INTO "Progress" (progress_id, enrollment_id, lecture_id, percentage)
+        VALUES (%s, %s, %s, 100)
+    """, (uuid.uuid4(), enrollment_id, lecture_id))
+
+    # Recalculate completion_percentage
+    cur.execute("""
+        UPDATE "Enrollment" e
+        SET completion_percentage = (
+            SELECT COUNT(p.progress_id) * 100.0 / (
+                SELECT COUNT(*) FROM "Lecture" l
+                JOIN "Module" m ON l.module_id = m.module_id
+                WHERE m.course_id = e.course_id
+            )
+            FROM "Progress" p
+            WHERE p.enrollment_id = e.enrollment_id
+        )
+        WHERE e.enrollment_id = %s
+    """, (enrollment_id,))
+
+    conn.commit()
+```
+
+**Case 2: User.role trong User table**
+
+```sql
+-- User table có denormalization nhẹ
+CREATE TABLE "User" (
+  user_id UUID PRIMARY KEY,
+  email VARCHAR(255),
+  role VARCHAR(20),  -- ⚠️ Could be separate Role table
+  ...
+);
+```
+
+**Tại sao không tách Role table?**
+- Roles ít (chỉ có: student, instructor, admin)
+- Không cần permissions phức tạp
+- Không cần role hierarchy
+- **Simplicity > perfect normalization**
+
+**Khi nào cần Role table?**
+```sql
+-- Nếu có RBAC phức tạp
+CREATE TABLE "Role" (
+  role_id UUID PRIMARY KEY,
+  role_name VARCHAR(50),
+  permissions JSONB  -- Detailed permissions
+);
+
+CREATE TABLE "User" (
+  user_id UUID PRIMARY KEY,
+  role_id UUID REFERENCES "Role"  -- FK to Role
+);
+
+CREATE TABLE "RolePermission" (
+  role_id UUID,
+  resource VARCHAR(50),
+  actions VARCHAR(20)[]
+);
+```
+
+**Case 3: JSONB fields (Quiz.questions, Attempt.answers)**
+
+```sql
+-- Quiz table
+CREATE TABLE "Quiz" (
+  quiz_id UUID PRIMARY KEY,
+  questions JSONB  -- ⚠️ Array of questions (không normalized)
+);
+```
+
+**Đây có phải denormalization?**
+- **Không phải** traditional denormalization
+- **Design choice**: JSON for flexibility vs separate Question table
+- Đã phân tích ở Q9.1
+
+**3. Normalization summary table:**
+
+| Table | Normal Form | Denormalization | Justification |
+|-------|-------------|-----------------|---------------|
+| User | ✅ 3NF | Không | Clean structure |
+| UserProfile | ✅ 3NF | Không | Separated from User |
+| Notification | ✅ 3NF | Không | Simple notifications |
+| Course | ✅ 3NF | Không | Core entity |
+| Module | ✅ 3NF | Không | Course structure |
+| Lecture | ✅ 3NF | Không | Content unit |
+| Assignment | ✅ 3NF | JSONB config | Flexibility |
+| Quiz | ✅ 3NF | JSONB questions | Atomic quiz unit |
+| Question | N/A | Merged into Quiz | Design choice |
+| Attempt | ✅ 3NF | JSONB answers | Atomic attempt |
+| Enrollment | ⚠️ 2.5NF | completion_percentage | Performance |
+| Progress | ✅ 3NF | Không | Tracking table |
+| Class | ✅ 3NF | JSONB schedules | Simple schedules |
+| Certificate | ✅ 3NF | Không | Credential record |
+| AssignmentSubmission | ✅ 3NF | Không | Submission record |
+
+**4. Denormalization best practices:**
+
+```sql
+-- ✅ Good: Denormalize for performance with maintenance plan
+CREATE TABLE "Enrollment" (
+  completion_percentage DECIMAL(5,2),  -- Cached value
+  last_progress_update TIMESTAMPTZ     -- Track when updated
+);
+
+-- Trigger to auto-update (optional)
+CREATE OR REPLACE FUNCTION update_completion_percentage()
+RETURNS TRIGGER AS $$
+BEGIN
+  UPDATE "Enrollment"
+  SET completion_percentage = (
+    SELECT COUNT(*) * 100.0 / (
+      SELECT COUNT(*) FROM "Lecture" l
+      JOIN "Module" m ON l.module_id = m.module_id
+      WHERE m.course_id = NEW.course_id
+    )
+    FROM "Progress"
+    WHERE enrollment_id = NEW.enrollment_id
+  ),
+  last_progress_update = CURRENT_TIMESTAMP
+  WHERE enrollment_id = NEW.enrollment_id;
+
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_update_completion
+AFTER INSERT OR DELETE ON "Progress"
+FOR EACH ROW EXECUTE FUNCTION update_completion_percentage();
+```
+
+**❌ Bad: Denormalize without consistency maintenance**
+```sql
+-- Missing: How to update completion_percentage?
+-- Missing: What if Progress deleted?
+-- Missing: Handling race conditions
+```
+
+**Kết luận:**
+- **Core v1.0 chủ yếu tuân thủ 3NF**
+- **Strategic denormalization**: Enrollment.completion_percentage (performance)
+- **Design choices**: JSONB fields (flexibility vs normalization)
+- **Trade-off**: Complexity vs Performance vs Maintainability
+- **Maintenance plan**: Triggers/application logic để maintain consistency
+
+---
+
+### Q10.2: Làm thế nào để đảm bảo referential integrity với ON DELETE CASCADE, SET NULL, RESTRICT?
+
+**Trả lời:**
+
+**1. ON DELETE behaviors overview:**
+
+PostgreSQL hỗ trợ 5 loại ON DELETE:
+1. **CASCADE**: Tự động xóa child records
+2. **SET NULL**: Set FK thành NULL khi parent deleted
+3. **SET DEFAULT**: Set FK về default value
+4. **RESTRICT**: Ngăn delete parent nếu có children (default)
+5. **NO ACTION**: Giống RESTRICT nhưng check cuối transaction
+
+**2. ON DELETE CASCADE - Cascading deletes:**
+
+**Use cases: Parent-child relationship mạnh**
+
+```sql
+-- Course → Module → Lecture: CASCADE chain
+CREATE TABLE "Module" (
+  module_id UUID PRIMARY KEY,
+  course_id UUID REFERENCES "Course"(course_id) ON DELETE CASCADE
+);
+
+CREATE TABLE "Lecture" (
+  lecture_id UUID PRIMARY KEY,
+  module_id UUID REFERENCES "Module"(module_id) ON DELETE CASCADE
+);
+
+CREATE TABLE "Assignment" (
+  assignment_id UUID PRIMARY KEY,
+  module_id UUID REFERENCES "Module"(module_id) ON DELETE CASCADE
+);
+```
+
+**Behavior:**
+```sql
+-- Delete course
+DELETE FROM "Course" WHERE course_id = 'course-123';
+
+-- Automatically deletes:
+-- 1. All Modules in course-123
+-- 2. All Lectures in those modules
+-- 3. All Assignments in those modules
+-- CASCADE propagates through FK chain
+```
+
+**Benefits:**
+- **Data integrity**: Không còn orphan records
+- **Simplicity**: Không cần manual cleanup
+- **Atomic**: All deletes trong một transaction
+
+**Risks & mitigation:**
+```python
+# ⚠️ Risk: Accidental mass deletion
+def delete_course(course_id):
+    # ❌ Dangerous: No confirmation, no backup
+    conn.execute("DELETE FROM \"Course\" WHERE course_id = %s", (course_id,))
+
+# ✅ Better: Soft delete + archival
+def archive_course(course_id):
+    # Soft delete instead of hard delete
+    conn.execute("""
+        UPDATE "Course"
+        SET status = 'archived',
+            archived_at = CURRENT_TIMESTAMP
+        WHERE course_id = %s
+    """, (course_id,))
+
+    # Later: Hard delete with confirmation
+    # Backup first: pg_dump specific course data
+
+# ✅ Best: Multi-step process
+def delete_course_safely(course_id):
+    # 1. Check dependencies
+    stats = conn.execute("""
+        SELECT
+            (SELECT COUNT(*) FROM "Module" WHERE course_id = %s) as modules,
+            (SELECT COUNT(*) FROM "Enrollment" WHERE course_id = %s) as enrollments
+    """, (course_id, course_id)).fetchone()
+
+    # 2. Require confirmation if has data
+    if stats['modules'] > 0 or stats['enrollments'] > 0:
+        return {
+            "error": "Course has dependencies",
+            "stats": stats,
+            "action_required": "Archive or force delete"
+        }
+
+    # 3. Backup before delete
+    backup_course_data(course_id)
+
+    # 4. Delete with transaction
+    conn.execute("DELETE FROM \"Course\" WHERE course_id = %s", (course_id,))
+    conn.commit()
+```
+
+**3. ON DELETE SET NULL - Preserve children:**
+
+**Use cases: Optional relationships**
+
+```sql
+-- Enrollment.class_id: Optional (self-paced courses)
+CREATE TABLE "Enrollment" (
+  enrollment_id UUID PRIMARY KEY,
+  class_id UUID REFERENCES "Class"(class_id) ON DELETE SET NULL
+);
+
+-- Notification.user_id: Keep notifications even if user deleted
+CREATE TABLE "Notification" (
+  notification_id UUID PRIMARY KEY,
+  user_id UUID REFERENCES "User"(user_id) ON DELETE SET NULL,
+  message TEXT NOT NULL  -- Message preserved
+);
+```
+
+**Behavior:**
+```sql
+-- Delete class
+DELETE FROM "Class" WHERE class_id = 'class-456';
+
+-- Result:
+SELECT * FROM "Enrollment" WHERE class_id IS NULL;
+-- Enrollments preserved but class_id = NULL
+-- Now self-paced mode
+```
+
+**Benefits:**
+- **Data preservation**: Children not deleted
+- **Flexibility**: Children can exist independently
+- **Audit trail**: Know that parent existed but was removed
+
+**Handling NULL values:**
+```python
+# Application must handle NULL FKs
+@app.get("/enrollments/{enrollment_id}")
+def get_enrollment(enrollment_id):
+    enrollment = conn.execute("""
+        SELECT e.*, c.class_name, c.start_date
+        FROM "Enrollment" e
+        LEFT JOIN "Class" c ON e.class_id = c.class_id
+        WHERE e.enrollment_id = %s
+    """, (enrollment_id,)).fetchone()
+
+    return {
+        "enrollment_id": enrollment['enrollment_id'],
+        "mode": "class-based" if enrollment['class_id'] else "self-paced",
+        "class": {
+            "class_id": enrollment['class_id'],
+            "class_name": enrollment['class_name'],
+            "start_date": enrollment['start_date']
+        } if enrollment['class_id'] else None
+    }
+```
+
+**4. ON DELETE RESTRICT - Prevent deletion:**
+
+**Use cases: Critical data protection**
+
+```sql
+-- Cannot delete User if has Enrollments
+CREATE TABLE "Enrollment" (
+  enrollment_id UUID PRIMARY KEY,
+  user_id UUID REFERENCES "User"(user_id) ON DELETE RESTRICT
+);
+
+-- Cannot delete Course if has Enrollments
+CREATE TABLE "Enrollment" (
+  enrollment_id UUID PRIMARY KEY,
+  course_id UUID REFERENCES "Course"(course_id) ON DELETE RESTRICT
+);
+```
+
+**Behavior:**
+```sql
+-- Try to delete user
+DELETE FROM "User" WHERE user_id = 'user-789';
+
+-- Error:
+-- ERROR:  update or delete on table "User" violates foreign key constraint
+-- DETAIL:  Key (user_id)=(user-789) is still referenced from table "Enrollment"
+```
+
+**Benefits:**
+- **Data safety**: Prevent accidental data loss
+- **Business rules**: Enforce that users with enrollments can't be deleted
+- **Explicit workflow**: Force proper cleanup process
+
+**Proper deletion workflow:**
+```python
+def delete_user(user_id):
+    """
+    Cannot delete user directly if has enrollments.
+    Must unenroll first or transfer enrollments.
+    """
+    # Check dependencies
+    has_enrollments = conn.execute("""
+        SELECT EXISTS(
+            SELECT 1 FROM "Enrollment" WHERE user_id = %s
+        )
+    """, (user_id,)).fetchone()[0]
+
+    if has_enrollments:
+        return {
+            "error": "Cannot delete user with active enrollments",
+            "action": "Unenroll user first or use deactivate_user()"
+        }
+
+    # Safe to delete
+    conn.execute("DELETE FROM \"User\" WHERE user_id = %s", (user_id,))
+    conn.commit()
+
+def deactivate_user(user_id):
+    """
+    Soft delete: Deactivate instead of delete.
+    """
+    conn.execute("""
+        UPDATE "User"
+        SET status = 'inactive',
+            deactivated_at = CURRENT_TIMESTAMP
+        WHERE user_id = %s
+    """, (user_id,))
+```
+
+**5. Decision matrix - Chọn ON DELETE behavior:**
+
+| Relationship | Parent | Child | ON DELETE | Reasoning |
+|--------------|--------|-------|-----------|-----------|
+| Course → Module | Course | Module | CASCADE | Modules không exist without course |
+| Module → Lecture | Module | Lecture | CASCADE | Lectures part of module structure |
+| Module → Assignment | Module | Assignment | CASCADE | Assignments belong to module |
+| Quiz → Attempt | Quiz | Attempt | RESTRICT | Keep quiz if students took it |
+| User → Enrollment | User | Enrollment | RESTRICT | Don't lose enrollment history |
+| Course → Enrollment | Course | Enrollment | RESTRICT | Course with enrollments can't delete |
+| Class → Enrollment | Class | Enrollment | SET NULL | Enrollment becomes self-paced |
+| User → Notification | User | Notification | SET NULL | Keep notification for audit |
+| Enrollment → Progress | Enrollment | Progress | CASCADE | Progress meaningless without enrollment |
+| Enrollment → Attempt | Enrollment | Attempt | CASCADE | Attempts belong to enrollment |
+| Enrollment → Certificate | Enrollment | Certificate | RESTRICT | Certificate is permanent credential |
+
+**6. Complex scenarios:**
+
+**Scenario 1: Soft delete + ON DELETE behaviors**
+
+```sql
+-- User table với soft delete
+CREATE TABLE "User" (
+  user_id UUID PRIMARY KEY,
+  email VARCHAR(255),
+  status VARCHAR(20) DEFAULT 'active',
+  deleted_at TIMESTAMPTZ
+);
+
+-- Enrollment vẫn reference User
+CREATE TABLE "Enrollment" (
+  enrollment_id UUID PRIMARY KEY,
+  user_id UUID REFERENCES "User"(user_id) ON DELETE RESTRICT
+);
+
+-- Soft delete user (không trigger ON DELETE)
+UPDATE "User" SET status = 'deleted', deleted_at = CURRENT_TIMESTAMP
+WHERE user_id = 'xxx';
+
+-- FK constraint không affected vì row vẫn tồn tại
+-- Enrollments vẫn reference user_id
+
+-- Application must filter:
+SELECT * FROM "User" WHERE status = 'active';  -- Exclude soft-deleted
+```
+
+**Scenario 2: Transfer ownership before delete**
+
+```python
+def transfer_course_ownership(course_id, old_instructor_id, new_instructor_id):
+    """
+    Transfer course to new instructor before deleting old instructor.
+    """
+    with conn.transaction():
+        # Transfer courses
+        conn.execute("""
+            UPDATE "Course"
+            SET instructor_id = %s,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE instructor_id = %s
+        """, (new_instructor_id, old_instructor_id))
+
+        # Now safe to delete old instructor
+        conn.execute("""
+            DELETE FROM "User" WHERE user_id = %s
+        """, (old_instructor_id,))
+```
+
+**Scenario 3: Conditional CASCADE with triggers**
+
+```sql
+-- Custom logic: Only CASCADE if course has no enrollments
+CREATE OR REPLACE FUNCTION prevent_delete_if_enrolled()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM "Enrollment" WHERE course_id = OLD.course_id) THEN
+    RAISE EXCEPTION 'Cannot delete course with active enrollments';
+  END IF;
+  RETURN OLD;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_prevent_course_delete
+BEFORE DELETE ON "Course"
+FOR EACH ROW EXECUTE FUNCTION prevent_delete_if_enrolled();
+```
+
+**7. Testing referential integrity:**
+
+```sql
+-- Test CASCADE
+BEGIN;
+  DELETE FROM "Course" WHERE course_id = 'test-course';
+  -- Check modules deleted
+  SELECT COUNT(*) FROM "Module" WHERE course_id = 'test-course';  -- Should be 0
+ROLLBACK;
+
+-- Test RESTRICT
+BEGIN;
+  -- Create enrollment
+  INSERT INTO "Enrollment" (enrollment_id, user_id, course_id)
+  VALUES (gen_random_uuid(), 'user-1', 'course-1');
+
+  -- Try delete course (should fail)
+  DELETE FROM "Course" WHERE course_id = 'course-1';
+  -- ERROR: violates foreign key constraint
+ROLLBACK;
+
+-- Test SET NULL
+BEGIN;
+  DELETE FROM "Class" WHERE class_id = 'class-1';
+  -- Check enrollment class_id set to NULL
+  SELECT class_id FROM "Enrollment" WHERE enrollment_id = 'enrollment-1';  -- NULL
+ROLLBACK;
+```
+
+**Kết luận:**
+- **CASCADE**: Parent-child mạnh (Course→Module→Lecture)
+- **SET NULL**: Optional relationships (Enrollment.class_id)
+- **RESTRICT**: Critical data (User/Course với Enrollments)
+- **Soft delete**: Preferred over hard delete cho nhiều use cases
+- **Testing**: Luôn test FK behaviors với transactions
+- **Application logic**: Handle NULLs, implement proper deletion workflows
+
+---
+
+### Q10.3: Các constraints (UNIQUE, CHECK, NOT NULL) được sử dụng như thế nào để enforce business rules?
+
+**Trả lời:**
+
+**1. UNIQUE constraints:**
+
+**Use case 1: Email uniqueness**
+
+```sql
+CREATE TABLE "User" (
+  user_id UUID PRIMARY KEY,
+  email VARCHAR(255) UNIQUE NOT NULL,  -- ✅ One email per account
+  ...
+);
+
+-- Partial unique index: Case-insensitive email
+CREATE UNIQUE INDEX idx_user_email_lower
+ON "User" (LOWER(email));
+-- Prevents: user@example.com vs USER@EXAMPLE.COM
+```
+
+**Benefits:**
+- Database-level enforcement (không thể bypass)
+- Automatic error on duplicate insert
+- Index for fast lookup
+
+**Application handling:**
+```python
+from psycopg2 import IntegrityError
+
+@app.post("/register")
+def register_user(email, password):
+    try:
+        conn.execute("""
+            INSERT INTO "User" (user_id, email, password_hash, role)
+            VALUES (%s, %s, %s, %s)
+        """, (uuid.uuid4(), email.lower(), hash_password(password), 'student'))
+        conn.commit()
+        return {"message": "User registered successfully"}
+
+    except IntegrityError as e:
+        if 'unique constraint' in str(e):
+            return {"error": "Email already registered"}, 409
+        raise
+```
+
+**Use case 2: Composite unique constraint**
+
+```sql
+-- Một user chỉ enroll một course một lần
+CREATE TABLE "Enrollment" (
+  enrollment_id UUID PRIMARY KEY,
+  user_id UUID REFERENCES "User",
+  course_id UUID REFERENCES "Course",
+  UNIQUE(user_id, course_id)  -- ✅ Composite unique
+);
+
+-- Error nếu enroll lại:
+INSERT INTO "Enrollment" (enrollment_id, user_id, course_id)
+VALUES (gen_random_uuid(), 'user-1', 'course-1');
+-- Second insert: ERROR: duplicate key value violates unique constraint
+```
+
+**Use case 3: Conditional uniqueness**
+
+```sql
+-- Certificate number unique per course (not globally)
+CREATE TABLE "Certificate" (
+  certificate_id UUID PRIMARY KEY,
+  enrollment_id UUID REFERENCES "Enrollment",
+  certificate_number VARCHAR(50),
+  UNIQUE(certificate_number, course_id)  -- Unique within course
+);
+
+-- Partial unique index: Only for active certificates
+CREATE UNIQUE INDEX idx_certificate_number_active
+ON "Certificate" (certificate_number)
+WHERE status = 'active';
+-- Allows duplicate cert numbers if one is revoked
+```
+
+**2. CHECK constraints:**
+
+**Use case 1: Enum-like values**
+
+```sql
+CREATE TABLE "User" (
+  user_id UUID PRIMARY KEY,
+  role VARCHAR(20) CHECK (role IN ('student', 'instructor', 'admin')),
+  status VARCHAR(20) CHECK (status IN ('active', 'inactive', 'suspended')),
+  ...
+);
+
+-- Error nếu invalid role:
+INSERT INTO "User" (user_id, role) VALUES (gen_random_uuid(), 'superuser');
+-- ERROR: new row violates check constraint "user_role_check"
+```
+
+**Use case 2: Numeric ranges**
+
+```sql
+CREATE TABLE "Quiz" (
+  quiz_id UUID PRIMARY KEY,
+  passing_score DECIMAL(5,2) CHECK (passing_score >= 0 AND passing_score <= 100),
+  time_limit_minutes INT CHECK (time_limit_minutes > 0),
+  ...
+);
+
+CREATE TABLE "Attempt" (
+  attempt_id UUID PRIMARY KEY,
+  score DECIMAL(5,2) CHECK (score >= 0),  -- Score cannot be negative
+  ...
+);
+
+CREATE TABLE "Enrollment" (
+  enrollment_id UUID PRIMARY KEY,
+  completion_percentage DECIMAL(5,2) CHECK (
+    completion_percentage >= 0 AND completion_percentage <= 100
+  ),
+  ...
+);
+```
+
+**Use case 3: Date validations**
+
+```sql
+CREATE TABLE "Class" (
+  class_id UUID PRIMARY KEY,
+  start_date DATE NOT NULL,
+  end_date DATE NOT NULL,
+  CHECK (end_date >= start_date),  -- ✅ End after start
+  ...
+);
+
+CREATE TABLE "Quiz" (
+  quiz_id UUID PRIMARY KEY,
+  available_from TIMESTAMPTZ,
+  available_until TIMESTAMPTZ,
+  CHECK (available_until > available_from),
+  ...
+);
+```
+
+**Use case 4: Business logic constraints**
+
+```sql
+-- AssignmentSubmission: Score không exceed max_score
+CREATE TABLE "AssignmentSubmission" (
+  submission_id UUID PRIMARY KEY,
+  score DECIMAL(5,2),
+  max_score DECIMAL(5,2),
+  CHECK (score IS NULL OR score <= max_score),  -- ✅ Score ≤ max_score
+  ...
+);
+
+-- Attempt: Cannot exceed max_attempts
+-- (This requires application logic, can't enforce with CHECK alone)
+```
+
+**Complex CHECK constraints:**
+
+```sql
+-- Status transitions
+CREATE TABLE "Course" (
+  course_id UUID PRIMARY KEY,
+  status VARCHAR(20) CHECK (status IN ('draft', 'published', 'archived')),
+  published_at TIMESTAMPTZ,
+  CHECK (
+    (status = 'published' AND published_at IS NOT NULL) OR
+    (status != 'published' AND published_at IS NULL)
+  )  -- ✅ Published courses must have published_at
+);
+```
+
+**3. NOT NULL constraints:**
+
+**Use case 1: Required fields**
+
+```sql
+CREATE TABLE "User" (
+  user_id UUID PRIMARY KEY,
+  email VARCHAR(255) UNIQUE NOT NULL,      -- ✅ Required
+  password_hash VARCHAR(255) NOT NULL,     -- ✅ Required
+  full_name VARCHAR(200) NOT NULL,         -- ✅ Required
+  role VARCHAR(20) NOT NULL,               -- ✅ Required
+  created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+  -- Optional fields
+  bio TEXT,                                -- ⚠️ Nullable
+  avatar_url VARCHAR(500),                 -- ⚠️ Nullable
+  deactivated_at TIMESTAMPTZ               -- ⚠️ Nullable
+);
+```
+
+**Use case 2: Conditional NOT NULL (with CHECK)**
+
+```sql
+CREATE TABLE "Certificate" (
+  certificate_id UUID PRIMARY KEY,
+  enrollment_id UUID NOT NULL,
+  issued_at TIMESTAMPTZ NOT NULL,
+  revoked_at TIMESTAMPTZ,
+  revocation_reason TEXT,
+  CHECK (
+    (revoked_at IS NULL AND revocation_reason IS NULL) OR
+    (revoked_at IS NOT NULL AND revocation_reason IS NOT NULL)
+  )  -- ✅ If revoked, must have reason
+);
+```
+
+**Use case 3: Application-level required fields**
+
+```python
+# Backend validation before database
+from pydantic import BaseModel, EmailStr, Field
+
+class UserCreate(BaseModel):
+    email: EmailStr  # Auto validates email format
+    password: str = Field(min_length=8)  # Min length
+    full_name: str = Field(min_length=1, max_length=200)
+    role: str = Field(pattern='^(student|instructor|admin)$')
+
+@app.post("/users")
+def create_user(user: UserCreate):
+    # Pydantic already validated required fields + formats
+    # Database constraints as second layer of defense
+    conn.execute("""
+        INSERT INTO "User" (user_id, email, password_hash, full_name, role)
+        VALUES (%s, %s, %s, %s, %s)
+    """, (uuid.uuid4(), user.email, hash(user.password), user.full_name, user.role))
+```
+
+**4. Combining constraints for business rules:**
+
+**Example 1: Quiz availability rules**
+
+```sql
+CREATE TABLE "Quiz" (
+  quiz_id UUID PRIMARY KEY,
+  title VARCHAR(200) NOT NULL,
+  passing_score DECIMAL(5,2) NOT NULL CHECK (passing_score >= 0 AND passing_score <= 100),
+  time_limit_minutes INT CHECK (time_limit_minutes IS NULL OR time_limit_minutes > 0),
+  max_attempts INT CHECK (max_attempts IS NULL OR max_attempts > 0),
+  available_from TIMESTAMPTZ,
+  available_until TIMESTAMPTZ,
+  CHECK (available_until IS NULL OR available_from IS NULL OR available_until > available_from),
+  status VARCHAR(20) NOT NULL CHECK (status IN ('draft', 'published', 'archived')) DEFAULT 'draft'
+);
+```
+
+**Business rules enforced:**
+1. Passing score must be 0-100
+2. Time limit must be positive (if set)
+3. Max attempts must be positive (if set)
+4. Available period must be valid (end > start)
+5. Status must be valid enum value
+
+**Example 2: Enrollment business rules**
+
+```sql
+CREATE TABLE "Enrollment" (
+  enrollment_id UUID PRIMARY KEY,
+  user_id UUID NOT NULL REFERENCES "User"(user_id) ON DELETE RESTRICT,
+  course_id UUID NOT NULL REFERENCES "Course"(course_id) ON DELETE RESTRICT,
+  class_id UUID REFERENCES "Class"(class_id) ON DELETE SET NULL,
+  enrolled_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  completion_percentage DECIMAL(5,2) DEFAULT 0 CHECK (
+    completion_percentage >= 0 AND completion_percentage <= 100
+  ),
+  status VARCHAR(20) NOT NULL CHECK (status IN ('active', 'completed', 'dropped')) DEFAULT 'active',
+  UNIQUE(user_id, course_id)  -- One enrollment per user per course
+);
+```
+
+**Business rules enforced:**
+1. User and Course required (NOT NULL + FK)
+2. One enrollment per user-course pair (UNIQUE)
+3. Completion percentage 0-100
+4. Status must be valid enum
+5. Enrolled timestamp required
+
+**5. Limitations and workarounds:**
+
+**Limitation 1: CHECK cannot reference other tables**
+
+```sql
+-- ❌ Cannot do this:
+CREATE TABLE "Attempt" (
+  attempt_id UUID PRIMARY KEY,
+  quiz_id UUID REFERENCES "Quiz",
+  score DECIMAL(5,2),
+  CHECK (score <= (SELECT passing_score FROM "Quiz" WHERE quiz_id = Attempt.quiz_id))
+);
+-- ERROR: cannot use subquery in check constraint
+```
+
+**Workaround: Application logic or triggers**
+
+```sql
+-- ✅ Use trigger instead
+CREATE OR REPLACE FUNCTION validate_attempt_score()
+RETURNS TRIGGER AS $$
+DECLARE
+  max_score DECIMAL;
+BEGIN
+  SELECT passing_score INTO max_score
+  FROM "Quiz"
+  WHERE quiz_id = NEW.quiz_id;
+
+  IF NEW.score > max_score THEN
+    RAISE EXCEPTION 'Score % exceeds max score %', NEW.score, max_score;
+  END IF;
+
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_validate_score
+BEFORE INSERT OR UPDATE ON "Attempt"
+FOR EACH ROW EXECUTE FUNCTION validate_attempt_score();
+```
+
+**Limitation 2: Complex business rules**
+
+```python
+# Application-level validation for complex rules
+def enroll_student(user_id, course_id, class_id=None):
+    """
+    Business rules:
+    1. User must be 'student' role
+    2. Course must be 'published'
+    3. If class_id provided, class must not be full
+    4. If class_id provided, class must not have started
+    """
+    # Validation queries
+    user = conn.execute("""
+        SELECT role FROM "User" WHERE user_id = %s
+    """, (user_id,)).fetchone()
+
+    if user['role'] != 'student':
+        return {"error": "Only students can enroll"}, 403
+
+    course = conn.execute("""
+        SELECT status FROM "Course" WHERE course_id = %s
+    """, (course_id,)).fetchone()
+
+    if course['status'] != 'published':
+        return {"error": "Course not available"}, 400
+
+    if class_id:
+        class_data = conn.execute("""
+            SELECT
+                c.max_students,
+                c.start_date,
+                COUNT(e.enrollment_id) as current_students
+            FROM "Class" c
+            LEFT JOIN "Enrollment" e ON c.class_id = e.class_id
+            WHERE c.class_id = %s
+            GROUP BY c.class_id
+        """, (class_id,)).fetchone()
+
+        if class_data['current_students'] >= class_data['max_students']:
+            return {"error": "Class is full"}, 400
+
+        if class_data['start_date'] < date.today():
+            return {"error": "Class already started"}, 400
+
+    # All validations passed, create enrollment
+    conn.execute("""
+        INSERT INTO "Enrollment" (enrollment_id, user_id, course_id, class_id)
+        VALUES (%s, %s, %s, %s)
+    """, (uuid.uuid4(), user_id, course_id, class_id))
+    conn.commit()
+
+    return {"message": "Enrolled successfully"}
+```
+
+**6. Testing constraints:**
+
+```sql
+-- Test UNIQUE
+BEGIN;
+  INSERT INTO "User" (user_id, email, password_hash, full_name, role)
+  VALUES (gen_random_uuid(), 'test@example.com', 'hash', 'Test User', 'student');
+
+  -- Should fail
+  INSERT INTO "User" (user_id, email, password_hash, full_name, role)
+  VALUES (gen_random_uuid(), 'test@example.com', 'hash2', 'Test User 2', 'student');
+  -- ERROR: duplicate key value
+ROLLBACK;
+
+-- Test CHECK
+BEGIN;
+  INSERT INTO "Quiz" (quiz_id, title, passing_score)
+  VALUES (gen_random_uuid(), 'Test Quiz', 150);
+  -- ERROR: violates check constraint (passing_score must be 0-100)
+ROLLBACK;
+
+-- Test NOT NULL
+BEGIN;
+  INSERT INTO "User" (user_id, email, role)
+  VALUES (gen_random_uuid(), NULL, 'student');
+  -- ERROR: null value in column "email" violates not-null constraint
+ROLLBACK;
+```
+
+**7. Constraint summary table:**
+
+| Constraint Type | Purpose | Example | Enforcement Level |
+|----------------|---------|---------|-------------------|
+| UNIQUE | No duplicates | User.email | Database |
+| CHECK | Value validation | Quiz.passing_score 0-100 | Database |
+| NOT NULL | Required fields | User.email NOT NULL | Database |
+| FOREIGN KEY | Referential integrity | Module.course_id → Course | Database |
+| Composite UNIQUE | Multi-column uniqueness | (user_id, course_id) | Database |
+| Partial UNIQUE | Conditional uniqueness | email WHERE status='active' | Database (index) |
+| Complex business rules | Multi-table validation | Max attempts, class capacity | Application + Triggers |
+
+**Kết luận:**
+- **Database constraints**: First line of defense (UNIQUE, CHECK, NOT NULL, FK)
+- **Application validation**: Complex business rules, user-friendly errors
+- **Triggers**: Cross-table validations, computed fields
+- **Layered approach**: Database + Application + UI validation
+- **Testing**: Test all constraint violations to ensure proper error handling
+
+---
+
+## Section 11: Additional Design Questions
+
+### Q11.1: Tại sao sử dụng UUID thay vì auto-increment INTEGER cho primary keys?
+
+**Trả lời:**
+
+**Đã được trả lời chi tiết ở Q1.2** (Section 1: General Design Questions).
+
+**Tóm tắt lý do:**
+1. **Distributed systems**: UUID có thể generate ở nhiều servers không cần coordination
+2. **Security**: Không predictable như INT (1, 2, 3...)
+3. **Merging data**: Dễ dàng merge từ nhiều sources không conflict
+4. **Globally unique**: Có thể dùng làm external IDs
+5. **No sequence bottleneck**: Không có lock contention trên sequence
+
+**Trade-offs:**
+- ✅ **Pros**: Security, scalability, flexibility
+- ⚠️ **Cons**: Storage (16 bytes vs 4 bytes), index size, harder to debug
+
+**Kết luận**: UUID phù hợp với LMS system vì security và potential scaling requirements.
+
+---
+
+### Q11.2: Database có support multi-tenancy (nhiều organizations) không?
+
+**Trả lời:**
+
+**Hiện tại: Core v1.0 KHÔNG support multi-tenancy**
+
+Database được thiết kế cho **single organization** (một trường học, một công ty).
+
+**Nếu cần multi-tenancy, có 3 approaches:**
+
+**Approach 1: Separate Database per Tenant**
+
+```sql
+-- Database: tenant_org1
+CREATE DATABASE tenant_org1;
+\c tenant_org1;
+-- Create all tables...
+
+-- Database: tenant_org2
+CREATE DATABASE tenant_org2;
+\c tenant_org2;
+-- Create all tables...
+```
+
+**Pros:**
+- ✅ Complete isolation
+- ✅ Easy backup/restore per tenant
+- ✅ Different schema versions possible
+- ✅ No cross-tenant data leakage
+
+**Cons:**
+- ❌ Resource overhead (one DB per tenant)
+- ❌ Difficult to query across tenants
+- ❌ Schema migrations need to run on all DBs
+
+**Approach 2: Separate Schema per Tenant**
+
+```sql
+-- Schema: tenant_org1
+CREATE SCHEMA tenant_org1;
+CREATE TABLE tenant_org1."User" (...);
+CREATE TABLE tenant_org1."Course" (...);
+
+-- Schema: tenant_org2
+CREATE SCHEMA tenant_org2;
+CREATE TABLE tenant_org2."User" (...);
+CREATE TABLE tenant_org2."Course" (...);
+```
+
+**Pros:**
+- ✅ Good isolation
+- ✅ Shared database connection pool
+- ✅ Easier than separate DBs
+
+**Cons:**
+- ❌ Still have schema management complexity
+- ❌ Need to SET search_path for each query
+
+**Approach 3: Shared Schema with tenant_id column**
+
+```sql
+-- Add tenant_id to all tables
+CREATE TABLE "User" (
+  user_id UUID PRIMARY KEY,
+  tenant_id UUID NOT NULL REFERENCES "Tenant"(tenant_id),
+  email VARCHAR(255),
+  ...,
+  UNIQUE(tenant_id, email)  -- Email unique per tenant
+);
+
+CREATE TABLE "Course" (
+  course_id UUID PRIMARY KEY,
+  tenant_id UUID NOT NULL REFERENCES "Tenant"(tenant_id),
+  title VARCHAR(200),
+  ...
+);
+
+CREATE TABLE "Tenant" (
+  tenant_id UUID PRIMARY KEY,
+  tenant_name VARCHAR(200),
+  subdomain VARCHAR(100) UNIQUE,
+  settings JSONB,
+  created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Row Level Security
+ALTER TABLE "User" ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY tenant_isolation_policy ON "User"
+USING (tenant_id = current_setting('app.current_tenant_id')::UUID);
+```
+
+**Pros:**
+- ✅ Simplest schema
+- ✅ Easy analytics across tenants
+- ✅ Efficient resource usage
+
+**Cons:**
+- ❌ Must include tenant_id in every query
+- ❌ Risk of data leakage if tenant_id forgotten
+- ❌ Shared indexes (larger size)
+
+**Application implementation with tenant_id:**
+
+```python
+# Middleware to set tenant context
+from flask import Flask, request, g
+
+app = Flask(__name__)
+
+@app.before_request
+def set_tenant_context():
+    # Extract tenant from subdomain or header
+    subdomain = request.host.split('.')[0]  # org1.example.com → org1
+
+    # Or from JWT token
+    # tenant_id = decode_jwt(request.headers['Authorization'])['tenant_id']
+
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT tenant_id FROM "Tenant" WHERE subdomain = %s
+    """, (subdomain,))
+    tenant = cur.fetchone()
+
+    if not tenant:
+        abort(404, "Tenant not found")
+
+    g.tenant_id = tenant['tenant_id']
+
+    # Set PostgreSQL session variable for RLS
+    cur.execute("""
+        SET app.current_tenant_id = %s
+    """, (str(g.tenant_id),))
+
+# All queries automatically filtered by RLS
+@app.get("/courses")
+def get_courses():
+    cur = get_db_connection().cursor()
+
+    # RLS automatically adds: WHERE tenant_id = current_setting('app.current_tenant_id')
+    cur.execute("SELECT * FROM \"Course\"")
+
+    return jsonify(cur.fetchall())
+
+# Explicit tenant_id in queries (without RLS)
+@app.get("/courses")
+def get_courses_explicit():
+    cur = get_db_connection().cursor()
+    cur.execute("""
+        SELECT * FROM "Course" WHERE tenant_id = %s
+    """, (g.tenant_id,))
+
+    return jsonify(cur.fetchall())
+```
+
+**Recommendation:**
+- **Small scale (< 100 tenants)**: Approach 3 (tenant_id column + RLS)
+- **Medium scale (100-1000 tenants)**: Approach 2 (separate schemas)
+- **Large scale (> 1000 tenants)**: Approach 1 (separate databases) hoặc shard by tenant
+
+**Core v1.0**: Single-tenant design, có thể migrate sang multi-tenant nếu cần.
+
+---
+
+### Q11.3: Làm thế nào để handle file uploads (videos, documents, images)?
+
+**Trả lời:**
+
+**Core v1.0 design: Store file URLs, NOT binary data**
+
+**1. Table structures cho files:**
+
+```sql
+-- Lecture có video/materials
+CREATE TABLE "Lecture" (
+  lecture_id UUID PRIMARY KEY,
+  title VARCHAR(200),
+  content TEXT,
+  video_url VARCHAR(500),      -- ✅ URL to video file
+  duration_seconds INT,
+  resources JSONB,             -- ✅ Array of file URLs
+  ...
+);
+
+-- resources JSONB structure:
+{
+  "resources": [
+    {
+      "type": "pdf",
+      "filename": "lecture-notes.pdf",
+      "url": "https://cdn.example.com/courses/course-123/lecture-notes.pdf",
+      "size_bytes": 2048576
+    },
+    {
+      "type": "video",
+      "filename": "demo.mp4",
+      "url": "https://cdn.example.com/courses/course-123/demo.mp4",
+      "size_bytes": 104857600,
+      "duration_seconds": 320
+    }
+  ]
+}
+
+-- Assignment submissions với files
+CREATE TABLE "AssignmentSubmission" (
+  submission_id UUID PRIMARY KEY,
+  file_url VARCHAR(500),       -- ✅ URL to submitted file
+  ...
+);
+
+-- User avatar
+CREATE TABLE "User" (
+  user_id UUID PRIMARY KEY,
+  avatar_url VARCHAR(500),     -- ✅ URL to avatar image
+  ...
+);
+```
+
+**2. Storage approaches:**
+
+**Option A: Cloud Storage (AWS S3, Google Cloud Storage, Azure Blob)**
+
+```python
+import boto3
+from botocore.exceptions import ClientError
+import uuid
+import mimetypes
+
+# AWS S3 configuration
+s3_client = boto3.client('s3',
+    aws_access_key_id='your-access-key',
+    aws_secret_access_key='your-secret-key',
+    region_name='us-east-1'
+)
+
+BUCKET_NAME = 'b-learning-files'
+CDN_URL = 'https://cdn.example.com'  # CloudFront URL
+
+@app.post("/lectures/{lecture_id}/upload-video")
+async def upload_lecture_video(lecture_id: str, file: UploadFile):
+    """
+    Upload video to S3 and save URL to database.
+    """
+    # Generate unique filename
+    file_ext = file.filename.split('.')[-1]
+    unique_filename = f"lectures/{lecture_id}/{uuid.uuid4()}.{file_ext}"
+
+    # Upload to S3
+    try:
+        s3_client.upload_fileobj(
+            file.file,
+            BUCKET_NAME,
+            unique_filename,
+            ExtraArgs={
+                'ContentType': file.content_type,
+                'ACL': 'public-read',  # Or use signed URLs
+                'CacheControl': 'max-age=31536000'  # 1 year cache
+            }
+        )
+    except ClientError as e:
+        return {"error": f"Upload failed: {str(e)}"}, 500
+
+    # Generate CDN URL
+    file_url = f"{CDN_URL}/{unique_filename}"
+
+    # Save to database
+    conn = get_db_connection()
+    conn.execute("""
+        UPDATE "Lecture"
+        SET video_url = %s,
+            updated_at = CURRENT_TIMESTAMP
+        WHERE lecture_id = %s
+    """, (file_url, lecture_id))
+    conn.commit()
+
+    return {
+        "message": "Video uploaded successfully",
+        "url": file_url
+    }
+
+# Get video with signed URL (for private content)
+@app.get("/lectures/{lecture_id}/video")
+def get_lecture_video(lecture_id: str, current_user: User):
+    """
+    Return signed URL for private video access.
+    """
+    # Check authorization
+    enrollment = conn.execute("""
+        SELECT e.enrollment_id
+        FROM "Enrollment" e
+        JOIN "Module" m ON m.course_id = e.course_id
+        JOIN "Lecture" l ON l.module_id = m.module_id
+        WHERE l.lecture_id = %s AND e.user_id = %s
+    """, (lecture_id, current_user.user_id)).fetchone()
+
+    if not enrollment:
+        return {"error": "Not enrolled in this course"}, 403
+
+    # Get video URL
+    lecture = conn.execute("""
+        SELECT video_url FROM "Lecture" WHERE lecture_id = %s
+    """, (lecture_id,)).fetchone()
+
+    # Generate signed URL (valid for 1 hour)
+    s3_key = lecture['video_url'].replace(CDN_URL + '/', '')
+    signed_url = s3_client.generate_presigned_url(
+        'get_object',
+        Params={'Bucket': BUCKET_NAME, 'Key': s3_key},
+        ExpiresIn=3600  # 1 hour
+    )
+
+    return {"video_url": signed_url}
+```
+
+**Option B: Local filesystem (for development/small scale)**
+
+```python
+import os
+import shutil
+from pathlib import Path
+
+UPLOAD_DIR = Path("/var/www/uploads")
+STATIC_URL = "https://example.com/static/uploads"
+
+@app.post("/lectures/{lecture_id}/upload-video")
+async def upload_lecture_video_local(lecture_id: str, file: UploadFile):
+    """
+    Upload video to local filesystem.
+    """
+    # Create directory structure
+    lecture_dir = UPLOAD_DIR / "lectures" / lecture_id
+    lecture_dir.mkdir(parents=True, exist_ok=True)
+
+    # Save file
+    file_ext = file.filename.split('.')[-1]
+    unique_filename = f"{uuid.uuid4()}.{file_ext}"
+    file_path = lecture_dir / unique_filename
+
+    with file_path.open("wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+
+    # Generate URL
+    file_url = f"{STATIC_URL}/lectures/{lecture_id}/{unique_filename}"
+
+    # Save to database (same as S3 approach)
+    conn.execute("""
+        UPDATE "Lecture"
+        SET video_url = %s
+        WHERE lecture_id = %s
+    """, (file_url, lecture_id))
+
+    return {"message": "Uploaded", "url": file_url}
+```
+
+**3. File upload best practices:**
+
+**Validation:**
+```python
+from fastapi import UploadFile, HTTPException
+
+MAX_FILE_SIZE = 500 * 1024 * 1024  # 500MB
+ALLOWED_VIDEO_TYPES = ['video/mp4', 'video/webm', 'video/ogg']
+ALLOWED_DOCUMENT_TYPES = ['application/pdf', 'application/msword',
+                          'application/vnd.openxmlformats-officedocument.wordprocessingml.document']
+ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
+
+def validate_video_upload(file: UploadFile):
+    # Check content type
+    if file.content_type not in ALLOWED_VIDEO_TYPES:
+        raise HTTPException(400, "Invalid video format. Allowed: MP4, WebM, OGG")
+
+    # Check file size
+    file.file.seek(0, 2)  # Seek to end
+    file_size = file.file.tell()
+    file.file.seek(0)  # Reset
+
+    if file_size > MAX_FILE_SIZE:
+        raise HTTPException(400, f"File too large. Max: {MAX_FILE_SIZE / 1024 / 1024}MB")
+
+    # Check extension matches content type
+    ext = file.filename.split('.')[-1].lower()
+    if ext == 'mp4' and file.content_type != 'video/mp4':
+        raise HTTPException(400, "File extension doesn't match content type")
+
+    return True
+
+@app.post("/lectures/{lecture_id}/upload-video")
+async def upload_with_validation(lecture_id: str, file: UploadFile):
+    validate_video_upload(file)
+    # Continue with upload...
+```
+
+**Progress tracking (chunked upload):**
+```python
+# Frontend: Upload in chunks with progress
+@app.post("/upload/initiate")
+def initiate_multipart_upload(filename: str, content_type: str):
+    """
+    Initiate S3 multipart upload.
+    """
+    upload = s3_client.create_multipart_upload(
+        Bucket=BUCKET_NAME,
+        Key=f"temp/{uuid.uuid4()}/{filename}",
+        ContentType=content_type
+    )
+
+    return {
+        "upload_id": upload['UploadId'],
+        "key": upload['Key']
+    }
+
+@app.post("/upload/chunk")
+def upload_chunk(upload_id: str, key: str, part_number: int, chunk: UploadFile):
+    """
+    Upload single chunk.
+    """
+    response = s3_client.upload_part(
+        Bucket=BUCKET_NAME,
+        Key=key,
+        UploadId=upload_id,
+        PartNumber=part_number,
+        Body=chunk.file
+    )
+
+    return {"ETag": response['ETag']}
+
+@app.post("/upload/complete")
+def complete_multipart_upload(upload_id: str, key: str, parts: List[dict]):
+    """
+    Complete multipart upload.
+    """
+    s3_client.complete_multipart_upload(
+        Bucket=BUCKET_NAME,
+        Key=key,
+        UploadId=upload_id,
+        MultipartUpload={'Parts': parts}
+    )
+
+    return {"url": f"{CDN_URL}/{key}"}
+```
+
+**4. Video processing pipeline:**
+
+```python
+# After upload, process video (transcoding, thumbnail generation)
+from celery import Celery
+
+celery_app = Celery('tasks', broker='redis://localhost:6379')
+
+@celery_app.task
+def process_video(lecture_id: str, original_url: str):
+    """
+    Background task to process uploaded video.
+    """
+    # 1. Generate thumbnail
+    thumbnail_url = generate_thumbnail(original_url)
+
+    # 2. Transcode to multiple qualities (480p, 720p, 1080p)
+    video_variants = transcode_video(original_url)
+
+    # 3. Generate subtitles (if enabled)
+    subtitles_url = generate_subtitles(original_url)
+
+    # 4. Update database
+    conn.execute("""
+        UPDATE "Lecture"
+        SET video_url = %s,
+            thumbnail_url = %s,
+            video_variants = %s::jsonb,
+            subtitles_url = %s,
+            processing_status = 'completed'
+        WHERE lecture_id = %s
+    """, (
+        video_variants['1080p'],  # Main video URL
+        thumbnail_url,
+        json.dumps(video_variants),
+        subtitles_url,
+        lecture_id
+    ))
+
+# Trigger after upload
+@app.post("/lectures/{lecture_id}/upload-video")
+async def upload_and_process(lecture_id: str, file: UploadFile):
+    # Upload to S3
+    file_url = await upload_to_s3(file)
+
+    # Update status to processing
+    conn.execute("""
+        UPDATE "Lecture"
+        SET video_url = %s,
+            processing_status = 'processing'
+        WHERE lecture_id = %s
+    """, (file_url, lecture_id))
+
+    # Trigger background processing
+    process_video.delay(lecture_id, file_url)
+
+    return {
+        "message": "Video uploaded, processing started",
+        "status": "processing"
+    }
+```
+
+**5. File management:**
+
+```python
+# Delete files when lecture deleted
+@app.delete("/lectures/{lecture_id}")
+def delete_lecture(lecture_id: str):
+    conn = get_db_connection()
+
+    # Get file URLs
+    lecture = conn.execute("""
+        SELECT video_url, resources FROM "Lecture" WHERE lecture_id = %s
+    """, (lecture_id,)).fetchone()
+
+    # Delete from S3
+    if lecture['video_url']:
+        s3_key = lecture['video_url'].replace(CDN_URL + '/', '')
+        s3_client.delete_object(Bucket=BUCKET_NAME, Key=s3_key)
+
+    if lecture['resources']:
+        for resource in lecture['resources']['resources']:
+            s3_key = resource['url'].replace(CDN_URL + '/', '')
+            s3_client.delete_object(Bucket=BUCKET_NAME, Key=s3_key)
+
+    # Delete from database
+    conn.execute("DELETE FROM \"Lecture\" WHERE lecture_id = %s", (lecture_id,))
+    conn.commit()
+
+    return {"message": "Lecture and files deleted"}
+```
+
+**Kết luận:**
+- **Store URLs, not binary data** in database
+- **Cloud storage (S3)** for production (scalable, CDN, backups)
+- **Local filesystem** for development only
+- **Validation**: File type, size, content
+- **Processing**: Async transcoding, thumbnails, subtitles
+- **Security**: Signed URLs for private content, access control
+- **Lifecycle**: Delete files when records deleted
+
+---
+
+## Kết luận & Tổng kết
+
+### Tổng quan thiết kế B-Learning Core v1.0
+
+**B-Learning Core Database** là một hệ thống quản lý học tập (LMS) được thiết kế với **16 tables** tổ chức theo **5 domains** chính, tuân thủ các nguyên tắc thiết kế cơ sở dữ liệu hiện đại và best practices của PostgreSQL.
+
+**Điểm mạnh của thiết kế:**
+
+1. **Modular Architecture (5 domains)**
+   - Domain 1: User Management (3 tables)
+   - Domain 2: Course Content (4 tables)
+   - Domain 3: Assessment (5 tables)
+   - Domain 4: Enrollment & Progress (2 tables)
+   - Domain 5: Class & Certificate (2 tables)
+
+2. **Modern Technologies**
+   - PostgreSQL 14+ với JSONB, arrays, UUID
+   - 96+ indexes (B-tree, GIN, composite)
+   - Foreign keys với ON DELETE behaviors
+   - Row Level Security ready
+
+3. **Scalability & Performance**
+   - UUID primary keys (distributed-friendly)
+   - Strategic denormalization (completion_percentage)
+   - Comprehensive indexing strategy
+   - JSON for flexible data structures
+
+4. **Data Integrity**
+   - UNIQUE constraints (email, enrollments)
+   - CHECK constraints (scores, dates, enums)
+   - NOT NULL for required fields
+   - Foreign key cascades and restrictions
+
+5. **Flexibility vs Structure Balance**
+   - JSONB cho Quiz questions và Attempt answers
+   - JSONB cho Class schedules và Assignment configs
+   - Structured tables cho core entities
+   - Migration path từ JSON → separate tables
+
+**Key Design Decisions:**
+
+| Decision | Reasoning | Trade-off |
+|----------|-----------|-----------|
+| UUID vs INT | Security, scalability | Storage overhead |
+| JSONB vs tables | Flexibility for quizzes | Query limitations |
+| Soft delete (status) | Data preservation | Application complexity |
+| 16 tables (not 31) | Simplicity for v1.0 | May need expansion |
+| ON DELETE CASCADE | Auto-cleanup | Risk of mass deletion |
+| completion_percentage cached | Performance | Must maintain consistency |
+| GIN indexes | Fast JSON/array queries | Index size |
+
+**Tài liệu đã hoàn thành:**
+
+✅ **MAIN_REPORT.md** (2377 lines)
+- Lời mở đầu
+- Chapter 1: Tổng quan kiến trúc
+- Chapter 2: Domain deep-dives
+- Chapter 3: Relationships & indexes
+- Chapter 4: Business logic & workflows
+- Chapter 5: Performance & future scaling
+
+✅ **FAQ_EXPLANATION.md** (hiện tại)
+- 60+ câu hỏi chi tiết
+- 11 sections covering all aspects
+- SQL examples, Python code, decision matrices
+- Best practices và anti-patterns
+
+**Use cases được support:**
+
+1. ✅ User registration & authentication (RBAC)
+2. ✅ Course creation & publishing (instructor workflow)
+3. ✅ Module & lecture organization (prerequisites)
+4. ✅ Quiz creation & auto-grading (MC, T/F, short answer)
+5. ✅ Assignment submissions & grading
+6. ✅ Student enrollment (class-based & self-paced)
+7. ✅ Progress tracking (lecture completion)
+8. ✅ Class scheduling & management
+9. ✅ Certificate issuance (completion-based)
+10. ✅ Notifications & user preferences
+
+**Production Readiness:**
+
+✅ **Ready for deployment:**
+- Complete schema với constraints
+- Comprehensive indexes
+- FK relationships properly defined
+- Seed data available
+
+⚠️ **Cần bổ sung trước production:**
+- Authentication & authorization layer
+- File upload/storage integration
+- Email service integration
+- Backup & recovery procedures
+- Monitoring & logging
+- Rate limiting & security
+- Load testing
+
+**Recommended Tech Stack:**
+
+- **Database**: PostgreSQL 14+ (AWS RDS hoặc self-hosted)
+- **Backend**: FastAPI (Python) hoặc Express (Node.js)
+- **Frontend**: Next.js (React) hoặc Vue.js
+- **File Storage**: AWS S3 + CloudFront
+- **Caching**: Redis (sessions, query caching)
+- **Background Jobs**: Celery (video processing, email)
+- **Deployment**: Docker + Kubernetes hoặc Heroku
+
+**Next Steps:**
+
+1. **Phase 1**: Implement core backend APIs
+2. **Phase 2**: Build admin & instructor dashboards
+3. **Phase 3**: Student learning interface
+4. **Phase 4**: Video processing pipeline
+5. **Phase 5**: Analytics & reporting features
+6. **Phase 6**: Mobile apps (iOS/Android)
+
+---
+
+**Tác giả**: Nguyễn Văn Kiệt - CNTT1-K63
+**Project**: B-Learning Core v1.0
+**Database**: PostgreSQL 14+
+**Tables**: 16 tables across 5 domains
+**Documentation**: 2377 lines (MAIN_REPORT) + 6300+ lines (FAQ)
+**Last Updated**: 2025-11-27
+
+---
+
+*Tài liệu này cung cấp câu trả lời chi tiết cho hơn 60 câu hỏi về thiết kế cơ sở dữ liệu B-Learning Core, bao gồm quyết định thiết kế, trade-offs, SQL examples, Python code, và best practices. Sử dụng tài liệu này như một reference guide khi phát triển và maintain LMS system.*
